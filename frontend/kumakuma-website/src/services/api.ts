@@ -67,6 +67,12 @@ export const api = {
     return res.json();
   },
 
+  // Manufacturing Section
+  getManufacturing: async () => {
+    const res = await fetch(`${API_BASE_URL}/manufacturing`);
+    return res.json();
+  },
+
   // Catalog
   getCatalog: async () => {
     const res = await fetch(`${API_BASE_URL}/catalog`);

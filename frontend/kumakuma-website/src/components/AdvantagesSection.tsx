@@ -30,14 +30,10 @@ export default function AdvantagesSection() {
 
         <div className="flex flex-col lg:flex-row gap-12 items-start">
           {/* Left Side - Vertical Title */}
-          <div className="hidden lg:block w-32 shrink-0 relative">
-             <div className="absolute top-0 left-0 origin-top-left -rotate-90 translate-y-[400px]">
-                <h3 className="text-[120px] font-black text-gray-900 leading-none whitespace-nowrap tracking-tighter opacity-90">
-                  KEUNGGULAN
-                </h3>
-                <h3 className="text-[120px] font-black text-gray-900 leading-none whitespace-nowrap tracking-tighter ml-20">
-                  KAMI
-                </h3>
+          <div className="hidden lg:flex w-24 shrink-0 flex-col items-center justify-start pt-10">
+             <div className="[writing-mode:vertical-rl] text-[80px] xl:text-[100px] font-black text-gray-900 leading-none whitespace-nowrap tracking-tighter opacity-90 rotate-180">
+                <span className="mb-8">KEUNGGULAN</span>
+                <span>KAMI</span>
              </div>
           </div>
 

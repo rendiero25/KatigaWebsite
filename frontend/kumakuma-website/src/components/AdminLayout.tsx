@@ -28,6 +28,7 @@ const menuItems = [
   { path: '/admin/messages', icon: FaEnvelope, label: 'Pesan' },
   { path: '/admin/certification-tech', icon: FaCertificate, label: 'Technology' },
   { path: '/admin/distribution', icon: FaBook, label: 'Distribution' },
+  { path: '/admin/manufacturing', icon: FaCog, label: 'Manufacturing' },
   { path: '/admin/settings', icon: FaCog, label: 'Pengaturan' },
 ];
 

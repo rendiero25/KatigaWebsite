@@ -33,6 +33,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const footerRoutes = require('./routes/footerRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const authRoutes = require('./routes/authRoutes');
+const manufacturingRoutes = require('./routes/manufacturingRoutes');
 
 // Use Routes
 app.use('/api/site-settings', siteSettingsRoutes);
@@ -50,6 +51,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/manufacturing', manufacturingRoutes);
 
 // Root route
 app.get('/', (req, res) => {

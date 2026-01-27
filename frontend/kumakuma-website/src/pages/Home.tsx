@@ -15,10 +15,10 @@ export default function Home() {
       <main>
         <HeroSection />
         <AdvantagesSection />
-        <CertificationTechSection />
+        {/* <CertificationTechSection /> */}
         <ProductsSection />
         <ManufacturingSection />
-        <DistributionSection />
+        {/* <DistributionSection /> */}
         <NewsSection />
       </main>
       <Footer />

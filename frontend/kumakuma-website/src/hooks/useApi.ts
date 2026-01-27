@@ -122,3 +122,14 @@ export function useDistribution() {
 
   return { data, loading };
 }
+
+export function useManufacturing() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getManufacturing().then(setData).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}

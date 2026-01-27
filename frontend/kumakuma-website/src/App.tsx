@@ -21,6 +21,7 @@ import AdminSettings from './pages/admin/Settings';
 import AdminMessages from './pages/admin/Messages';
 import AdminCertificationTech from './pages/admin/CertificationTech';
 import AdminDistribution from './pages/admin/Distribution';
+import AdminManufacturing from './pages/admin/Manufacturing';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
         <Route path="/admin/messages" element={<AdminMessages />} />
         <Route path="/admin/certification-tech" element={<AdminCertificationTech />} />
         <Route path="/admin/distribution" element={<AdminDistribution />} />
+        <Route path="/admin/manufacturing" element={<AdminManufacturing />} />
       </Routes>
     </BrowserRouter>
   );
