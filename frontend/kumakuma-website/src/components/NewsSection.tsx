@@ -11,61 +11,64 @@ export default function NewsSection() {
   }
 
   return (
-    <section className="py-16 lg:py-24 bg-gradient-to-br from-purple-900 via-purple-800 to-pink-900">
+    <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div>
-            <p className="text-sm font-medium text-pink-300 mb-2">E-info Kuma & Tips Update</p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+            <div className="flex items-center gap-2 mb-2">
+               <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+               <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Certificates & Technologi</p>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
               Rangkuman berita dan sorotan utama<br/>
-              <span className="text-pink-400">yang relevan untuk Anda.</span>
+              <span className="text-gray-400">yang relevan untuk Anda.</span>
             </h2>
           </div>
-          <Link 
-            to="/berita"
-            className="inline-flex items-center gap-2 text-pink-300 font-medium hover:text-white transition"
-          >
-            Lihat Semua Berita
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
+          {/* Optional: Add 'View All' link here if needed, keeping it simple for now as per image */}
         </div>
 
         {/* News Grid */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
           {latestNews.map((article: any) => (
             <Link 
               key={article._id}
               to={`/berita/${article._id}`}
-              className="block bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden hover:bg-white/20 transition group"
+              className="group block relative overflow-hidden"
             >
-              <div className="aspect-video overflow-hidden">
+              <div className="aspect-[4/3] rounded-sm overflow-hidden mb-4 relative">
                 <img 
                   src={api.getImageUrl(article.image)}
                   alt={article.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400';
                   }}
                 />
+                {/* Date Badge */}
+                <div className="absolute top-0 right-0 bg-red-600 text-white p-3 text-center min-w-[60px]">
+                    <span className="block text-2xl font-bold leading-none">
+                        {new Date(article.date).getDate()}
+                    </span>
+                    <span className="block text-xs uppercase font-medium">
+                        {new Date(article.date).toLocaleDateString('id-ID', { month: 'short' })}
+                    </span>
+                </div>
               </div>
-              <div className="p-5">
-                <p className="text-pink-300 text-sm mb-2">
-                  {new Date(article.date).toLocaleDateString('id-ID', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
-                  })}
-                </p>
-                <h3 className="text-white font-semibold mb-2 line-clamp-2">
-                  {article.title}
-                </h3>
-                <p className="text-gray-300 text-sm line-clamp-2">
-                  {article.excerpt}
-                </p>
+
+              <div className="relative">
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6 -mt-20 pointer-events-none">
+                     {/* Overlay Text Style */}
+                     <span className="text-xs text-white/80 uppercase font-bold tracking-wider mb-1">
+                        Apex Textile Kreasindo
+                     </span>
+                     <h3 className="text-white font-bold text-lg leading-tight line-clamp-2">
+                        {article.title}
+                     </h3>
+                     <p className="text-white/60 text-xs mt-2 line-clamp-1">
+                        {article.excerpt}
+                     </p>
+                 </div>
               </div>
             </Link>
           ))}
