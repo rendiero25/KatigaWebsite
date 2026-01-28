@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import AboutUs from './pages/AboutUs';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import News from './pages/News';
@@ -29,6 +30,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
+        <Route path="/tentang-kami" element={<AboutUs />} />
         <Route path="/produk" element={<Products />} />
         <Route path="/produk/:id" element={<ProductDetail />} />
         <Route path="/berita" element={<News />} />

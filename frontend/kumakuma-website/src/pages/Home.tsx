@@ -1,24 +1,22 @@
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
+import PartnersSection from '../components/PartnersSection';
 import AdvantagesSection from '../components/AdvantagesSection';
 import ProductsSection from '../components/ProductsSection';
 import ManufacturingSection from '../components/ManufacturingSection';
-import CertificationTechSection from '../components/CertificationTechSection';
-import DistributionSection from '../components/DistributionSection';
 import NewsSection from '../components/NewsSection';
 
 export default function Home() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main>
+      <main className='flex flex-col gap-20 mb-20'>
         <HeroSection />
+        <PartnersSection />
         <AdvantagesSection />
-        {/* <CertificationTechSection /> */}
         <ProductsSection />
         <ManufacturingSection />
-        {/* <DistributionSection /> */}
         <NewsSection />
       </main>
       <Footer />

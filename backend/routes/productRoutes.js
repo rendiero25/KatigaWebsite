@@ -41,6 +41,9 @@ router.get('/:id', async (req, res) => {
 // @desc    Create a product
 // @access  Private
 router.post('/', auth, upload.single('image'), async (req, res) => {
+  console.log('POST /api/products hit');
+  console.log('Body:', req.body);
+  console.log('File:', req.file);
   try {
     const { name, description, category, price, link, isFeatured } = req.body;
     const product = new Product({
@@ -53,8 +56,10 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       image: req.file ? `/uploads/${req.file.filename}` : ''
     });
     await product.save();
+    console.log('Product saved:', product);
     res.status(201).json(product);
   } catch (error) {
+    console.error('Error in POST /api/products:', error);
     res.status(500).json({ message: error.message });
   }
 });

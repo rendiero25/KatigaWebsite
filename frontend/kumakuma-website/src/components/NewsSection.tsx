@@ -1,9 +1,12 @@
-import { useNews } from '../hooks/useApi';
+import { useNews, useNewsSection } from '../hooks/useApi';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 
 export default function NewsSection() {
-  const { data: news, loading } = useNews();
+  const { data: news, loading: loadingList } = useNews();
+  const { data: sectionContent, loading: loadingContent } = useNewsSection();
+  
+  const loading = loadingList || loadingContent;
   const latestNews = news?.slice(0, 3) || [];
 
   if (loading || latestNews.length === 0) {
@@ -11,18 +14,17 @@ export default function NewsSection() {
   }
 
   return (
-    <section className="py-20 bg-white">
+    <section className="bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div>
             <div className="flex items-center gap-2 mb-2">
                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-               <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Certificates & Technologi</p>
+               <p className="text-lg font-bold text-black">{sectionContent?.subtitle || 'Certificates & Technologi'}</p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
-              Rangkuman berita dan sorotan utama<br/>
-              <span className="text-gray-400">yang relevan untuk Anda.</span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-black leading-tight">
+              {sectionContent?.title || 'Rangkuman berita dan sorotan utama yang relevan untuk Anda.'}
             </h2>
           </div>
           {/* Optional: Add 'View All' link here if needed, keeping it simple for now as per image */}
@@ -57,7 +59,7 @@ export default function NewsSection() {
               </div>
 
               <div className="relative">
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6 -mt-20 pointer-events-none">
+                 <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent flex flex-col justify-end p-6 -mt-20 pointer-events-none">
                      {/* Overlay Text Style */}
                      <span className="text-xs text-white/80 uppercase font-bold tracking-wider mb-1">
                         Apex Textile Kreasindo

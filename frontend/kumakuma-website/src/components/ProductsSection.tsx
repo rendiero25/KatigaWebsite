@@ -28,40 +28,35 @@ export default function ProductsSection() {
   }
 
   return (
-    <section className="py-16 lg:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-10">
-           {/* Section title hidden for cleaner look or could be added back */}
-           <div className="hidden"></div> 
-        </div>
+    <section className="bg-white">
+      <div className="flex flex-col items-center gap-15 w-full overflow-hidden">
+        
 
         {/* Swiper Carousel */}
-        <div className="relative group/section">
+        <div className="relative group/section w-full">
            <Swiper
              modules={[Navigation]}
-             spaceBetween={24}
              slidesPerView={1.2}
              navigation={{
                prevEl,
                nextEl,
              }}
+             spaceBetween={35}
              breakpoints={{
-               640: { slidesPerView: 2.2 },
-               1024: { slidesPerView: 3.2 },
-               1280: { slidesPerView: 4 },
+               640: { slidesPerView: 2, spaceBetween: 20 },
+               1024: { slidesPerView: 3.2, spaceBetween: 30 },
+               1280: { slidesPerView: 4, spaceBetween: 40 },
              }}
-             className="!pb-12"
            >
              {featuredProducts.map((product: any) => (
-               <SwiperSlide key={product._id}>
+               <SwiperSlide key={product._id} className="w-auto!">
                  <div className="group h-full flex flex-col">
                    {/* Image Card */}
-                   <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-gray-100 mb-4 relative">
+                   <div className="w-[600px] h-[550px] rounded-2xl bg-gray-100 mb-8 relative">
                      <img 
                        src={api.getImageUrl(product.image)}
                        alt={product.name}
-                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                       className="w-full h-full object-cover group-hover:scale-105 rounded-3xl transition duration-500"
                        onError={(e) => {
                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400';
                        }}
@@ -79,17 +74,17 @@ export default function ProductsSection() {
                    
                    {/* Content */}
                    <div className="flex-1 flex flex-col items-start">
-                     <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
+                     <h3 className="text-2xl font-bold text-black mb-2 leading-tight">
                        {product.name}
                      </h3>
-                     <p className="text-sm text-gray-500 line-clamp-3 mb-4 leading-relaxed">
+                     <p className="text-lg text-black/80 line-clamp-3 mb-4 leading-relaxed">
                        {product.description || 'Deskripsi singkat produk akan muncul di sini untuk memberikan informasi awal.'}
                      </p>
                      
                      <div className="mt-auto">
                         <Link 
                           to={`/produk/${product._id}`}
-                          className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition block mb-1"
+                          className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition block mb-1"
                         >
                           Lihat Selengkapnya
                         </Link>
@@ -99,14 +94,19 @@ export default function ProductsSection() {
                </SwiperSlide>
              ))}
            </Swiper>
-           
-           {/* Custom Navigation Arrows (Outside) */}
-           <button ref={(node) => setPrevEl(node)} className="absolute top-1/2 -left-4 md:-left-12 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:text-blue-600 transition disabled:opacity-0">
-              <FaChevronLeft />
-           </button>
-           <button ref={(node) => setNextEl(node)} className="absolute top-1/2 -right-4 md:-right-12 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:text-blue-600 transition disabled:opacity-0">
-              <FaChevronRight />
-           </button>
+        </div>
+
+        {/* Section Header */}
+        <div className="flex items-center justify-end mb-10 gap-4 px-4 sm:px-0">
+           {/* Custom Navigation Arrows (Moved here) */}
+           <div className="flex gap-2">
+             <button ref={(node) => setPrevEl(node)} className="cursor-pointer w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-primary hover:border-0 hover:text-white transition disabled:opacity-50">
+                <FaChevronLeft className="w-4 h-4" />
+             </button>
+             <button ref={(node) => setNextEl(node)} className="cursor-pointer w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-primary hover:border-0 hover:text-white transition disabled:opacity-50">
+                <FaChevronRight className="w-4 h-4" />
+             </button>
+           </div>
         </div>
       </div>
     </section>

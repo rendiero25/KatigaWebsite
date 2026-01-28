@@ -25,6 +25,11 @@ export const api = {
     return res.json();
   },
 
+  getAdvantagesSection: async () => {
+    const res = await fetch(`${API_BASE_URL}/advantages/content`);
+    return res.json();
+  },
+
   // Products
   getProducts: async (params?: { category?: string; featured?: boolean }) => {
     const queryString = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
@@ -104,6 +109,11 @@ export const api = {
   // News
   getNews: async () => {
     const res = await fetch(`${API_BASE_URL}/news`);
+    return res.json();
+  },
+
+  getNewsSection: async () => {
+    const res = await fetch(`${API_BASE_URL}/news/content`);
     return res.json();
   },
 

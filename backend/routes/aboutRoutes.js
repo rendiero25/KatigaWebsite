@@ -16,55 +16,60 @@ router.get('/', async (req, res) => {
   }
 });
 
-// @route   GET /api/about/:section
-// @desc    Get about content by section
+// @route   GET /api/about
+// @desc    Get about content (Singleton)
 // @access  Public
-router.get('/:section', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const content = await AboutContent.findOne({ section: req.params.section });
-    res.json(content || {});
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   POST /api/about
-// @desc    Create about content
-// @access  Private
-router.post('/', auth, upload.array('images', 5), async (req, res) => {
-  try {
-    const { section, title, content } = req.body;
-    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
-    
-    const aboutContent = new AboutContent({
-      section,
-      title,
-      content,
-      images
-    });
-    await aboutContent.save();
-    res.status(201).json(aboutContent);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   PUT /api/about/:id
-// @desc    Update about content
-// @access  Private
-router.put('/:id', auth, upload.array('images', 5), async (req, res) => {
-  try {
-    const aboutContent = await AboutContent.findById(req.params.id);
+    let aboutContent = await AboutContent.findOne();
     if (!aboutContent) {
-      return res.status(404).json({ message: 'Content not found' });
+        // Create default if not exists
+        aboutContent = new AboutContent({});
+        await aboutContent.save();
+    }
+    res.json(aboutContent);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/about
+// @desc    Update about content (Singleton)
+// @access  Private
+router.put('/', auth, upload.array('images', 10), async (req, res) => {
+  try {
+    let aboutContent = await AboutContent.findOne();
+    if (!aboutContent) {
+        aboutContent = new AboutContent({});
     }
 
-    const { section, title, content } = req.body;
-    if (section) aboutContent.section = section;
-    if (title) aboutContent.title = title;
-    if (content) aboutContent.content = content;
+    const { title, subtitle, history, missionPoints, visionContent } = req.body;
+    
+    if (title !== undefined) aboutContent.title = title;
+    if (subtitle !== undefined) aboutContent.subtitle = subtitle;
+    if (history !== undefined) aboutContent.history = history;
+    if (visionContent !== undefined) aboutContent.vision = { ...aboutContent.vision, content: visionContent };
+    
+    if (missionPoints) {
+        // Expecting missionPoints to be JSON string of array if sent via FormData
+        try {
+            const parsedPoints = JSON.parse(missionPoints);
+            if (Array.isArray(parsedPoints)) {
+                aboutContent.mission = { ...aboutContent.mission, points: parsedPoints };
+            }
+        } catch (e) {
+            console.error("Error parsing mission points", e);
+        }
+    }
+
     if (req.files && req.files.length > 0) {
-      aboutContent.images = req.files.map(file => `/uploads/${file.filename}`);
+      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      // Append new images or replace? Usually for gallery we might want to append or allow managing. 
+      // For now, let's just append up to max 10 total? Or just add all new ones.
+      // User requirement: "Images (Upload max 10 image)". 
+      // I'll stick to appending for now, frontend can handle deletion via another endpoint strictly for images if needed, or simple replacement logic. 
+      // Let's assume this PUT adds images.
+      aboutContent.images = [...aboutContent.images, ...newImages].slice(0, 10);
     }
 
     await aboutContent.save();
@@ -74,19 +79,19 @@ router.put('/:id', auth, upload.array('images', 5), async (req, res) => {
   }
 });
 
-// @route   DELETE /api/about/:id
-// @desc    Delete about content
-// @access  Private
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const content = await AboutContent.findByIdAndDelete(req.params.id);
-    if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
+// Helper route to clear images if needed or delete specific image
+router.put('/images/delete', auth, async (req, res) => {
+    try {
+        const { imageUrl } = req.body;
+        let aboutContent = await AboutContent.findOne();
+        if (aboutContent) {
+            aboutContent.images = aboutContent.images.filter(img => img !== imageUrl);
+            await aboutContent.save();
+        }
+        res.json(aboutContent);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-    res.json({ message: 'Content deleted' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 });
 
 module.exports = router;

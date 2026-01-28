@@ -24,18 +24,28 @@ export default function ManufacturingSection() {
   ];
 
   return (
-    <section className="py-20 lg:py-28 relative overflow-hidden bg-[#2C331F]"> {/* Dark Olive/Green Background */}
+    <section className="py-20 lg:py-28 relative overflow-hidden bg-[#2C331F]"> 
       
-      {/* Background Gradient/Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1a1f12] to-[#2C331F] opacity-90"></div>
+      {/* Background Image */}
+      {manufacturing?.backgroundImage ? (
+          <div className="absolute inset-0 z-0">
+              <img 
+                  src={`http://localhost:5000${manufacturing.backgroundImage}`} 
+                  alt="Manufacturing Background" 
+                  className="w-full h-full object-cover"
+              />
+          </div>
+      ) : (
+          <div className="absolute inset-0 bg-linier-to-b from-[#1a1f12] to-[#2C331F] opacity-90"></div>
+      )}
       
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <p className="text-xs font-bold text-[#A4B193] uppercase tracking-widest mb-4">
+        <div className="max-w-6xl mx-auto text-center mb-16">
+          <p className="text-lg font-bold text-white mb-4">
             {tagline}
           </p>
-          <h2 className="text-2xl sm:text-3xl font-medium text-white leading-relaxed">
+          <h2 className="text-2xl sm:text-4xl font-normal text-white leading-relaxed">
             {description}
           </h2>
         </div>
@@ -44,12 +54,12 @@ export default function ManufacturingSection() {
         <div className="grid sm:grid-cols-3 gap-12 max-w-4xl mx-auto">
             {features.map((feature: any, index: number) => (
                 <div key={index} className="text-center group">
-                  <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                  <div className="w-20 mx-auto mb-6 flex flex-wrap items-end justify-center">
                      {feature.icon ? (
                          <img 
                             src={`http://localhost:5000${feature.icon}`} 
                             alt={feature.title} 
-                            className="w-16 h-16 object-contain brightness-0 invert" 
+                            className="h-20 object-cover" 
                             onError={(e) => {
                                 // Fallback if image fails
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -62,7 +72,8 @@ export default function ManufacturingSection() {
                          </svg>
                      )}
                   </div>
-                  <h3 className="text-white font-bold text-lg leading-tight whitespace-pre-line">
+                  
+                  <h3 className="text-white font-bold text-xl leading-tight whitespace-pre-line">
                     {feature.title}
                   </h3>
                 </div>

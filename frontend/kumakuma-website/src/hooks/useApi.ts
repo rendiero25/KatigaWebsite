@@ -45,6 +45,17 @@ export function useAdvantages() {
   return { data, loading };
 }
 
+export function useAdvantagesSection() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getAdvantagesSection().then(setData).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
 export function useProducts(params?: { category?: string; featured?: boolean }) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +107,17 @@ export function useNews() {
 
   useEffect(() => {
     api.getNews().then(setData).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
+export function useNewsSection() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getNewsSection().then(setData).finally(() => setLoading(false));
   }, []);
 
   return { data, loading };

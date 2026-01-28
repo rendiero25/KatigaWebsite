@@ -1,22 +1,40 @@
 const mongoose = require('mongoose');
 
 const aboutContentSchema = new mongoose.Schema({
-  section: {
-    type: String,
-    required: true,
-    enum: ['history', 'mission', 'vision', 'teamwork']
-  },
   title: {
     type: String,
-    required: true
+    default: ''
   },
-  content: {
+  subtitle: {
     type: String,
-    required: true
+    default: ''
   },
   images: [{
     type: String
-  }]
+  }],
+  history: {
+    type: String,
+    default: ''
+  },
+  mission: {
+    title: { type: String, default: 'Mission' },
+    points: [{ type: String }] 
+  },
+  vision: {
+    title: { type: String, default: 'Vision' },
+    content: { type: String, default: '' }
+  }
 }, { timestamps: true });
+
+// Singleton Check
+aboutContentSchema.pre('save', async function(next) {
+  if (this.isNew) {
+    const count = await mongoose.model('AboutContent').countDocuments();
+    if (count > 0) {
+      throw new Error('Cannot create more than one AboutContent document. Use update instead.');
+    }
+  }
+  next();
+});
 
 module.exports = mongoose.model('AboutContent', aboutContentSchema);

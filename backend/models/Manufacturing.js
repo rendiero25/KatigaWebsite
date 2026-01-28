@@ -11,6 +11,10 @@ const manufacturingSchema = new mongoose.Schema({
     required: true,
     default: 'Sebagai produsen langsung (direct manufacturer), kami mengawasi setiap detik proses pembuatan. Mulai dari pemintalan benang (Spinning), penjahitan (Sewing), hingga inspeksi ketat (Inspection) untuk memastikan hanya kelembutan terbaik yang menyentuh kulit bayi Anda.'
   },
+  backgroundImage: {
+    type: String, // URL to uploaded image
+    required: false
+  },
   features: [{
     title: {
       type: String,

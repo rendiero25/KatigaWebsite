@@ -1,10 +1,9 @@
-import { useHero, usePartners } from '../hooks/useApi';
+import { useHero } from '../hooks/useApi';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 
 export default function HeroSection() {
   const { data: hero, loading } = useHero();
-  const { data: partners } = usePartners();
 
   if (loading) {
     return (

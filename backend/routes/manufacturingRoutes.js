@@ -38,8 +38,13 @@ router.get('/', async (req, res) => {
 router.put('/', auth, upload.fields([
     { name: 'icon0', maxCount: 1 },
     { name: 'icon1', maxCount: 1 },
-    { name: 'icon2', maxCount: 1 }
+    { name: 'icon2', maxCount: 1 },
+    { name: 'backgroundImage', maxCount: 1 }
 ]), async (req, res) => {
+  console.log('PUT /api/manufacturing hit');
+  console.log('Body:', req.body);
+  console.log('Files keys:', req.files ? Object.keys(req.files) : 'No files');
+  
   try {
     let manufacturing = await Manufacturing.findOne();
     if (!manufacturing) {
@@ -49,6 +54,11 @@ router.put('/', auth, upload.fields([
     const { tagline, description } = req.body;
     if (tagline) manufacturing.tagline = tagline;
     if (description) manufacturing.description = description;
+
+    if (req.files && req.files['backgroundImage']) {
+        console.log('Updating background image:', req.files['backgroundImage'][0].filename);
+        manufacturing.backgroundImage = `/uploads/${req.files['backgroundImage'][0].filename}`;
+    }
 
     // Handle Features
     // We expect titles as title0, title1, title2 in body
@@ -71,21 +81,17 @@ router.put('/', auth, upload.fields([
         }
 
         if (req.files && req.files[iconKey]) {
-            // Delete old icon if it exists and is a file (not empty string or external url basically)
-            // But here we just assume we overwrite.
+            console.log(`Updating feature ${i} icon:`, req.files[iconKey][0].filename);
             manufacturing.features[i].icon = `/uploads/${req.files[iconKey][0].filename}`;
         }
     }
     
-    // If request attempts to only update 1 feature, we preserved others via the loop checks.
-    // However, if the user sends features as a JSON array string, we might need to parse.
-    // But FormData usually sends individual fields. I'll stick to title0, title1.. convention.
-
     await manufacturing.save();
+    console.log('Manufacturing saved successfully');
     res.json(manufacturing);
 
   } catch (error) {
-    console.error(error);
+    console.error('Error in PUT /api/manufacturing:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 });

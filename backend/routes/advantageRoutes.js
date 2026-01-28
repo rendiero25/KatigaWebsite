@@ -6,6 +6,46 @@ const auth = require('../middleware/auth');
 // @route   GET /api/advantages
 // @desc    Get all advantages
 // @access  Public
+const AdvantagesSection = require('../models/AdvantagesSection');
+
+// @route   GET /api/advantages/content
+// @desc    Get advantages section content
+// @access  Public
+router.get('/content', async (req, res) => {
+  try {
+    let content = await AdvantagesSection.findOne();
+    if (!content) {
+        content = new AdvantagesSection();
+        await content.save();
+    }
+    res.json(content);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/advantages/content
+// @desc    Update advantages section content
+// @access  Private
+router.put('/content', auth, async (req, res) => {
+  try {
+    let content = await AdvantagesSection.findOne();
+    if (!content) {
+        content = new AdvantagesSection();
+    }
+    
+    const { title, subtitle, content: sectionContent } = req.body;
+    if (title) content.title = title;
+    if (subtitle) content.subtitle = subtitle;
+    if (sectionContent) content.content = sectionContent;
+
+    await content.save();
+    res.json(content);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const advantages = await Advantage.find().sort({ order: 1 });

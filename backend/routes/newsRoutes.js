@@ -1,8 +1,46 @@
 const express = require('express');
 const router = express.Router();
 const NewsArticle = require('../models/NewsArticle');
+const NewsSection = require('../models/NewsSection');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
+
+// @route   GET /api/news/content
+// @desc    Get news section content
+// @access  Public
+router.get('/content', async (req, res) => {
+  try {
+    let content = await NewsSection.findOne();
+    if (!content) {
+        content = new NewsSection();
+        await content.save();
+    }
+    res.json(content);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/news/content
+// @desc    Update news section content
+// @access  Private
+router.put('/content', auth, async (req, res) => {
+  try {
+    let content = await NewsSection.findOne();
+    if (!content) {
+        content = new NewsSection();
+    }
+    
+    const { title, subtitle } = req.body;
+    if (title) content.title = title;
+    if (subtitle) content.subtitle = subtitle;
+
+    await content.save();
+    res.json(content);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // @route   GET /api/news
 // @desc    Get all news articles

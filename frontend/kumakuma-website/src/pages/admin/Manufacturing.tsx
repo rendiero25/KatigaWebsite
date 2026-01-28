@@ -19,6 +19,7 @@ export default function AdminManufacturing() {
   
   // File uploads
   const [iconFiles, setIconFiles] = useState<(File | null)[]>([null, null, null]);
+  const [bgFile, setBgFile] = useState<File | null>(null);
 
   const token = localStorage.getItem('adminToken');
 
@@ -61,6 +62,7 @@ export default function AdminManufacturing() {
     const formData = new FormData();
     formData.append('tagline', tagline);
     formData.append('description', description);
+    if (bgFile) formData.append('backgroundImage', bgFile);
     
     features.forEach((feat, i) => {
         formData.append(`title${i}`, feat.title);
@@ -134,6 +136,26 @@ export default function AdminManufacturing() {
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 h-32"
                 placeholder="Sebagai produsen langsung..."
               />
+            </div>
+            
+            <div>
+               <label className="block text-sm font-medium text-gray-700 mb-2">Background Image</label>
+               <div className="flex items-center gap-4">
+                   {data.backgroundImage && (
+                       <img 
+                           src={`http://localhost:5000${data.backgroundImage}`} 
+                           alt="Current Background" 
+                           className="w-32 h-20 object-cover rounded-lg border"
+                       />
+                   )}
+                   <input
+                       type="file"
+                       accept="image/*"
+                       onChange={(e) => setBgFile(e.target.files?.[0] || null)}
+                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                   />
+               </div>
+               <p className="text-xs text-gray-500 mt-1">Format: JPG, PNG. Ukuran ideal 1920x1080px.</p>
             </div>
           </div>
 
