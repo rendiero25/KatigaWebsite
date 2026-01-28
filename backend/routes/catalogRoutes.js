@@ -21,6 +21,7 @@ router.get('/', async (req, res) => {
 // @access  Private
 router.put('/', auth, upload.fields([
   { name: 'backgroundImage', maxCount: 1 },
+  { name: 'cardImage', maxCount: 1 },
   { name: 'file', maxCount: 1 }
 ]), async (req, res) => {
   try {
@@ -33,12 +34,14 @@ router.put('/', auth, upload.fields([
         title: title || '',
         description: description || '',
         backgroundImage: req.files?.backgroundImage ? `/uploads/${req.files.backgroundImage[0].filename}` : '',
+        cardImage: req.files?.cardImage ? `/uploads/${req.files.cardImage[0].filename}` : '',
         fileUrl: req.files?.file ? `/uploads/${req.files.file[0].filename}` : ''
       });
     } else {
       if (title) catalog.title = title;
       if (description) catalog.description = description;
       if (req.files?.backgroundImage) catalog.backgroundImage = `/uploads/${req.files.backgroundImage[0].filename}`;
+      if (req.files?.cardImage) catalog.cardImage = `/uploads/${req.files.cardImage[0].filename}`;
       if (req.files?.file) catalog.fileUrl = `/uploads/${req.files.file[0].filename}`;
     }
 

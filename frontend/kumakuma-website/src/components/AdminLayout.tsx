@@ -19,6 +19,7 @@ const menuItems = [
   { path: '/admin/advantages', icon: FaStar, label: 'Keunggulan' },
   { path: '/admin/categories', icon: FaTags, label: 'Kategori' },
   { path: '/admin/products', icon: FaBox, label: 'Produk' },
+  { path: '/admin/product-page-content', icon: FaBox, label: 'Konten Hal. Produk' },
   { 
     path: '/admin/about', 
     icon: FaInfoCircle, 
@@ -31,7 +32,8 @@ const menuItems = [
   },
   { path: '/admin/certifications', icon: FaCertificate, label: 'Sertifikasi' },
   { path: '/admin/catalog', icon: FaBook, label: 'E-Catalog' },
-  { path: '/admin/contact', icon: FaPhone, label: 'Contact' },
+  { path: '/admin/contact-page-content', icon: FaPhone, label: 'Konten Hal. Kontak' },
+  { path: '/admin/contact', icon: FaPhone, label: 'Info Kontak' },
   { path: '/admin/footer', icon: FaInfoCircle, label: 'Footer' },
   { path: '/admin/news', icon: FaNewspaper, label: 'Berita' },
   { path: '/admin/messages', icon: FaEnvelope, label: 'Pesan' },

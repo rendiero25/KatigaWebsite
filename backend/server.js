@@ -58,6 +58,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to KumaKuma API' });
 });
 
+app.use('/api/product-page', require('./routes/productPageRoutes'));
+app.use('/api/contact-page', require('./routes/contactPageRoutes'));
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

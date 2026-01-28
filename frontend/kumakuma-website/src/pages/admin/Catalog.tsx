@@ -8,6 +8,7 @@ export default function AdminCatalog() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '' });
   const [bgFile, setBgFile] = useState<File | null>(null);
+  const [cardFile, setCardFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
 
   const token = localStorage.getItem('adminToken');
@@ -29,6 +30,7 @@ export default function AdminCatalog() {
     data.append('title', formData.title);
     data.append('description', formData.description);
     if (bgFile) data.append('backgroundImage', bgFile);
+    if (cardFile) data.append('cardImage', cardFile);
     if (pdfFile) data.append('file', pdfFile);
 
     const res = await fetch(`${API_URL}/catalog`, {
@@ -60,12 +62,21 @@ export default function AdminCatalog() {
             <input type="file" accept="image/*" onChange={(e) => setBgFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 border rounded-lg" />
           </div>
 
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Gambar Kartu Katalog (Hexagon/Collage)</h3>
+            <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4 max-w-xs mx-auto">
+              {catalog.cardImage ? (
+                <img src={`http://localhost:5000${catalog.cardImage}`} alt="Card Image" className="w-full h-full object-contain" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">Belum ada gambar</div>
+              )}
+            </div>
+            <input type="file" accept="image/*" onChange={(e) => setCardFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 border rounded-lg" />
+          </div>
+
           <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
             <h3 className="font-semibold text-gray-900 mb-4">Konten Catalog</h3>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
-              <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-2 border rounded-lg" placeholder="Company Catalogue" />
-            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
               <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-2 border rounded-lg" rows={4} />

@@ -127,6 +127,12 @@ export const api = {
     return res.json();
   },
 
+  // Product Page Settings
+  getProductPageSettings: async () => {
+    const res = await fetch(`${API_BASE_URL}/product-page`);
+    return res.json();
+  },
+
   // Get base URL for images
   getImageUrl: (path: string) => {
     if (!path) return '/placeholder.jpg';

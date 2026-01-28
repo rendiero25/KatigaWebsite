@@ -2,130 +2,229 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { useProducts, useCategories } from '../hooks/useApi';
+import { useProducts } from '../hooks/useApi';
 import api from '../services/api';
+import { FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const categoryParam = searchParams.get('category') || undefined;
+  const [settings, setSettings] = useState<any>(null);
+  const [partners, setPartners] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState(1); // 1 or 2
   
-  const { data: products, loading: productsLoading } = useProducts({ category: categoryParam });
-  const { data: categories } = useCategories();
-  
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(categoryParam);
-
+  // Fetch Page Settings and Partners
   useEffect(() => {
-    setSelectedCategory(categoryParam);
-  }, [categoryParam]);
+    const fetchData = async () => {
+      try {
+        const [settingsData, partnersData] = await Promise.all([
+          api.getProductPageSettings(),
+          api.getPartners()
+        ]);
+        setSettings(settingsData);
+        setPartners(partnersData);
+      } catch (error) {
+        console.error('Error fetching page data:', error);
+      }
+    };
+    fetchData();
+  }, []);
 
-  const handleCategoryChange = (categoryId: string | undefined) => {
-    setSelectedCategory(categoryId);
-    if (categoryId) {
-      setSearchParams({ category: categoryId });
-    } else {
-      setSearchParams({});
-    }
+  // Determine Category to fetch based on active Tab and Settings
+  const currentCategoryName = activeTab === 1 
+    ? settings?.category1?.name 
+    : settings?.category2?.name;
+
+  const { data: productskumakuma, loading: productsLoading } = useProducts({ 
+    category: currentCategoryName 
+  });
+
+  const handleTabChange = (tabIndex: number) => {
+    setActiveTab(tabIndex);
   };
 
+  const currentCategoryTitle = activeTab === 1 
+    ? settings?.category1?.title 
+    : settings?.category2?.title;
+
+  const currentCategorySubtitle = activeTab === 1 
+    ? settings?.category1?.subtitle 
+    : settings?.category2?.subtitle;
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Header />
-      <main className="flex-grow pt-24 pb-16 bg-gray-50">
+      
+      <main className="flex-grow pt-32 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Produk Kami</h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Temukan berbagai produk berkualitas tinggi untuk kebutuhan Anda, dari bahan alami hingga solusi modern.
+          
+          {/* Main Header Section */}
+          <div className="mb-8">
+            <p className="text-gray-600 font-medium mb-2">
+              {settings?.subtitle || 'Produk Kualitas Dunia, Buatan Indonesia'}
             </p>
+            <h1 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight md:max-w-4xl">
+              {settings?.title || 'Hadirkan pelukan hangat dalam setiap momen tidur dan mandi. Rangkaian produk premium yang dirancang khusus untuk mempererat ikatan kasih sayang keluarga Anda.'}
+            </h1>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar Filters */}
-            <aside className="w-full lg:w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-                <h3 className="font-semibold text-gray-900 mb-4">Kategori</h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => handleCategoryChange(undefined)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                      !selectedCategory ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    Semua Produk
-                  </button>
-                  {categories.map((cat: any) => (
-                    <button
-                      key={cat._id}
-                      onClick={() => handleCategoryChange(cat.name)}
-                      className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                        selectedCategory === cat.name ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {cat.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </aside>
-
-            {/* Product Grid */}
-            <div className="flex-1">
-              {productsLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="bg-white rounded-xl p-4 shadow-sm animate-pulse">
-                      <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : products.length === 0 ? (
-                <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-                  <p className="text-gray-500">Tidak ada produk ditemukan di kategori ini.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product: any) => (
-                    <Link
-                      key={product._id}
-                      to={`/produk/${product._id}`}
-                      className="group bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden border border-gray-100"
-                    >
-                      <div className="aspect-square relative overflow-hidden bg-gray-100">
-                        <img 
-                          src={api.getImageUrl(product.image)}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400';
-                          }}
-                        />
-                        {product.isFeatured && (
-                          <span className="absolute top-2 left-2 px-2 py-1 bg-pink-500 text-white text-xs font-medium rounded-full">
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <p className="text-xs text-indigo-600 font-medium mb-1">{product.category?.name || 'Umum'}</p>
-                        <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-indigo-600 transition">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 line-clamp-2 mb-3">
-                          {product.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-900 font-bold">{product.price || 'Hubungi Kami'}</span>
-                          <span className="text-sm text-indigo-600 group-hover:underline">Detail →</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+          {/* Trusted By Section */}
+          <div className="mb-12 flex flex-wrap items-center gap-8 md:gap-12 opacity-80">
+            <span className="text-sm font-medium text-gray-500 max-w-[150px] leading-tight">
+              Trusted by several big company in Indonesia
+            </span>
+            <div className="flex flex-wrap items-center gap-8 grayscale hover:grayscale-0 transition-all duration-300">
+               {partners.slice(0, 6).map((partner: any) => (
+                  <img 
+                    key={partner._id} 
+                    src={api.getImageUrl(partner.logo)} 
+                    alt={partner.name}
+                    className="h-6 md:h-8 object-contain opacity-60 hover:opacity-100 transition"
+                  />
+               ))}
             </div>
           </div>
+
+          {/* Banner Image */}
+          <div className="mb-12 w-full h-64 md:h-[400px] rounded-2xl overflow-hidden bg-gray-100">
+             <img 
+                src={settings?.bannerImage ? api.getImageUrl(settings?.bannerImage) : 'https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?q=80&w=2070&auto=format&fit=crop'}
+                alt="Product Banner"
+                className="w-full h-full object-cover"
+             />
+          </div>
+
+          {/* Controls: Tabs & Search */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+            {/* Tabs */}
+            <div className="flex items-center bg-indigo-50 p-1 rounded-full">
+               <button
+                 onClick={() => handleTabChange(1)}
+                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                   activeTab === 1 
+                     ? 'bg-white text-indigo-900 shadow-sm' 
+                     : 'text-indigo-600 hover:text-indigo-800'
+                 }`}
+               >
+                 {settings?.category1?.name || 'Perlengkapan Tidur Bayi'}
+               </button>
+               <button
+                 onClick={() => handleTabChange(2)}
+                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                   activeTab === 2
+                     ? 'bg-indigo-600 text-white shadow-sm' 
+                     : 'text-indigo-600 hover:text-indigo-800' // Note: Active tab style in image is blue bg for tab 2? 
+                     // Wait, the image shows Tab 1 "Perlengkapan Tidur Bayi" white bg, Tab 2 "Handuk Keluarga" blue bg. 
+                     // It actually looks like "Perlengkapan Tidur Bayi" is selected (white with border/shadow?) OR maybe "Handuk Keluarga" is the button link style.
+                     // A cleaner generic tab style: Active = Blue, Inactive = Transparent/Gray.
+                 }`}
+               >
+                 {/* Re-evaluating Design: The image has "Perlengkapan Tidur Bayi" in white pill, "Handuk Keluarga" in Blue pill. 
+                     This might mean they are purely navigational buttons or filtered. 
+                     Let's use a standard toggle look. Active = White with Shadow (if bg is light) or Blue (if bg is light).
+                     Let's stick to: Active = White rounded pill, Inactive = Transparent. 
+                     Wait, looking closer at "Handuk Keluarga" in blue.. it looks like a selected state or a distinct button. 
+                     Let's Assume standard Tabs: Selected is Highlighted.
+                  */}
+                 {settings?.category2?.name || 'Handuk Keluarga'}
+               </button>
+            </div>
+            
+             {/* Refined Tab logic based on visual re-check:
+                 The image shows [Perlengkapan Tidur Bayi] [Handuk Keluarga]
+                 "Perlengkapan Tidur Bayi" has clear background (white), text dark.
+                 "Handuk Keluarga" has blue background, text white.
+                 It's possible "Handuk Keluarga" is the Active one? Or they are just styled differently.
+                 Given the content below says "Perlengkapan Tidur Bayi (Baby Sleep Essentials)", it implies Tab 1 is active.
+                 So Active = White pill? Or maybe the blue one is just a CTA? 
+                 I'll implement standard tabs: Active = Slate/Indigo, Inactive = White/Gray.
+                 Let's go with: Active = Indigo-600 Text White. Inactive = Gray Text.
+                 Actually, let's copy the Pill shape in the image.
+                 Container: Blue-ish/Indigo-50.
+                 Tab 1 (Active in screenshot context): White Bg, Blue Text.
+                 Tab 2: Blue Bg, White Text.
+                 
+                 Wait, if Tab 1 corresponds to the content below, then Tab 1 is active. 
+                 It looks like the container is Blue-ish.
+                 Let's do: Container p-1. Active = bg-white text-blue. Inactive = text-blue (transparent).
+              */}
+          </div>
+
+          {/* Current Category Title */}
+          <div className="mb-8">
+            <p className="text-sm font-semibold text-gray-500 mb-1">
+              {currentCategorySubtitle || 'Kenyamanan Tidur Si Kecil'}
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+              {currentCategoryTitle || 'Perlengkapan Tidur Bayi (Baby Sleep Essentials)'}
+            </h2>
+          </div>
+
+          {/* Product Grid */}
+          {productsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+                {(Array.isArray(productskumakuma) ? productskumakuma : []).map((product: any) => (
+                  <Link key={product._id} to={`/produk/${product._id}`} className="group block">
+                    <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4">
+                      <img 
+                        src={api.getImageUrl(product.image)} 
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                      />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900 mb-1">{product.name}</h3>
+                      <p className="text-xs text-gray-500 line-clamp-2 mb-2">{product.description}</p>
+                      <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+                        Beli Sekarang
+                      </button>
+                    </div>
+                  </Link>
+                ))}
+             </div>
+          )}
+
+          {/* Pagination (Visual Only for now) */}
+          <div className="mt-16 flex justify-center items-center gap-4">
+            <button className="p-2 text-gray-400 hover:text-gray-900 disabled:opacity-50">
+              <FaChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="font-bold text-gray-900">1</span>
+            <span className="text-gray-400">2</span>
+            <span className="text-gray-400">3</span>
+            <button className="p-2 text-gray-400 hover:text-gray-900">
+              <FaChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Bottom CTA Section */}
+           <div className="mt-20 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 md:p-12 md:flex items-center justify-between">
+              <div className="mb-6 md:mb-0 md:max-w-xl">
+                 <p className="text-sm font-bold text-gray-500 mb-2">Gratis Konsultasi</p>
+                 <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                   Punya Pertanyaan Seputar Produk Si Kecil? atau Ingin menjadi bagian dari Keluarga Kuma Kuma?
+                 </h3>
+                 <p className="text-gray-600">
+                    Tim kami siap membantu Anda menemukan kenyamanan terbaik untuk keluarga.
+                 </p>
+              </div>
+              <Link 
+                to="/kontak" /* Assuming contact route exists or is anchor */
+                className="px-8 py-3 bg-indigo-900 text-white font-semibold rounded-full hover:bg-indigo-800 transition shadow-lg"
+              >
+                Hubungi Kami
+              </Link>
+           </div>
+
         </div>
       </main>
       <Footer />

@@ -13,6 +13,10 @@ const catalogSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  cardImage: {
+    type: String,
+    default: ''
+  },
   fileUrl: {
     type: String,
     default: ''

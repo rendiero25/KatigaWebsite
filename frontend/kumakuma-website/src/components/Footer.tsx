@@ -60,7 +60,7 @@ export default function Footer() {
                   <Link to="/" className="hover:font-bold">Beranda</Link>
                   <Link to="/tentang-kami" className="hover:font-bold">Tentang Kami</Link>
                   <Link to="/produk" className="hover:font-bold">Produk</Link>
-                  <Link to="/lokasi-toko" className="hover:font-bold">Lokasi Toko</Link>
+                  <Link to="/katalog" className="hover:font-bold">Katalog</Link>
                   <Link to="/kontak" className="hover:font-bold">Kontak</Link>
                </div>
              </div>

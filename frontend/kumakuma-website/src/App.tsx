@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import AboutUs from './pages/AboutUs';
+import Katalog from './pages/Katalog';
+import ContactPage from './pages/ContactPage';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import News from './pages/News';
@@ -23,6 +25,8 @@ import AdminMessages from './pages/admin/Messages';
 import AdminCertificationTech from './pages/admin/CertificationTech';
 import AdminDistribution from './pages/admin/Distribution';
 import AdminManufacturing from './pages/admin/Manufacturing';
+import AdminProductPageContent from './pages/admin/ProductPageContent';
+import AdminContactPageContent from './pages/admin/ContactPageContent';
 
 function App() {
   return (
@@ -31,10 +35,14 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/tentang-kami" element={<AboutUs />} />
+        <Route path="/katalog" element={<Katalog />} />
         <Route path="/produk" element={<Products />} />
         <Route path="/produk/:id" element={<ProductDetail />} />
         <Route path="/berita" element={<News />} />
         <Route path="/berita/:id" element={<NewsDetail />} />
+        
+        <Route path="/berita/:id" element={<NewsDetail />} />
+        <Route path="/kontak" element={<ContactPage />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -55,6 +63,9 @@ function App() {
         <Route path="/admin/certification-tech" element={<AdminCertificationTech />} />
         <Route path="/admin/distribution" element={<AdminDistribution />} />
         <Route path="/admin/manufacturing" element={<AdminManufacturing />} />
+        <Route path="/admin/manufacturing" element={<AdminManufacturing />} />
+        <Route path="/admin/product-page-content" element={<AdminProductPageContent />} />
+        <Route path="/admin/contact-page-content" element={<AdminContactPageContent />} />
       </Routes>
     </BrowserRouter>
   );

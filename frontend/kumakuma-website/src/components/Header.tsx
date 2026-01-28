@@ -23,9 +23,11 @@ export default function Header() {
 
   // Check if we are on the About Us page
   const isAboutPage = location.pathname === '/tentang-kami';
+  const isProductPage = location.pathname === '/produk';
+  const isKatalogPage = location.pathname === '/katalog';
 
   return (
-    <header className={`sticky top-0 z-50 transition-colors duration-300 ${isScrolled || isAboutPage ? 'bg-white/80 backdrop-blur-md' : 'bg-[#F9F7F2]'}`}>
+    <header className={`sticky top-0 z-50 transition-colors duration-300 ${isScrolled || isAboutPage || isProductPage ? 'bg-white/80 backdrop-blur-md' : 'bg-[#F9F7F2]'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 py-12">
           {/* Logo */}
@@ -60,10 +62,10 @@ export default function Header() {
               Produk
             </Link>
             <Link 
-              to="/lokasi-toko" 
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive('/lokasi-toko')}`}
+              to="/katalog" 
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive('/katalog')}`}
             >
-              Lokasi Toko
+              Katalog
             </Link>
             <Link 
               to="/kontak" 

@@ -4,6 +4,8 @@ const Product = require('../models/Product');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
+const ProductCategory = require('../models/ProductCategory');
+
 // @route   GET /api/products
 // @desc    Get all products
 // @access  Public
@@ -12,7 +14,28 @@ router.get('/', async (req, res) => {
     const { category, featured } = req.query;
     let query = {};
     
-    if (category) query.category = category;
+    if (category) {
+      // Check if category is a valid ObjectId
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(category);
+      
+      if (isValidObjectId) {
+        query.category = category;
+      } else {
+        // If not ID, try to find category by name (case-insensitive)
+        const categoryDoc = await ProductCategory.findOne({ 
+          name: { $regex: new RegExp(`^${category}$`, 'i') } 
+        });
+        
+        if (categoryDoc) {
+          query.category = categoryDoc._id;
+        } else {
+          // Category name provided but not found -> return empty, or maybe return all?
+          // If filtering by specific non-existent category, result should be empty.
+          return res.json([]);
+        }
+      }
+    }
+
     if (featured === 'true') query.isFeatured = true;
 
     const products = await Product.find(query).populate('category');
