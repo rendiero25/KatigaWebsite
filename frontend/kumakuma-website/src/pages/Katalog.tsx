@@ -38,16 +38,16 @@ export default function Katalog() {
            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
               
               {/* Floating Card */}
-              <div className="bg-[#f0f2eb] rounded-r-3xl rounded-bl-3xl p-8 md:p-12 max-w-md shadow-2xl relative">
+              <div className="rounded-r-3xl p-8 md:p-12 max-w-xl relative">
                   {/* Decorative corner shape if needed - standard rounded corners seem enough based on image usually */}
                   
                   {/* Card Content - Dynamic Image or Default Layout */}
                   {catalog?.cardImage ? (
-                    <div className="mb-8 flex justify-center">
+                    <div className="mb-8 flex justify-start">
                        <img 
                          src={api.getImageUrl(catalog.cardImage)} 
                          alt="Catalog Card" 
-                         className="w-full h-auto object-contain rounded-lg" // Adjust sizing as needed
+                         className="w-1/2 h-auto object-contain rounded-lg" // Adjust sizing as needed
                        />
                     </div>
                   ) : (
@@ -70,12 +70,8 @@ export default function Katalog() {
                     </>
                   )}
                   
-                  <p className="text-gray-600 text-sm mb-8 leading-relaxed">
-                     SIMPAN KOLEKSI LENGKAP KAMI DI GADGET ANDA. 
-                     TEMUKAN MOTIF-MOTIF LUCU UNTUK SI KECIL DAN 
-                     PELAJARI LEBIH LANJUT TENTANG TEKNOLOGI SERAT 
-                     TENCEL SERTA STANDAR KEAMANAN OEKO-TEX YANG 
-                     KAMI GUNAKAN UNTUK MELINDUNGI KELUARGA ANDA
+                  <p className="text-white text-xl mb-8 leading-relaxed">
+                     {catalog.description}
                   </p>
 
                   <button 

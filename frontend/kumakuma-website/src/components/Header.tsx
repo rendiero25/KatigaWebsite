@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useSiteSettings } from '../hooks/useApi';
-import IconTokopedia from '../assets/icon-tokopedia.png';
-import IconShopee from '../assets/icon-shopee.png';
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useSiteSettings } from "../hooks/useApi";
+import IconTokopedia from "../assets/icon-tokopedia.png";
+import IconShopee from "../assets/icon-shopee.png";
 
 export default function Header() {
   const { data: settings } = useSiteSettings();
@@ -13,63 +13,81 @@ export default function Header() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const isActive = (path: string) => {
-    return location.pathname === path ? 'bg-white text-black' : 'text-white hover:text-gray-300';
+    return location.pathname === path
+      ? "bg-white text-black"
+      : "text-white hover:text-gray-300";
   };
 
   // Check if we are on the About Us page
-  const isAboutPage = location.pathname === '/tentang-kami';
-  const isProductPage = location.pathname === '/produk';
-  const isKatalogPage = location.pathname === '/katalog';
+  const isAboutPage = location.pathname === "/tentang-kami";
+  const isProductPage = location.pathname === "/produk";
+  const isKatalogPage = location.pathname === "/katalog";
+  const isNewsPage = location.pathname === "/news";
 
   return (
-    <header className={`sticky top-0 z-50 transition-colors duration-300 ${isScrolled || isAboutPage || isProductPage ? 'bg-white/80 backdrop-blur-md' : 'bg-[#F9F7F2]'}`}>
+    <header
+      className={`sticky top-0 z-50 transition-colors duration-300 ${isScrolled || isAboutPage || isProductPage || isKatalogPage || isNewsPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 py-12">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-             <div className="">
-               {settings?.logo ? (
-                 <img src={`http://localhost:5000${settings.logo}`} alt="Logo" className="w-full h-full object-cover" />
-               ) : (
-                 <div className="w-full h-full bg-linear-gradient-to-br from-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">KK</div>
-               )}
-             </div>
+            <div className="">
+              {settings?.logo ? (
+                <img
+                  src={`http://localhost:5000${settings.logo}`}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-linear-gradient-to-br from-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                  KK
+                </div>
+              )}
+            </div>
           </Link>
 
           {/* Navigation - Black Capsule Style */}
           <nav className="hidden md:flex items-center bg-black rounded-full px-1.5 py-1.5 gap-2 shadow-lg ">
-            <Link 
-              to="/" 
-              className={`text-md font-medium transition px-6 py-1.5 rounded-full ${isActive('/')}`}
+            <Link
+              to="/"
+              className={`text-md font-medium transition px-6 py-1.5 rounded-full ${isActive("/")}`}
             >
               Beranda
             </Link>
-            <Link 
-              to="/tentang-kami" 
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive('/tentang-kami')}`}
+            <Link
+              to="/tentang-kami"
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/tentang-kami")}`}
             >
               Tentang Kami
             </Link>
-            <Link 
-              to="/produk" 
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive('/produk')}`}
+            <Link
+              to="/produk"
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/produk")}`}
             >
               Produk
             </Link>
-            <Link 
-              to="/katalog" 
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive('/katalog')}`}
+
+            <Link
+              to="/katalog"
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/katalog")}`}
             >
               Katalog
             </Link>
-            <Link 
-              to="/kontak" 
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive('/kontak')}`}
+            <Link
+              to="/berita"
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/news")}`}
+            >
+              Berita
+            </Link>
+            <Link
+              to="/kontak"
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/kontak")}`}
             >
               Kontak
             </Link>
@@ -77,29 +95,37 @@ export default function Header() {
 
           {/* Right Side */}
           <div className="flex items-center gap-4">
-            <a 
-              href={settings?.shopNowUrl || '#'} 
+            <a
+              href={settings?.shopNowUrl || "#"}
               className="hidden sm:block text-lg font-semibold text-primary"
             >
               Shop Now
             </a>
             <div className="flex items-center gap-4">
-              <a 
-                href={settings?.tokopediaUrl || '#'} 
-                target="_blank" 
+              <a
+                href={settings?.tokopediaUrl || "#"}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center transition hover:opacity-80"
               >
-                <img src={IconTokopedia} alt="Tokopedia" className="w-10 object-contain" />
+                <img
+                  src={IconTokopedia}
+                  alt="Tokopedia"
+                  className="w-10 object-contain"
+                />
               </a>
 
-              <a 
-                href={settings?.shopeeUrl || '#'} 
-                target="_blank" 
+              <a
+                href={settings?.shopeeUrl || "#"}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center transition hover:opacity-80"
               >
-                <img src={IconShopee} alt="Shopee" className="w-10 object-contain" />
+                <img
+                  src={IconShopee}
+                  alt="Shopee"
+                  className="w-10 object-contain"
+                />
               </a>
             </div>
           </div>

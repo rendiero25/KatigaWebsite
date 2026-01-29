@@ -1,19 +1,19 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const NewsArticle = require('../models/NewsArticle');
-const NewsSection = require('../models/NewsSection');
-const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const NewsArticle = require("../models/NewsArticle");
+const NewsSection = require("../models/NewsSection");
+const auth = require("../middleware/auth");
+const upload = require("../middleware/upload");
 
 // @route   GET /api/news/content
 // @desc    Get news section content
 // @access  Public
-router.get('/content', async (req, res) => {
+router.get("/content", async (req, res) => {
   try {
     let content = await NewsSection.findOne();
     if (!content) {
-        content = new NewsSection();
-        await content.save();
+      content = new NewsSection();
+      await content.save();
     }
     res.json(content);
   } catch (error) {
@@ -24,16 +24,17 @@ router.get('/content', async (req, res) => {
 // @route   PUT /api/news/content
 // @desc    Update news section content
 // @access  Private
-router.put('/content', auth, async (req, res) => {
+router.put("/content", auth, upload.single("bannerImage"), async (req, res) => {
   try {
     let content = await NewsSection.findOne();
     if (!content) {
-        content = new NewsSection();
+      content = new NewsSection();
     }
-    
+
     const { title, subtitle } = req.body;
     if (title) content.title = title;
     if (subtitle) content.subtitle = subtitle;
+    if (req.file) content.bannerImage = `/uploads/${req.file.filename}`;
 
     await content.save();
     res.json(content);
@@ -45,7 +46,7 @@ router.put('/content', auth, async (req, res) => {
 // @route   GET /api/news
 // @desc    Get all news articles
 // @access  Public
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const articles = await NewsArticle.find().sort({ date: -1 });
     res.json(articles);
@@ -57,11 +58,11 @@ router.get('/', async (req, res) => {
 // @route   GET /api/news/:id
 // @desc    Get single news article
 // @access  Public
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const article = await NewsArticle.findById(req.params.id);
     if (!article) {
-      return res.status(404).json({ message: 'Article not found' });
+      return res.status(404).json({ message: "Article not found" });
     }
     res.json(article);
   } catch (error) {
@@ -72,7 +73,7 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/news
 // @desc    Create a news article
 // @access  Private
-router.post('/', auth, upload.single('image'), async (req, res) => {
+router.post("/", auth, upload.single("image"), async (req, res) => {
   try {
     const { title, excerpt, content, date } = req.body;
     const article = new NewsArticle({
@@ -80,7 +81,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       excerpt,
       content,
       date: date || Date.now(),
-      image: req.file ? `/uploads/${req.file.filename}` : ''
+      image: req.file ? `/uploads/${req.file.filename}` : "",
     });
     await article.save();
     res.status(201).json(article);
@@ -92,11 +93,11 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
 // @route   PUT /api/news/:id
 // @desc    Update a news article
 // @access  Private
-router.put('/:id', auth, upload.single('image'), async (req, res) => {
+router.put("/:id", auth, upload.single("image"), async (req, res) => {
   try {
     const article = await NewsArticle.findById(req.params.id);
     if (!article) {
-      return res.status(404).json({ message: 'Article not found' });
+      return res.status(404).json({ message: "Article not found" });
     }
 
     const { title, excerpt, content, date } = req.body;
@@ -116,13 +117,13 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 // @route   DELETE /api/news/:id
 // @desc    Delete a news article
 // @access  Private
-router.delete('/:id', auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
     const article = await NewsArticle.findByIdAndDelete(req.params.id);
     if (!article) {
-      return res.status(404).json({ message: 'Article not found' });
+      return res.status(404).json({ message: "Article not found" });
     }
-    res.json({ message: 'Article deleted' });
+    res.json({ message: "Article deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -64,7 +64,7 @@ export default function AdminDistribution() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Gambar Peta</h3>
-            <div className="aspect-[2/1] bg-gray-100 rounded-lg overflow-hidden mb-4">
+            <div className="aspect-2/1 bg-gray-100 rounded-lg overflow-hidden mb-4">
               {data.mapImage ? (
                 <img src={`http://localhost:5000${data.mapImage}`} alt="" className="w-full h-full object-contain" />
               ) : (

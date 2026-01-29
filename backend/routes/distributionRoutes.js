@@ -1,13 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const DistributionChannel = require('../models/DistributionChannel');
-const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const DistributionChannel = require("../models/DistributionChannel");
+const auth = require("../middleware/auth");
+const upload = require("../middleware/upload");
 
 // @route   GET /api/distribution
 // @desc    Get distribution channel content
 // @access  Public
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     let content = await DistributionChannel.findOne();
     res.json(content || {});
@@ -19,17 +19,19 @@ router.get('/', async (req, res) => {
 // @route   PUT /api/distribution
 // @desc    Update distribution channel content
 // @access  Private
-router.put('/', auth, upload.single('mapImage'), async (req, res) => {
+router.put("/", auth, upload.single("mapImage"), async (req, res) => {
+  console.log("PUT /api/distribution Body:", req.body);
+  console.log("PUT /api/distribution File:", req.file);
   try {
     let content = await DistributionChannel.findOne();
-    
+
     const { title, description } = req.body;
 
     if (!content) {
       content = new DistributionChannel({
-        title: title || '',
-        description: description || '',
-        mapImage: req.file ? `/uploads/${req.file.filename}` : ''
+        title: title || "",
+        description: description || "",
+        mapImage: req.file ? `/uploads/${req.file.filename}` : "",
       });
     } else {
       if (title) content.title = title;

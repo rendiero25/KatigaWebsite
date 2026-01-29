@@ -1,132 +1,378 @@
-import { useState, useEffect } from 'react';
-import AdminLayout from '../../components/AdminLayout';
+import { useState, useEffect } from "react";
+import AdminLayout from "../../components/AdminLayout";
+import { FaPlus, FaTrash, FaSave } from "react-icons/fa";
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = "http://localhost:5000/api";
 
 export default function AdminCertificationTech() {
-  const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    content: ''
+    headerTitle: "",
+    headerSubtitle: "",
+    sec1Title: "",
+    sec1Points: [] as { title: string; description: string }[],
+    sec2Title: "",
+    sec2Subtitle: "",
+    sec2Points: [] as string[],
   });
-  const [points, setPoints] = useState<string[]>([]);
-  const [newPoint, setNewPoint] = useState('');
 
-  const token = localStorage.getItem('adminToken');
+  const [sec1Image, setSec1Image] = useState<File | null>(null);
+  const [sec1ImagePreview, setSec1ImagePreview] = useState("");
 
-  useEffect(() => {
-    fetch(`${API_URL}/certification-tech`)
-      .then(res => res.json())
-      .then(data => {
-        setData(data);
+  const [sec2Image, setSec2Image] = useState<File | null>(null);
+  const [sec2ImagePreview, setSec2ImagePreview] = useState("");
+
+  const token = localStorage.getItem("adminToken");
+
+  const fetchData = async () => {
+    try {
+      const res = await fetch(`${API_URL}/certification-tech`);
+      const data = await res.json();
+      if (data) {
         setFormData({
-          title: data.title || '',
-          content: data.content || ''
+          headerTitle: data.header?.title || "",
+          headerSubtitle: data.header?.subtitle || "",
+          sec1Title: data.section1?.title || "",
+          sec1Points: data.section1?.points || [],
+          sec2Title: data.section2?.title || "",
+          sec2Subtitle: data.section2?.subtitle || "",
+          sec2Points: data.section2?.points || [],
         });
-        setPoints(data.points || []);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleAddPoint = () => {
-    if (newPoint.trim()) {
-      setPoints([...points, newPoint.trim()]);
-      setNewPoint('');
+        if (data.section1?.image)
+          setSec1ImagePreview(`http://localhost:5000${data.section1.image}`);
+        if (data.section2?.image)
+          setSec2ImagePreview(`http://localhost:5000${data.section2.image}`);
+      }
+      setLoading(false);
+    } catch (e) {
+      console.error("Failed to fetch data", e);
+      setLoading(false);
     }
   };
 
-  const handleRemovePoint = (index: number) => {
-    setPoints(points.filter((_, i) => i !== index));
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Handlers for Section 1 Points
+  const addSec1Point = () => {
+    setFormData({
+      ...formData,
+      sec1Points: [...formData.sec1Points, { title: "", description: "" }],
+    });
+  };
+  const updateSec1Point = (
+    idx: number,
+    field: "title" | "description",
+    value: string,
+  ) => {
+    const newPoints = [...formData.sec1Points];
+    newPoints[idx][field] = value;
+    setFormData({ ...formData, sec1Points: newPoints });
+  };
+  const removeSec1Point = (idx: number) => {
+    setFormData({
+      ...formData,
+      sec1Points: formData.sec1Points.filter((_, i) => i !== idx),
+    });
+  };
+
+  // Handlers for Section 2 Points
+  const addSec2Point = () => {
+    setFormData({ ...formData, sec2Points: [...formData.sec2Points, ""] });
+  };
+  const updateSec2Point = (idx: number, value: string) => {
+    const newPoints = [...formData.sec2Points];
+    newPoints[idx] = value;
+    setFormData({ ...formData, sec2Points: newPoints });
+  };
+  const removeSec2Point = (idx: number) => {
+    setFormData({
+      ...formData,
+      sec2Points: formData.sec2Points.filter((_, i) => i !== idx),
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
+    const data = new FormData();
+    data.append("headerTitle", formData.headerTitle);
+    data.append("headerSubtitle", formData.headerSubtitle);
 
-    const submitData = new FormData();
-    submitData.append('title', formData.title);
-    submitData.append('content', formData.content);
-    submitData.append('points', JSON.stringify(points));
-    if (imageFile) submitData.append('image', imageFile);
+    data.append("sec1Title", formData.sec1Title);
+    data.append("sec1Points", JSON.stringify(formData.sec1Points));
+    if (sec1Image) data.append("section1Image", sec1Image);
+
+    data.append("sec2Title", formData.sec2Title);
+    data.append("sec2Subtitle", formData.sec2Subtitle);
+    data.append(
+      "sec2Points",
+      JSON.stringify(formData.sec2Points.filter((p) => p.trim() !== "")),
+    );
+    if (sec2Image) data.append("section2Image", sec2Image);
 
     try {
       const res = await fetch(`${API_URL}/certification-tech`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: submitData
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
       });
-      
       if (res.ok) {
-        const updated = await res.json();
-        setData(updated);
-        alert('Berhasil diperbarui!');
+        alert("Perubahan berhasil disimpan!");
+        fetchData();
+      } else {
+        alert("Gagal menyimpan perubahan");
       }
-    } catch (error) {
-      console.error('Error updating:', error);
-    } finally {
-      setSaving(false);
+    } catch (e) {
+      console.error("Error saving", e);
     }
   };
 
-  if (loading) return <AdminLayout title="Certification Tech">Loading...</AdminLayout>;
+  if (loading)
+    return (
+      <AdminLayout title="Certification & Technology">
+        <p>Loading...</p>
+      </AdminLayout>
+    );
 
   return (
-    <AdminLayout title="Certification Technology">
-      <div className="max-w-4xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Gambar Section</h3>
-            <div className="aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden mb-4 max-w-md">
-              {data.image ? (
-                <img src={`http://localhost:5000${data.image}`} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
-              )}
+    <AdminLayout title="Certification & Technology">
+      <div className="bg-white rounded-xl shadow-sm p-6 max-w-4xl">
+        <h1 className="text-2xl font-bold mb-6 text-gray-800">
+          Edit Page Content
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {/* Global Header */}
+          <section className="space-y-4 border-b pb-6">
+            <h2 className="text-xl font-semibold text-gray-700">Page Header</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Main Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.headerTitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, headerTitle: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="KAMI MENJAMIN..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={formData.headerSubtitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, headerSubtitle: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Certificates & Technology"
+                />
+              </div>
             </div>
-            <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 border rounded-lg" />
-          </div>
+          </section>
 
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Konten Utama</h3>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Judul</label>
-              <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-2 border rounded-lg" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Konten Deskripsi</label>
-              <textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="w-full px-4 py-2 border rounded-lg" rows={4} />
-            </div>
-          </div>
+          {/* Section 1: Certificates */}
+          <section className="space-y-6 border-b pb-6">
+            <h2 className="text-xl font-semibold text-gray-700">
+              Section 1: Certificates (Left Image, Right Points)
+            </h2>
 
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Poin-poin Keunggulan</h3>
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={newPoint} 
-                onChange={(e) => setNewPoint(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPoint())}
-                className="flex-1 px-4 py-2 border rounded-lg" 
-                placeholder="Tambah poin baru..."
-              />
-              <button type="button" onClick={handleAddPoint} className="px-4 py-2 bg-indigo-600 text-white rounded-lg">Tambah</button>
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Section 1 Image (Left Side)
+              </label>
+              <div className="flex items-center gap-4">
+                {sec1ImagePreview && (
+                  <img
+                    src={sec1ImagePreview}
+                    className="h-20 w-32 object-cover rounded border"
+                    alt="Preview"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setSec1Image(e.target.files[0]);
+                      setSec1ImagePreview(
+                        URL.createObjectURL(e.target.files[0]),
+                      );
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
             </div>
-            <ul className="space-y-2">
-              {points.map((point, index) => (
-                <li key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span>{point}</span>
-                  <button type="button" onClick={() => handleRemovePoint(index)} className="text-red-600 hover:text-red-800">Hapus</button>
-                </li>
+
+            {/* Points */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium text-gray-600">
+                  Certificate Points
+                </label>
+                <button
+                  type="button"
+                  onClick={addSec1Point}
+                  className="text-sm text-blue-600 flex items-center gap-1"
+                >
+                  <FaPlus /> Add Point
+                </button>
+              </div>
+              {formData.sec1Points.map((point, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gray-50 p-4 rounded-lg flex gap-4 items-start"
+                >
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Point Title (e.g. SNI & K3L)"
+                      value={point.title}
+                      onChange={(e) =>
+                        updateSec1Point(idx, "title", e.target.value)
+                      }
+                      className="w-full border rounded px-3 py-1 font-semibold"
+                    />
+                    <textarea
+                      placeholder="Description"
+                      value={point.description}
+                      onChange={(e) =>
+                        updateSec1Point(idx, "description", e.target.value)
+                      }
+                      className="w-full border rounded px-3 py-1 text-sm"
+                      rows={2}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSec1Point(idx)}
+                    className="text-red-500 p-2 hover:bg-red-100 rounded"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+          </section>
 
-          <button type="submit" disabled={saving} className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50">
-            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-          </button>
+          {/* Section 2: Forest to Fashion */}
+          <section className="space-y-6">
+            <h2 className="text-xl font-semibold text-gray-700">
+              Section 2: Forest to Fashion (Left Image, Right Content)
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.sec2Title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sec2Title: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="DARI HUTAN UNTUK..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Subtitle (Parentheses)
+                </label>
+                <input
+                  type="text"
+                  value={formData.sec2Subtitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sec2Subtitle: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="(FROM FOREST TO FASHION)"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Section 2 Image (Left Side)
+              </label>
+              <div className="flex items-center gap-4">
+                {sec2ImagePreview && (
+                  <img
+                    src={sec2ImagePreview}
+                    className="h-20 w-32 object-cover rounded border"
+                    alt="Preview"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setSec2Image(e.target.files[0]);
+                      setSec2ImagePreview(
+                        URL.createObjectURL(e.target.files[0]),
+                      );
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
+
+            {/* Simple Points */}
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-medium text-gray-600">
+                  Feature Points
+                </label>
+                <button
+                  type="button"
+                  onClick={addSec2Point}
+                  className="text-sm text-blue-600 flex items-center gap-1"
+                >
+                  <FaPlus /> Add Point
+                </button>
+              </div>
+              {formData.sec2Points.map((point, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <span className="pt-2 font-bold text-gray-400">
+                    {idx + 1}.
+                  </span>
+                  <input
+                    type="text"
+                    value={point}
+                    onChange={(e) => updateSec2Point(idx, e.target.value)}
+                    className="flex-1 border rounded px-3 py-2"
+                    placeholder="Feature description..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSec2Point(idx)}
+                    className="text-red-500 p-2 hover:bg-red-100 rounded"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="pt-6 border-t flex justify-end">
+            <button
+              type="submit"
+              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium shadow-lg"
+            >
+              <FaSave /> Simpan Perubahan
+            </button>
+          </div>
         </form>
       </div>
     </AdminLayout>
