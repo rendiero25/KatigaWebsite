@@ -31,7 +31,7 @@ export default function AdvantagesSection() {
           </h2>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12 items-end">
+        <div className="pt-20 flex flex-col lg:flex-row gap-12 items-end">
           {/* Left Side - Vertical Title */}
           <div className="hidden lg:flex w-24 shrink-0 flex-row items-center justify-start">
              <div className="[writing-mode:vertical-rl] text-[80px] xl:text-9xl font-black text-black leading-none h-auto tracking-tighter opacity-90 rotate-180">
@@ -43,7 +43,7 @@ export default function AdvantagesSection() {
           <div className="flex-1 space-y-12 lg:pl-45">
             {advantages?.map((advantage: any, index: number) => (
               <div key={advantage._id} className="group">
-                <div className="flex items-baseline gap-6 border-b border-gray-200 pb-1">
+                <div className="flex items-baseline gap-6">
                   <span className="text-3xl font-normal text-black/70 group-hover:text-gray-900 transition">
                     {advantage.number || `0${index + 1}`}
                   </span>

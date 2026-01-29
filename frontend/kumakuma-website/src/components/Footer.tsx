@@ -7,15 +7,15 @@ export default function Footer() {
   const { data: contact } = useContactInfo();
 
   return (
-    <footer className="bg-white pt-10">
+    <footer className="bg-white pt-10 container mx-auto">
       {/* Consultation CTA */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+      <div className="mb-10">
         <div className="flex flex-col md:flex-row gap-12 items-center justify-between">
           <div className="flex-1">
             <p className="text-lg font-bold text-black mb-2">
               Gratis Konsultasi
             </p>
-            <h3 className="text-4xl font-bold text-black mb-4">
+            <h3 className="text-4xl font-bold text-black mb-4 max-w-5xl">
               Punya Pertanyaan Seputar Produk Si Kecil? atau Ingin menjadi
               bagian dari Keluarga Kuma Kuma?
               <span className="text-black/80 font-normal">
@@ -37,7 +37,7 @@ export default function Footer() {
       </div>
 
       {/* Main Footer Info */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
+      <div className="pb-10">
         <div className=" gap-10">
           {/* Left Column: Address */}
           <div>

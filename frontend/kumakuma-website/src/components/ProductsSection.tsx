@@ -28,7 +28,7 @@ export default function ProductsSection() {
   }
 
   return (
-    <section className="bg-white">
+    <section className="pt-10 bg-white">
       <div className="flex flex-col items-center gap-15 w-full overflow-hidden">
         
 

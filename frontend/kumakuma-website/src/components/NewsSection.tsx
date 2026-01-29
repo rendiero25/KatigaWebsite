@@ -14,7 +14,7 @@ export default function NewsSection() {
   }
 
   return (
-    <section className="bg-white">
+    <section className="bg-white pt-5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
@@ -23,7 +23,7 @@ export default function NewsSection() {
                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
                <p className="text-lg font-bold text-black">{sectionContent?.subtitle || 'Certificates & Technologi'}</p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-black leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-black leading-tight max-w-2xl">
               {sectionContent?.title || 'Rangkuman berita dan sorotan utama yang relevan untuk Anda.'}
             </h2>
           </div>
