@@ -51,7 +51,7 @@ export default function AboutUs() {
     <div className="min-h-screen bg-white">
       <Header />
 
-      <main className="pt-10 flex flex-col gap-20 items-center justify-between">
+      <main className="pt-20 flex flex-col gap-20 items-center justify-between">
         {/* 1. Header Section */}
         <section className="text-center px-4 max-w-4xl mx-auto">
           <motion.h1 

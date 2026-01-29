@@ -33,7 +33,7 @@ export default function Header() {
     <header
       className={`sticky top-0 z-50 transition-colors duration-300 ${isScrolled || isAboutPage || isProductPage || isKatalogPage || isNewsPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 py-12">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
