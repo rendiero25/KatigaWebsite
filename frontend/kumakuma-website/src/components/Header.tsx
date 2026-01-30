@@ -31,7 +31,13 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-colors duration-300 ${isScrolled || isAboutPage || isProductPage || isKatalogPage || isNewsPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`}
+      className={`top-0 z-50 transition-colors duration-300 ${
+        isKatalogPage
+          ? isScrolled
+            ? "fixed w-full bg-white/80 backdrop-blur-md shadow-sm"
+            : "absolute w-full bg-transparent"
+          : `sticky ${isScrolled || isAboutPage || isProductPage || isNewsPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`
+      }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20 py-12">
