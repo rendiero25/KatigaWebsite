@@ -44,12 +44,48 @@ router.put("/content", auth, upload.single("bannerImage"), async (req, res) => {
 });
 
 // @route   GET /api/news
-// @desc    Get all news articles
+// @desc    Get all news articles with pagination, search, and filtering
 // @access  Public
 router.get("/", async (req, res) => {
   try {
-    const articles = await NewsArticle.find().sort({ date: -1 });
-    res.json(articles);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const search = req.query.search || "";
+    const category = req.query.category || "";
+    const sort = req.query.sort || "newest";
+    
+    const skip = (page - 1) * limit;
+
+    // Build query
+    const query = {};
+    if (search) {
+      query.title = { $regex: search, $options: "i" };
+    }
+    if (category && category !== "All") {
+      query.category = category;
+    }
+
+    // Build sort
+    let sortOptions = { date: -1 }; // Default: newest
+    if (sort === "oldest") sortOptions = { date: 1 };
+    else if (sort === "az") sortOptions = { title: 1 };
+    else if (sort === "za") sortOptions = { title: -1 };
+
+    const total = await NewsArticle.countDocuments(query);
+    const articles = await NewsArticle.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      data: articles,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -75,12 +111,13 @@ router.get("/:id", async (req, res) => {
 // @access  Private
 router.post("/", auth, upload.single("image"), async (req, res) => {
   try {
-    const { title, excerpt, content, date } = req.body;
+    const { title, excerpt, content, date, category } = req.body;
     const article = new NewsArticle({
       title,
       excerpt,
       content,
       date: date || Date.now(),
+      category: category || "Uncategorized",
       image: req.file ? `/uploads/${req.file.filename}` : "",
     });
     await article.save();
@@ -100,11 +137,12 @@ router.put("/:id", auth, upload.single("image"), async (req, res) => {
       return res.status(404).json({ message: "Article not found" });
     }
 
-    const { title, excerpt, content, date } = req.body;
+    const { title, excerpt, content, date, category } = req.body;
     if (title) article.title = title;
     if (excerpt) article.excerpt = excerpt;
     if (content) article.content = content;
     if (date) article.date = date;
+    if (category) article.category = category;
     if (req.file) article.image = `/uploads/${req.file.filename}`;
 
     await article.save();

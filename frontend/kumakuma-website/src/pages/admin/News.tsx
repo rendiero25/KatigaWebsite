@@ -16,16 +16,20 @@ export default function AdminNews() {
     title: "",
     excerpt: "",
     content: "",
+    category: "Company News",
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
 
   const token = localStorage.getItem("adminToken");
 
+  const categories = ["Company News", "Events", "Product Updates", "CSR"];
+
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_URL}/news`);
-      setArticles(await res.json());
+      const res = await fetch(`${API_URL}/news?limit=1000`);
+      const data = await res.json();
+      setArticles(data.data || []);
 
       const resContent = await fetch(`${API_URL}/news/content`);
       const contentData = await resContent.json();
@@ -71,6 +75,7 @@ export default function AdminNews() {
     data.append("title", formData.title);
     data.append("excerpt", formData.excerpt);
     data.append("content", formData.content);
+    data.append("category", formData.category);
     if (imageFile) data.append("image", imageFile);
 
     try {
@@ -108,12 +113,13 @@ export default function AdminNews() {
       title: item.title,
       excerpt: item.excerpt,
       content: item.content,
+      category: item.category || "Company News",
     });
     setShowModal(true);
   };
 
   const resetForm = () => {
-    setFormData({ title: "", excerpt: "", content: "" });
+    setFormData({ title: "", excerpt: "", content: "", category: "Company News" });
     setImageFile(null);
     setEditing(null);
     setShowModal(false);
@@ -228,9 +234,14 @@ export default function AdminNews() {
               )}
             </div>
             <div className="p-4">
-              <p className="text-sm text-gray-500 mb-1">
-                {new Date(item.date).toLocaleDateString("id-ID")}
-              </p>
+              <div className="flex justify-between items-start mb-1">
+                <p className="text-sm text-gray-500">
+                  {new Date(item.date).toLocaleDateString("id-ID")}
+                </p>
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+                  {item.category || "Uncategorized"}
+                </span>
+              </div>
               <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                 {item.title}
               </h3>
@@ -277,6 +288,26 @@ export default function AdminNews() {
                   required
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Kategori
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border rounded-lg"
+                >
+                   {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Ringkasan

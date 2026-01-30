@@ -27,7 +27,8 @@ export default function Header() {
   const isAboutPage = location.pathname === "/tentang-kami";
   const isProductPage = location.pathname === "/produk";
   const isKatalogPage = location.pathname === "/katalog";
-  const isNewsPage = location.pathname === "/news";
+  const isNewsPage = location.pathname === "/berita";
+  const isContactPage = location.pathname === "/kontak";
 
   return (
     <header
@@ -36,7 +37,7 @@ export default function Header() {
           ? isScrolled
             ? "fixed w-full bg-white/80 backdrop-blur-md shadow-sm"
             : "absolute w-full bg-transparent"
-          : `sticky ${isScrolled || isAboutPage || isProductPage || isNewsPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`
+          : `sticky ${isScrolled || isAboutPage || isProductPage || isNewsPage || isContactPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -87,7 +88,7 @@ export default function Header() {
             </Link>
             <Link
               to="/berita"
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/news")}`}
+              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/berita")}`}
             >
               Berita
             </Link>

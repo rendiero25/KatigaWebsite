@@ -1,13 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useFooter, useContactInfo } from "../hooks/useApi";
 import { FaPhone, FaWhatsapp, FaEnvelope, FaInstagram } from "react-icons/fa";
 
 export default function Footer() {
   const { data: footer } = useFooter();
   const { data: contact } = useContactInfo();
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   return (
-    <footer className="bg-white pt-10 container mx-auto">
+    <footer className={`${!isHome ? "bg-gradient-to-t from-primary to-transparent" : "bg-white"} pt-10 container mx-auto`}>
       {/* Consultation CTA */}
       <div className="mb-10">
         <div className="flex flex-col md:flex-row gap-12 items-center justify-between">

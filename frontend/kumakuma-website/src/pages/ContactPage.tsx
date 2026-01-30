@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
@@ -57,13 +58,18 @@ export default function ContactPage() {
       <main className="flex-grow pt-32 pb-16 px-4 md:px-8 max-w-7xl mx-auto w-full">
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
           {/* Left Column: Text & Info */}
-          <div className="lg:w-1/2">
-            <h1 className="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-8">
-              {content.title || "Let’s get\nin touch"}
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="lg:w-1/2"
+          >
+            <h1 className="text-5xl md:text-8xl font-bold text-black leading-tight mb-8">
+              {content.title}
             </h1>
 
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              {content.subtitle1 || "Don’t be afraid to say hello with us!"}
+            <h2 className="text-4xl max-w-xs font-normal text-black mb-6">
+              {content.subtitle1}
             </h2>
 
             {/* Dynamic Contact Info */}
@@ -89,13 +95,17 @@ export default function ContactPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column: Form */}
-          <div className="lg:w-1/2">
-            <p className="font-medium text-gray-900 mb-8 leading-relaxed">
-              {content.subtitle2 ||
-                "Great! we’re excited to hear from you and let’s start something special together. Call us for any inquery."}
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="lg:w-1/2"
+          >
+            <p className="font-medium text-black mb-8 leading-relaxed text-2xl">
+              {content.subtitle2}
             </p>
 
             <div className="bg-[#1a1a1a] text-white p-8 md:p-12 rounded-none md:rounded-lg">
@@ -174,13 +184,13 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-[#c81920] hover:bg-[#a01217] text-white font-bold py-4 mt-4 transition duration-300 shadow-lg disabled:opacity-50"
+                  className="w-full bg-primary text-white font-bold py-4 mt-4 transition duration-300 shadow-lg disabled:opacity-50"
                 >
                   {submitting ? "Sending..." : "Send to us"}
                 </button>
               </form>
             </div>
-          </div>
+          </motion.div>
         </div>
       </main>
 

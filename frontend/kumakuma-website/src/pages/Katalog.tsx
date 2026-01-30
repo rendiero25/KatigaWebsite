@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
@@ -52,7 +53,12 @@ export default function Katalog() {
 
           <div className="container mx-auto relative h-full flex items-center z-10">
             {/* Floating Card */}
-            <div className="rounded-r-3xl p-8 md:p-12 max-w-xl relative">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="rounded-r-3xl p-8 md:p-12 max-w-xl relative"
+            >
               {/* Decorative corner shape if needed - standard rounded corners seem enough based on image usually */}
 
               {/* Card Content - Dynamic Image or Default Layout */}
@@ -87,25 +93,40 @@ export default function Katalog() {
                     </div>
                   </div>
 
-                  <h1 className="text-4xl font-bold text-[#6B705C] mb-8 leading-tight">
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="text-4xl font-bold text-[#6B705C] mb-8 leading-tight"
+                  >
                     Company
                     <br />
                     Catalogue
-                  </h1>
+                  </motion.h1>
                 </>
               )}
 
-              <p className="text-black font-normal text-2xl mb-8 leading-relaxed">
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                className="text-black font-normal text-2xl mb-8 leading-relaxed"
+              >
                 {catalog?.description || ""}
-              </p>
+              </motion.p>
 
-              <button
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ delay: 0.7, duration: 0.4 }}
                 onClick={handleDownload}
-                className="w-full md:w-auto px-10 py-4 bg-[#3d4c7a] text-white rounded-full font-medium hover:bg-[#2e3b61] transition shadow-lg"
+                className="w-full md:w-auto px-10 py-4 bg-[#3d4c7a] text-white rounded-full font-medium shadow-lg"
               >
                 Download
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           </div>
         </div>
       </main>

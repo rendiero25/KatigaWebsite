@@ -107,8 +107,9 @@ export const api = {
   },
 
   // News
-  getNews: async () => {
-    const res = await fetch(`${API_BASE_URL}/news`);
+  getNews: async (params?: { page?: number; limit?: number; search?: string; category?: string; sort?: string }) => {
+    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/news${queryString}`);
     return res.json();
   },
 

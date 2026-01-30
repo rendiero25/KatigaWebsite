@@ -101,15 +101,36 @@ export function useFooter() {
 }
 
 
-export function useNews() {
+export function useNews(page = 1, limit = 12, search = "", category = "", sort = "newest") {
   const [data, setData] = useState<any[]>([]);
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 12, pages: 1 });
   const [loading, setLoading] = useState(true);
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
-    api.getNews().then(setData).finally(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    api.getNews({ page, limit, search: debouncedSearch, category, sort })
+      .then((res) => {
+        if (res.data) {
+          setData(res.data);
+          setPagination(res.pagination);
+        } else {
+          // Fallback for old API response structure if needed
+          setData(res); 
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [page, limit, debouncedSearch, category, sort]);
 
-  return { data, loading };
+  return { data, pagination, loading };
 }
 
 export function useNewsSection() {

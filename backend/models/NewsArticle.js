@@ -20,6 +20,10 @@ const newsArticleSchema = new mongoose.Schema({
   date: {
     type: Date,
     default: Date.now
+  },
+  category: {
+    type: String,
+    default: 'Uncategorized'
   }
 }, { timestamps: true });
 
