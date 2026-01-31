@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { usePartners } from "../hooks/useApi";
 import api from "../services/api";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -16,7 +15,6 @@ export default function AboutUs() {
   const [content, setContent] = useState<any>(null);
   const [tech, setTech] = useState<any>(null);
   const [distribution, setDistribution] = useState<any>(null);
-  const { data: partners } = usePartners();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

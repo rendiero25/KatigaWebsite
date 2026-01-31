@@ -4,6 +4,7 @@
   "description": "Root package to run both backend and frontend",
   "scripts": {
     "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "build": "cd frontend/kumakuma-website && npm install && npm run build",
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend/kumakuma-website && npm run dev"
   },
