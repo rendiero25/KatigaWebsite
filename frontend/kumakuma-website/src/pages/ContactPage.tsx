@@ -40,7 +40,7 @@ export default function ContactPage() {
     setSubmitting(true);
 
     try {
-      await api.submitContactForm(formData);
+      await api.submitContact(formData);
       alert("Pesan berhasil dikirim!");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (error) {

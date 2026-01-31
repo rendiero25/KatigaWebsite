@@ -79,7 +79,7 @@ export default function AboutUs() {
             transition={{ delay: 0.5, duration: 1 }}
             className="-mt-10"
         >
-          <PartnersSection partners={partners}/>
+          <PartnersSection />
         </motion.div>
 
         {/* 3. Gallery Grid/Marquee */}
