@@ -15,7 +15,7 @@ export default function NewsSection() {
 
   return (
     <section className="bg-white pt-5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div>
@@ -48,7 +48,7 @@ export default function NewsSection() {
                   }}
                 />
                 {/* Date Badge */}
-                <div className="absolute top-0 right-0 bg-red-600 text-white p-3 text-center min-w-[60px]">
+                <div className="absolute top-0 right-0 bg-primary text-white p-3 text-center min-w-[60px]">
                     <span className="block text-2xl font-bold leading-none">
                         {new Date(article.date).getDate()}
                     </span>

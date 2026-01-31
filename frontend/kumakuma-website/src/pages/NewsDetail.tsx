@@ -50,7 +50,7 @@ export default function NewsDetail() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
-      <main className="flex-grow pt-24 pb-16">
+      <main className="flex-grow pb-16">
          {/* Hero / Header Image */}
          <div className="h-64 sm:h-96 w-full relative mb-8 sm:mb-12">
             <img 
@@ -63,7 +63,7 @@ export default function NewsDetail() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
             <div className="absolute bottom-0 left-0 w-full p-4 sm:p-8 md:p-12">
-               <div className="max-w-4xl mx-auto text-white">
+               <div className="container mx-auto text-white">
                   <div className="flex items-center gap-4 text-sm sm:text-base font-medium mb-2 opacity-90">
                      <span>{newsItem.author || 'Admin'}</span>
                      <span>&bull;</span>
@@ -77,7 +77,7 @@ export default function NewsDetail() {
          </div>
 
          {/* Content */}
-         <div className="max-w-3xl mx-auto px-4 sm:px-6">
+         <div className="container mx-auto px-4 sm:px-6">
             <div className="prose prose-lg prose-indigo text-gray-700 mx-auto">
                <p className="lead text-xl text-gray-500 font-medium mb-8 border-l-4 border-indigo-500 pl-4 italic">
                   {newsItem.excerpt}

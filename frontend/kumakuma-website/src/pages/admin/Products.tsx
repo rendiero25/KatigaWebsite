@@ -15,9 +15,12 @@ export default function AdminProducts() {
     category: '',
     price: '',
     link: '',
+    linkTokopedia: '',
+    linkShopee: '',
     isFeatured: false
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
 
   const token = localStorage.getItem('adminToken');
 
@@ -54,8 +57,23 @@ export default function AdminProducts() {
     data.append('category', formData.category);
     data.append('price', formData.price);
     data.append('link', formData.link);
+    data.append('linkTokopedia', formData.linkTokopedia);
+    data.append('linkShopee', formData.linkShopee);
     data.append('isFeatured', String(formData.isFeatured));
-    if (imageFile) data.append('image', imageFile);
+    
+    // Append new images
+    if (imageFiles.length > 0) {
+      imageFiles.forEach(file => {
+        data.append('images', file);
+      });
+    }
+
+    // Append kept existing images
+    if (existingImages.length > 0) {
+      existingImages.forEach(img => {
+        data.append('keptImages', img);
+      });
+    }
 
     try {
       const url = editingProduct 
@@ -71,9 +89,15 @@ export default function AdminProducts() {
       if (res.ok) {
         fetchProducts();
         resetForm();
+        alert('Produk berhasil disimpan');
+      } else {
+        const errData = await res.json();
+        alert(`Gagal menyimpan produk: ${errData.message || 'Unknown error'}`);
+        console.error('Save failed:', errData);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product:', error);
+      alert(`Terjadi kesalahan: ${error.message}`);
     }
   };
 
@@ -99,14 +123,28 @@ export default function AdminProducts() {
       category: product.category?._id || product.category || '',
       price: product.price || '',
       link: product.link || '',
+      linkTokopedia: product.linkTokopedia || '',
+      linkShopee: product.linkShopee || '',
       isFeatured: product.isFeatured || false
     });
+    
+    // Populate existing images
+    // If product has 'images' array, use it. Else fallback to 'image' string if present.
+    if (product.images && product.images.length > 0) {
+      setExistingImages(product.images);
+    } else if (product.image) {
+      setExistingImages([product.image]);
+    } else {
+      setExistingImages([]);
+    }
+    
     setShowModal(true);
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', category: '', price: '', link: '', isFeatured: false });
-    setImageFile(null);
+    setFormData({ name: '', description: '', category: '', price: '', link: '', linkTokopedia: '', linkShopee: '', isFeatured: false });
+    setImageFiles([]);
+    setExistingImages([]);
     setEditingProduct(null);
     setShowModal(false);
   };
@@ -117,7 +155,7 @@ export default function AdminProducts() {
         <p className="text-gray-600">Total {products.length} produk</p>
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+          className="cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
         >
           + Tambah Produk
         </button>
@@ -167,13 +205,13 @@ export default function AdminProducts() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(product)}
-                      className="px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded"
+                      className="cursor-pointer px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(product._id)}
-                      className="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
+                      className="cursor-pointer px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded"
                     >
                       Hapus
                     </button>
@@ -240,24 +278,87 @@ export default function AdminProducts() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link Beli</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Link Tokopedia</label>
                   <input
                     type="text"
-                    value={formData.link}
-                    onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                    value={formData.linkTokopedia}
+                    onChange={(e) => setFormData({ ...formData, linkTokopedia: e.target.value })}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                    placeholder="https://..."
+                    placeholder="https://tokopedia.com/..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Link Shopee</label>
+                  <input
+                    type="text"
+                    value={formData.linkShopee}
+                    onChange={(e) => setFormData({ ...formData, linkShopee: e.target.value })}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="https://shopee.co.id/..."
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Gambar</label>
+                
+                {/* Existing Images Preview */}
+                {existingImages.length > 0 && (
+                  <div className="mb-3 grid grid-cols-3 gap-2">
+                    {existingImages.map((img, index) => (
+                      <div key={index} className="relative group">
+                        <img 
+                          src={`http://localhost:5000${img}`} 
+                          alt={`Existing ${index}`} 
+                          className="w-full h-24 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setExistingImages(prev => prev.filter((_, i) => i !== index))}
+                          className="cursor-pointer absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* File Input */}
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2 border rounded-lg"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setImageFiles(prev => [...prev, ...files]);
+                  }}
+                  className="cursor-pointer w-full px-4 py-2 border rounded-lg"
                 />
+                
+                {/* New Files Preview */}
+                {imageFiles.length > 0 && (
+                   <div className="mt-3 grid grid-cols-3 gap-2">
+                     {imageFiles.map((file, index) => (
+                       <div key={index} className="relative group">
+                         <span className="text-xs absolute bottom-0 left-0 bg-black/50 text-white w-full truncate px-1">{file.name}</span>
+                         <div className="w-full h-24 bg-gray-100 flex items-center justify-center rounded-lg border text-gray-400 text-xs">
+                           New Image
+                         </div>
+                          <button
+                           type="button"
+                           onClick={() => setImageFiles(prev => prev.filter((_, i) => i !== index))}
+                           className="cursor-pointer absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 transition"
+                         >
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                           </svg>
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -273,13 +374,13 @@ export default function AdminProducts() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  className="cursor-pointer flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="cursor-pointer flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                 >
                   Simpan
                 </button>

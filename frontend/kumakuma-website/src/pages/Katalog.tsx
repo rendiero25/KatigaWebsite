@@ -122,7 +122,7 @@ export default function Katalog() {
                 whileTap={{ scale: 0.95 }}
                 transition={{ delay: 0.7, duration: 0.4 }}
                 onClick={handleDownload}
-                className="w-full md:w-auto px-10 py-4 bg-[#3d4c7a] text-white rounded-full font-medium shadow-lg"
+                className="cursor-pointer w-full md:w-auto px-10 py-4 bg-[#3d4c7a] text-white rounded-full font-medium shadow-lg"
               >
                 Download
               </motion.button>

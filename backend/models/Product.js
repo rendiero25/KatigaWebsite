@@ -11,7 +11,11 @@ const productSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    required: true
+    required: false
+  },
+  images: {
+    type: [String],
+    default: []
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -23,6 +27,14 @@ const productSchema = new mongoose.Schema({
     default: ''
   },
   link: {
+    type: String,
+    default: ''
+  },
+  linkTokopedia: {
+    type: String,
+    default: ''
+  },
+  linkShopee: {
     type: String,
     default: ''
   },

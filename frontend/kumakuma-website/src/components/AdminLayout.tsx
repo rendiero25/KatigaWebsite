@@ -151,7 +151,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
                   <button
                     onClick={() => toggleMenu(item.label)}
                     className={`
-                              w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition
+                              cursor-pointer w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition
                               ${
                                 isActive
                                   ? "bg-indigo-900 text-white"

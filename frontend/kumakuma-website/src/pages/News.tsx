@@ -101,7 +101,7 @@ export default function News() {
 
         <div className="container mx-auto py-12">
           {/* Search and Filter Section */}
-          <div className="flex flex-col md:flex-row w-full justify-between gap-4 mb-16 z-20 relative">
+          <div className="flex flex-col md:flex-row w-full justify-between items-center gap-4 mb-10 z-20 relative">
             {/* Search Bar */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
@@ -114,7 +114,7 @@ export default function News() {
                 placeholder="Search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-6 py-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-lg"
+                className="cursor-pointer w-full pl-12 pr-6 py-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-lg"
               />
               <FaSearch className="absolute left-5 top-1/2 transform -translate-y-1/2 text-black/40 w-4 h-4" />
             </motion.div>
@@ -130,13 +130,13 @@ export default function News() {
               >
                 <button
                   onClick={() => setIsSortOpen(!isSortOpen)}
-                  className="w-full px-6 py-4 rounded-full border border-gray-300 bg-white flex items-center justify-between shadow-sm text-lg hover:border-indigo-500 transition-colors"
+                  className="cursor-pointer px-6 py-4 rounded-full border border-gray-300 bg-white flex items-center justify-between shadow-sm text-lg hover:border-indigo-500 transition-colors"
                 >
                   <span className="flex items-center gap-2">
                     {sortOptions.find(opt => opt.value === sort)?.icon}
                     {sortOptions.find(opt => opt.value === sort)?.label}
                   </span>
-                  <FaChevronDown className={`w-3 h-3 transition-transform ${isSortOpen ? "rotate-180" : ""}`} />
+                  <FaChevronDown className={`w-3 h-3 ml-2 transition-transform ${isSortOpen ? "rotate-180" : ""}`} />
                 </button>
                 
                 <AnimatePresence>
@@ -155,7 +155,7 @@ export default function News() {
                             setSort(opt.value);
                             setIsSortOpen(false);
                           }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                          className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
                             sort === opt.value 
                               ? "bg-indigo-50 text-indigo-600 font-medium" 
                               : "hover:bg-gray-50 text-gray-700"
@@ -218,7 +218,7 @@ export default function News() {
                     />
 
                     {/* Date Badge */}
-                    <div className="absolute top-0 right-4 bg-[#D32F2F] text-white p-2 text-center min-w-[60px]">
+                    <div className="absolute top-0 right-4 bg-primary text-white p-2 text-center min-w-[60px]">
                       <span className="block text-xl font-bold leading-none">
                         {new Date(item.date).getDate()}
                       </span>

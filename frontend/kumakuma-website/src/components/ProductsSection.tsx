@@ -73,12 +73,12 @@ export default function ProductsSection() {
                    </div>
                    
                    {/* Content */}
-                   <div className="flex-1 flex flex-col items-start">
+                   <div className="flex-1 flex flex-col items-start px-10">
                      <h3 className="text-2xl font-bold text-black mb-2 leading-tight">
                        {product.name}
                      </h3>
-                     <p className="text-lg text-black/80 line-clamp-3 mb-4 leading-relaxed">
-                       {product.description || 'Deskripsi singkat produk akan muncul di sini untuk memberikan informasi awal.'}
+                     <p className="text-lg text-black/80 max-w-lg line-clamp-2 mb-4 leading-relaxed ">
+                       {product.description}
                      </p>
                      
                      <div className="mt-auto">

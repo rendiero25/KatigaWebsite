@@ -63,20 +63,36 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/products
 // @desc    Create a product
 // @access  Private
-router.post('/', auth, upload.single('image'), async (req, res) => {
+router.post('/', auth, upload.any(), async (req, res) => {
   console.log('POST /api/products hit');
   console.log('Body:', req.body);
-  console.log('File:', req.file);
+  console.log('Files:', req.files); // Debug log
   try {
-    const { name, description, category, price, link, isFeatured } = req.body;
+    const { name, description, category, price, link, linkTokopedia, linkShopee, isFeatured } = req.body;
+    
+    // Manual filtering: prefer 'images' field but fallback to all files if necessary
+    // This robustness helps avoid "Unexpected field" errors from multer strictness
+    let imageFiles = req.files || [];
+    // Optionally filter: imageFiles = req.files.filter(f => f.fieldname === 'images');
+    
+    const imagePaths = imageFiles.map(file => `/uploads/${file.filename}`);
+    
+    // Primary image is the first one, or empty string
+    const primaryImage = imagePaths.length > 0 ? imagePaths[0] : '';
+    
+    console.log('Using image paths:', imagePaths);
+
     const product = new Product({
       name,
       description,
       category,
       price,
       link,
+      linkTokopedia,
+      linkShopee,
       isFeatured: isFeatured === 'true',
-      image: req.file ? `/uploads/${req.file.filename}` : ''
+      image: primaryImage,
+      images: imagePaths
     });
     await product.save();
     console.log('Product saved:', product);
@@ -90,25 +106,55 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
 // @route   PUT /api/products/:id
 // @desc    Update a product
 // @access  Private
-router.put('/:id', auth, upload.single('image'), async (req, res) => {
+router.put('/:id', auth, upload.any(), async (req, res) => {
+  console.log('PUT /api/products/:id hit');
+  console.log('Files:', req.files);
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const { name, description, category, price, link, isFeatured } = req.body;
+    const { name, description, category, price, link, linkTokopedia, linkShopee, isFeatured, keptImages } = req.body;
+    
     if (name) product.name = name;
     if (description) product.description = description;
     if (category) product.category = category;
     if (price) product.price = price;
     if (link) product.link = link;
+    if (linkTokopedia !== undefined) product.linkTokopedia = linkTokopedia;
+    if (linkShopee !== undefined) product.linkShopee = linkShopee;
     if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true';
-    if (req.file) product.image = `/uploads/${req.file.filename}`;
+
+    // Handle images
+    // keptImages might be a string (if 1) or array (if multiple) or undefined
+    let currentImages = [];
+    if (keptImages) {
+        if (Array.isArray(keptImages)) {
+            currentImages = keptImages;
+        } else {
+            currentImages = [keptImages];
+        }
+    }
+
+    // Add new images
+    let imageFiles = req.files || [];
+    const newImagePaths = imageFiles.map(file => `/uploads/${file.filename}`);
+    
+    const finalImages = [...currentImages, ...newImagePaths];
+    product.images = finalImages;
+    
+    // Update primary image (first one)
+    if (finalImages.length > 0) {
+        product.image = finalImages[0];
+    } else {
+        product.image = '';
+    }
 
     await product.save();
     res.json(product);
   } catch (error) {
+    console.error('Error in PUT /api/products:', error);
     res.status(500).json({ message: error.message });
   }
 });

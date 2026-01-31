@@ -18,7 +18,12 @@ export default function Header() {
   }, []);
 
   const isActive = (path: string) => {
-    return location.pathname === path
+    if (path === "/") {
+      return location.pathname === "/"
+        ? "bg-white text-black"
+        : "text-white hover:text-gray-300";
+    }
+    return location.pathname === path || location.pathname.startsWith(path + "/")
       ? "bg-white text-black"
       : "text-white hover:text-gray-300";
   };
@@ -29,6 +34,7 @@ export default function Header() {
   const isKatalogPage = location.pathname === "/katalog";
   const isNewsPage = location.pathname === "/berita";
   const isContactPage = location.pathname === "/kontak";
+  const isProductDetailPage = location.pathname.startsWith("/produk/");
 
   return (
     <header
@@ -37,10 +43,10 @@ export default function Header() {
           ? isScrolled
             ? "fixed w-full bg-white/80 backdrop-blur-md shadow-sm"
             : "absolute w-full bg-transparent"
-          : `sticky ${isScrolled || isAboutPage || isProductPage || isNewsPage || isContactPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`
+          : `sticky ${isScrolled || isAboutPage || isProductPage || isNewsPage || isContactPage || isProductDetailPage ? "bg-white/80 backdrop-blur-md" : "bg-[#F9F7F2]"}`
       }`}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20 py-12">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
@@ -63,38 +69,38 @@ export default function Header() {
           <nav className="hidden md:flex items-center bg-black rounded-full px-1.5 py-1.5 gap-2 shadow-lg ">
             <Link
               to="/"
-              className={`text-md font-medium transition px-6 py-1.5 rounded-full ${isActive("/")}`}
+              className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/")}`}
             >
               Beranda
             </Link>
             <Link
               to="/tentang-kami"
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/tentang-kami")}`}
+              className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/tentang-kami")}`}
             >
               Tentang Kami
             </Link>
             <Link
               to="/produk"
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/produk")}`}
+              className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/produk")}`}
             >
               Produk
             </Link>
 
             <Link
               to="/katalog"
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/katalog")}`}
+              className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/katalog")}`}
             >
               Katalog
             </Link>
             <Link
               to="/berita"
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/berita")}`}
+              className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/berita")}`}
             >
               Berita
             </Link>
             <Link
               to="/kontak"
-              className={`text-md font-medium transition px-4 py-1.5 rounded-full ${isActive("/kontak")}`}
+              className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/kontak")}`}
             >
               Kontak
             </Link>

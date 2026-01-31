@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useFooter, useContactInfo } from "../hooks/useApi";
 import { FaPhone, FaWhatsapp, FaEnvelope, FaInstagram } from "react-icons/fa";
+import { div } from "motion/react-client";
 
 export default function Footer() {
   const { data: footer } = useFooter();
@@ -9,9 +10,9 @@ export default function Footer() {
   const isHome = location.pathname === "/";
 
   return (
-    <footer className={`${!isHome ? "bg-gradient-to-t from-primary to-transparent" : "bg-white"} pt-10 container mx-auto`}>
+    <footer className={`${!isHome ? "bg-gradient-to-t from-[#F9F7F2] via-[#F9F7F2] to-transparant" : "bg-white"} pt-10`}>
       {/* Consultation CTA */}
-      <div className="mb-10">
+      <div className="mb-10 container mx-auto px-4">
         <div className="flex flex-col md:flex-row gap-12 items-center justify-between">
           <div className="flex-1">
             <p className="text-lg font-bold text-black mb-2">
@@ -39,7 +40,7 @@ export default function Footer() {
       </div>
 
       {/* Main Footer Info */}
-      <div className="pb-10">
+      <div className="pb-10 container mx-auto px-4">
         <div className=" gap-10">
           {/* Left Column: Address */}
           <div>

@@ -259,8 +259,8 @@ export default function Products() {
                         <p className="text-xs text-gray-500 line-clamp-2 mb-2">
                           {product.description}
                         </p>
-                        <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-                          Beli Sekarang
+                        <button className="cursor-pointer text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+                          Lihat Detail
                         </button>
                       </div>
                     </Link>
