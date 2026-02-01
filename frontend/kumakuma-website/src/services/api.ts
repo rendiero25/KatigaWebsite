@@ -1,4 +1,18 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Normalize API_BASE_URL to ensure it always ends with /api
+const getBaseUrl = () => {
+  let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  // Remove trailing slashes
+  while (url.endsWith('/')) {
+    url = url.slice(0, -1);
+  }
+  // Append /api if missing
+  if (!url.endsWith('/api')) {
+    url += '/api';
+  }
+  return url;
+};
+
+const API_BASE_URL = getBaseUrl();
 
 export const api = {
   // Site Settings
