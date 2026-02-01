@@ -138,7 +138,14 @@ export const api = {
   getImageUrl: (path: string) => {
     if (!path) return '/placeholder.jpg';
     if (path.startsWith('http')) return path;
-    return `http://localhost:5000${path}`;
+    
+    // Remove /api from API_BASE_URL to get the root server URL if needed, 
+    // or just construct it relative to the domain if hosted appropriately.
+    // Assuming API_BASE_URL is like 'https://.../api', we might want the root 'https://...' for static files depending on how they are served.
+    // However, the backend serves /uploads relative to root.
+    
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}${path}`;
   }
 };
 

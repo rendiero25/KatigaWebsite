@@ -10,7 +10,30 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL || 'https://kumakuma-website.vercel.app' // Fallback or env var
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1 && !origin.includes('vercel.app')) {
+       // Optional: Allow all vercel deploy previews via .includes('vercel.app') check if needed, 
+       // or keep it strict. For now, strict check against list + flexible vercel.
+       // flexible check for vercel previews:
+       if (origin.endsWith('.vercel.app')) {
+           return callback(null, true);
+       }
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
