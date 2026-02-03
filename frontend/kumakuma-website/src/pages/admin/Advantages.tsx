@@ -1,19 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+interface Advantage {
+  _id: string;
+  number: string;
+  title: string;
+  description: string;
+  order: number;
+}
+
+interface SectionContent {
+  title: string;
+  subtitle: string;
+  content: string;
+}
 
 export default function AdminAdvantages() {
-  const [advantages, setAdvantages] = useState<any[]>([]);
-  const [sectionContent, setSectionContent] = useState({ title: '', subtitle: '', content: '' });
+  const [advantages, setAdvantages] = useState<Advantage[]>([]);
+  const [sectionContent, setSectionContent] = useState<SectionContent>({ title: '', subtitle: '', content: '' });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Advantage | null>(null);
   const [formData, setFormData] = useState({ number: '', title: '', description: '', order: 0 });
 
   const token = localStorage.getItem('adminToken');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
         const res = await fetch(`${API_URL}/advantages`);
         setAdvantages(await res.json());
@@ -31,9 +46,11 @@ export default function AdminAdvantages() {
         console.error("Error fetching data:", error);
         setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSectionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +84,7 @@ export default function AdminAdvantages() {
     fetchData();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: Advantage) => {
     setEditing(item);
     setFormData({ number: item.number, title: item.title, description: item.description, order: item.order || 0 });
     setShowModal(true);

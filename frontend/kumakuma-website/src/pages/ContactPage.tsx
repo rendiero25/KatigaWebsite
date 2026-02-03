@@ -20,8 +20,7 @@ export default function ContactPage() {
 
   useEffect(() => {
     // Fetch Page Content
-    fetch("http://localhost:5000/api/contact-page")
-      .then((res) => res.json())
+    api.getContactPageContent()
       .then(setContent)
       .catch(console.error);
 

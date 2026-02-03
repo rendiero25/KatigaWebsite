@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
+import api from '../../services/api';
 import { FaTrash, FaPlus } from "react-icons/fa";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminAbout() {
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function AdminAbout() {
 
   const token = localStorage.getItem("adminToken");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/about`);
       const data = await res.json();
@@ -40,11 +41,11 @@ export default function AdminAbout() {
         setExistingImages(data.images || []);
         if (data.mission?.backgroundImage)
           setMissionBgPreview(
-            `http://localhost:5000${data.mission.backgroundImage}`,
+            api.getImageUrl(data.mission.backgroundImage),
           );
         if (data.vision?.backgroundImage)
           setVisionBgPreview(
-            `http://localhost:5000${data.vision.backgroundImage}`,
+            api.getImageUrl(data.vision.backgroundImage),
           );
       }
       setLoading(false);
@@ -52,11 +53,11 @@ export default function AdminAbout() {
       console.error("Failed to fetch about content", e);
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleMissionChange = (index: number, value: string) => {
     const newPoints = [...formData.missionPoints];
@@ -199,7 +200,7 @@ export default function AdminAbout() {
                     className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden"
                   >
                     <img
-                      src={`http://localhost:5000${img}`}
+                      src={api.getImageUrl(img)}
                       alt=""
                       className="w-full h-full object-cover"
                     />

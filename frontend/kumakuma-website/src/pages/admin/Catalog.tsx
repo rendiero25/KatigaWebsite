@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+interface CatalogData {
+  title: string;
+  description: string;
+  backgroundImage?: string;
+  cardImage?: string;
+  fileUrl?: string;
+}
 
 export default function AdminCatalog() {
-  const [catalog, setCatalog] = useState<any>({});
+  const [catalog, setCatalog] = useState<CatalogData>({ title: '', description: '' });
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '' });
   const [bgFile, setBgFile] = useState<File | null>(null);
@@ -13,14 +22,20 @@ export default function AdminCatalog() {
 
   const token = localStorage.getItem('adminToken');
 
-  useEffect(() => {
-    fetch(`${API_URL}/catalog`)
-      .then(res => res.json())
-      .then(data => {
-        setCatalog(data);
-        setFormData({ title: data.title || '', description: data.description || '' });
-      });
+  const fetchCatalog = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/catalog`);
+      const data = await res.json();
+      setCatalog(data);
+      setFormData({ title: data.title || '', description: data.description || '' });
+    } catch (error) {
+      console.error('Error fetching catalog:', error);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchCatalog();
+  }, [fetchCatalog]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +69,7 @@ export default function AdminCatalog() {
             <h3 className="font-semibold text-gray-900 mb-4">Background Image</h3>
             <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4">
               {catalog.backgroundImage ? (
-                <img src={`http://localhost:5000${catalog.backgroundImage}`} alt="Catalog BG" className="w-full h-full object-cover" />
+                <img src={api.getImageUrl(catalog.backgroundImage)} alt="Catalog BG" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">Belum ada gambar</div>
               )}
@@ -66,7 +81,7 @@ export default function AdminCatalog() {
             <h3 className="font-semibold text-gray-900 mb-4">Gambar Kartu Katalog (Hexagon/Collage)</h3>
             <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4 max-w-xs mx-auto">
               {catalog.cardImage ? (
-                <img src={`http://localhost:5000${catalog.cardImage}`} alt="Card Image" className="w-full h-full object-contain" />
+                <img src={api.getImageUrl(catalog.cardImage)} alt="Card Image" className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">Belum ada gambar</div>
               )}
@@ -86,7 +101,7 @@ export default function AdminCatalog() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 mb-4">File Catalog (PDF)</h3>
             {catalog.fileUrl && (
-              <p className="text-sm text-gray-600 mb-2">File saat ini: <a href={`http://localhost:5000${catalog.fileUrl}`} target="_blank" className="text-indigo-600">{catalog.fileUrl}</a></p>
+              <p className="text-sm text-gray-600 mb-2">File saat ini: <a href={api.getImageUrl(catalog.fileUrl)} target="_blank" className="text-indigo-600">{catalog.fileUrl}</a></p>
             )}
             <input type="file" accept=".pdf" onChange={(e) => setPdfFile(e.target.files?.[0] || null)} className="w-full px-4 py-2 border rounded-lg" />
           </div>

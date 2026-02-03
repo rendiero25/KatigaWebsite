@@ -114,7 +114,7 @@ export default function AboutUs() {
                   className="w-64 h-48 md:w-80 md:h-90 shrink-0 rounded-xl overflow-hidden"
                 >
                   <img
-                    src={`http://localhost:5000${img}`}
+                    src={api.getImageUrl(img)}
                     alt=""
                     className="w-full h-full object-cover hover:scale-105 transition duration-500 shadow-2xl"
                   />
@@ -153,7 +153,7 @@ export default function AboutUs() {
             className="relative rounded-3xl overflow-hidden bg-cover bg-center text-white h-[400px] flex justify-center items-center w-full shadow-xl mb-8"
             style={{
               backgroundImage: content?.mission?.backgroundImage
-                ? `url(http://localhost:5000${content.mission.backgroundImage})`
+                ? `url(${api.getImageUrl(content.mission.backgroundImage)})`
                 : "",
             }}
           >
@@ -185,7 +185,7 @@ export default function AboutUs() {
             className="relative rounded-3xl overflow-hidden bg-cover bg-center text-white flex justify-center items-center w-full h-[400px] shadow-xl"
             style={{
               backgroundImage: content?.vision?.backgroundImage
-                ? `url(http://localhost:5000${content.vision.backgroundImage})`
+                ? `url(${api.getImageUrl(content.vision.backgroundImage)})`
                 : "",
             }}
           >
@@ -236,7 +236,7 @@ export default function AboutUs() {
                 <div className="rounded-3xl overflow-hidden size-3/4 relative group">
                   {tech.section1?.image ? (
                     <img
-                      src={`http://localhost:5000${tech.section1.image}`}
+                      src={api.getImageUrl(tech.section1.image)}
                       className="w-full h-full object-cover"
                       alt="Certificates"
                     />
@@ -290,7 +290,7 @@ export default function AboutUs() {
                 <div className="rounded-3xl overflow-hidden size-3/4 relative group">
                   {tech.section2?.image ? (
                     <img
-                      src={`http://localhost:5000${tech.section2.image}`}
+                      src={api.getImageUrl(tech.section2.image)}
                       className="w-full h-full object-cover"
                       alt="Forest to Fashion"
                     />
@@ -357,7 +357,7 @@ export default function AboutUs() {
             <div className="relative w-full aspect-2/1 rounded-3xl overflow-hidden">
               {distribution.mapImage ? (
                 <img
-                  src={`http://localhost:5000${distribution.mapImage}`}
+                  src={api.getImageUrl(distribution.mapImage)}
                   alt="Map"
                   className="w-full h-full object-contain"
                 />

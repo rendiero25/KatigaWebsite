@@ -1,4 +1,5 @@
 import { useManufacturing } from '../hooks/useApi';
+import api from '../services/api';
 
 export default function ManufacturingSection() {
   const { data: manufacturing, loading } = useManufacturing();
@@ -30,7 +31,7 @@ export default function ManufacturingSection() {
       {manufacturing?.backgroundImage ? (
           <div className="absolute inset-0 z-0">
               <img 
-                  src={`http://localhost:5000${manufacturing.backgroundImage}`} 
+                  src={api.getImageUrl(manufacturing.backgroundImage)} 
                   alt="Manufacturing Background" 
                   className="w-full h-full object-cover"
               />
@@ -57,7 +58,7 @@ export default function ManufacturingSection() {
                   <div className="w-20 mx-auto mb-6 flex flex-wrap items-end justify-center">
                      {feature.icon ? (
                          <img 
-                            src={`http://localhost:5000${feature.icon}`} 
+                            src={api.getImageUrl(feature.icon)} 
                             alt={feature.title} 
                             className="h-20 object-cover" 
                             onError={(e) => {

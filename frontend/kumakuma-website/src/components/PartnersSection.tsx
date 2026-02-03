@@ -1,4 +1,5 @@
 import { usePartners } from '../hooks/useApi';
+import api from '../services/api';
 
 export default function PartnersSection() {
   const { data: partners, loading } = usePartners();
@@ -29,7 +30,7 @@ export default function PartnersSection() {
               {partners.map((partner) => (
                 <div key={partner._id} className="shrink-0 h-8 md:h-20 w-auto flex items-center justify-between group">
                   <img
-                    src={`http://localhost:5000${partner.logo}`}
+                    src={api.getImageUrl(partner.logo)}
                     alt={partner.name}
                     className="w-full object-contain transition-all duration-300"
                     onError={(e) => {

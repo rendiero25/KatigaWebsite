@@ -1,23 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+interface Certification {
+  _id: string;
+  name: string;
+  description: string;
+  order: number;
+  icon: string;
+}
 
 export default function AdminCertifications() {
-  const [certifications, setCertifications] = useState<any[]>([]);
+  const [certifications, setCertifications] = useState<Certification[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState<any>(null);
+  const [editing, setEditing] = useState<Certification | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', order: 0 });
   const [iconFile, setIconFile] = useState<File | null>(null);
 
   const token = localStorage.getItem('adminToken');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const res = await fetch(`${API_URL}/certifications`);
     setCertifications(await res.json());
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +52,7 @@ export default function AdminCertifications() {
     fetchData();
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: Certification) => {
     setEditing(item);
     setFormData({ name: item.name, description: item.description, order: item.order || 0 });
     setShowModal(true);
@@ -66,7 +75,7 @@ export default function AdminCertifications() {
       <div className="grid md:grid-cols-3 gap-4">
         {certifications.map((item) => (
           <div key={item._id} className="bg-white rounded-xl shadow-sm p-6 relative group">
-            {item.icon && <img src={`http://localhost:5000${item.icon}`} alt="" className="w-12 h-12 object-contain mb-4" />}
+            {item.icon && <img src={api.getImageUrl(item.icon)} alt="" className="w-12 h-12 object-contain mb-4" />}
             <h3 className="font-semibold text-gray-900 mb-2">{item.name}</h3>
             <p className="text-gray-600 text-sm">{item.description}</p>
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition flex gap-2">

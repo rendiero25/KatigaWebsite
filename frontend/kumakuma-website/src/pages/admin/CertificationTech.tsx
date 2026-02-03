@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
+import api from "../../services/api";
 import { FaPlus, FaTrash, FaSave } from "react-icons/fa";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminCertificationTech() {
   const [loading, setLoading] = useState(true);
@@ -24,7 +25,7 @@ export default function AdminCertificationTech() {
 
   const token = localStorage.getItem("adminToken");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/certification-tech`);
       const data = await res.json();
@@ -39,20 +40,20 @@ export default function AdminCertificationTech() {
           sec2Points: data.section2?.points || [],
         });
         if (data.section1?.image)
-          setSec1ImagePreview(`http://localhost:5000${data.section1.image}`);
+          setSec1ImagePreview(api.getImageUrl(data.section1.image));
         if (data.section2?.image)
-          setSec2ImagePreview(`http://localhost:5000${data.section2.image}`);
+          setSec2ImagePreview(api.getImageUrl(data.section2.image));
       }
       setLoading(false);
     } catch (e) {
       console.error("Failed to fetch data", e);
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Handlers for Section 1 Points
   const addSec1Point = () => {

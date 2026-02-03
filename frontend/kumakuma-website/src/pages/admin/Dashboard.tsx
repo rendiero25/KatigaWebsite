@@ -1,4 +1,5 @@
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 import { useProducts, useCategories } from '../../hooks/useApi';
 import { Link } from 'react-router-dom';
 import { FaBox, FaUsers, FaNewspaper, FaEnvelope, FaImage, FaStar } from 'react-icons/fa';
@@ -94,7 +95,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden">
                         <img 
-                          src={`http://localhost:5000${product.image}`}
+                          src={api.getImageUrl(product.image)}
                           alt={product.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {

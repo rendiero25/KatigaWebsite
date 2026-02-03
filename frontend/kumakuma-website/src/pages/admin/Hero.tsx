@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminHero() {
   const [hero, setHero] = useState<any>({});
@@ -83,7 +84,7 @@ export default function AdminHero() {
             <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-4">
               {hero.image ? (
                 <img 
-                  src={`http://localhost:5000${hero.image}`}
+                  src={api.getImageUrl(hero.image)}
                   alt="Hero"
                   className="w-full h-full object-cover"
                 />

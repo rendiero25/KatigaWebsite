@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSiteSettings } from "../hooks/useApi";
+import api from "../services/api";
 import IconTokopedia from "../assets/icon-tokopedia.png";
 import IconShopee from "../assets/icon-shopee.png";
 
@@ -53,7 +54,7 @@ export default function Header() {
             <div className="">
               {settings?.logo ? (
                 <img
-                  src={`http://localhost:5000${settings.logo}`}
+                  src={api.getImageUrl(settings.logo)}
                   alt="Logo"
                   className="w-full h-full object-cover"
                 />

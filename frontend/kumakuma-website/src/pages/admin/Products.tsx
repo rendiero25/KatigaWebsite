@@ -1,14 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+interface Product {
+  _id: string;
+  name: string;
+  description?: string;
+  category: any; // Can be ID or object depending on population
+  price: string;
+  link?: string;
+  linkTokopedia?: string;
+  linkShopee?: string;
+  isFeatured: boolean;
+  image: string;
+  images?: string[];
+}
 
 export default function AdminProducts() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -24,7 +39,7 @@ export default function AdminProducts() {
 
   const token = localStorage.getItem('adminToken');
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/products`);
       const data = await res.json();
@@ -32,9 +47,9 @@ export default function AdminProducts() {
     } catch (error) {
       console.error('Error fetching products:', error);
     }
-  };
+  }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/categories`);
       const data = await res.json();
@@ -42,11 +57,11 @@ export default function AdminProducts() {
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false));
-  }, []);
+  }, [fetchProducts, fetchCategories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +130,7 @@ export default function AdminProducts() {
     }
   };
 
-  const handleEdit = (product: any) => {
+  const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -180,7 +195,7 @@ export default function AdminProducts() {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
                       <img 
-                        src={`http://localhost:5000${product.image}`}
+                        src={api.getImageUrl(product.image)}
                         alt={product.name}
                         className="w-full h-full object-cover"
                         onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/48'}
@@ -307,7 +322,7 @@ export default function AdminProducts() {
                     {existingImages.map((img, index) => (
                       <div key={index} className="relative group">
                         <img 
-                          src={`http://localhost:5000${img}`} 
+                          src={api.getImageUrl(img)} 
                           alt={`Existing ${index}`} 
                           className="w-full h-24 object-cover rounded-lg border"
                         />

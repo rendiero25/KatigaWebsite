@@ -41,7 +41,7 @@ function App() {
         <Route path="/berita" element={<News />} />
         <Route path="/berita/:id" element={<NewsDetail />} />
         
-        <Route path="/berita/:id" element={<NewsDetail />} />
+
         <Route path="/kontak" element={<ContactPage />} />
         
         {/* Admin Routes */}
@@ -63,7 +63,7 @@ function App() {
         <Route path="/admin/certification-tech" element={<AdminCertificationTech />} />
         <Route path="/admin/distribution" element={<AdminDistribution />} />
         <Route path="/admin/manufacturing" element={<AdminManufacturing />} />
-        <Route path="/admin/manufacturing" element={<AdminManufacturing />} />
+
         <Route path="/admin/product-page-content" element={<AdminProductPageContent />} />
         <Route path="/admin/contact-page-content" element={<AdminContactPageContent />} />
       </Routes>

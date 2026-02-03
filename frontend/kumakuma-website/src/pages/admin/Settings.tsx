@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState<any>({});
@@ -63,7 +64,7 @@ export default function AdminSettings() {
             <h3 className="font-semibold text-gray-900 mb-4">Logo Website</h3>
             <div className="flex items-center gap-4 mb-4">
               {settings.logo ? (
-                <img src={`http://localhost:5000${settings.logo}`} alt="Logo" className="w-20 h-20 object-contain border rounded-lg" />
+                <img src={api.getImageUrl(settings.logo)} alt="Logo" className="w-20 h-20 object-contain border rounded-lg" />
               ) : (
                 <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">No Logo</div>
               )}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "../../components/AdminLayout";
+import api from '../../services/api';
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminNews() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -145,7 +146,7 @@ export default function AdminNews() {
                 />
               ) : sectionContent.bannerImage ? (
                 <img
-                  src={`http://localhost:5000${sectionContent.bannerImage}`}
+                  src={api.getImageUrl(sectionContent.bannerImage)}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -227,7 +228,7 @@ export default function AdminNews() {
             <div className="aspect-video bg-gray-100">
               {item.image && (
                 <img
-                  src={`http://localhost:5000${item.image}`}
+                  src={api.getImageUrl(item.image)}
                   alt=""
                   className="w-full h-full object-cover"
                 />

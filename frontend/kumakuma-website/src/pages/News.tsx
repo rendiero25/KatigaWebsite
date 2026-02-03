@@ -29,8 +29,7 @@ export default function News() {
 
   useEffect(() => {
     // Fetch section content for banner
-    fetch("http://localhost:5000/api/news/content")
-      .then((res) => res.json())
+    api.getNewsSection()
       .then(setSectionContent)
       .catch(console.error);
   }, []);

@@ -1,26 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+interface Partner {
+  _id: string;
+  name: string;
+  logo: string;
+  order?: number; // Add order as optional since it's used
+}
 
 export default function AdminPartners() {
-  const [partners, setPartners] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingPartner, setEditingPartner] = useState<any>(null);
+  const [editing, setEditing] = useState<Partner | null>(null);
   const [formData, setFormData] = useState({ name: '', order: 0 });
   const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const token = localStorage.getItem('adminToken');
 
-  const fetchPartners = async () => {
+  const fetchPartners = useCallback(async () => {
     const res = await fetch(`${API_URL}/partners`);
     const data = await res.json();
     setPartners(data);
-    setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchPartners(); }, []);
+  useEffect(() => { fetchPartners(); }, [fetchPartners]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +35,9 @@ export default function AdminPartners() {
     data.append('order', String(formData.order));
     if (logoFile) data.append('logo', logoFile);
 
-    const url = editingPartner ? `${API_URL}/partners/${editingPartner._id}` : `${API_URL}/partners`;
+    const url = editing ? `${API_URL}/partners/${editing._id}` : `${API_URL}/partners`;
     const res = await fetch(url, {
-      method: editingPartner ? 'PUT' : 'POST',
+      method: editing ? 'PUT' : 'POST',
       headers: { 'Authorization': `Bearer ${token}` },
       body: data
     });
@@ -51,16 +57,16 @@ export default function AdminPartners() {
     fetchPartners();
   };
 
-  const handleEdit = (partner: any) => {
-    setEditingPartner(partner);
-    setFormData({ name: partner.name, order: partner.order || 0 });
+  const handleEdit = (item: Partner) => {
+    setEditing(item);
+    setFormData({ name: item.name, order: item.order || 0 });
     setShowModal(true);
   };
 
   const resetForm = () => {
     setFormData({ name: '', order: 0 });
     setLogoFile(null);
-    setEditingPartner(null);
+    setEditing(null);
     setShowModal(false);
   };
 
@@ -78,7 +84,7 @@ export default function AdminPartners() {
           <div key={partner._id} className="bg-white rounded-xl shadow-sm p-4 text-center group relative">
             <div className="h-16 flex items-center justify-center mb-2">
               <img 
-                src={`http://localhost:5000${partner.logo}`}
+                src={api.getImageUrl(partner.logo)}
                 alt={partner.name}
                 className="max-h-full max-w-full object-contain"
                 onError={(e) => (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100x50'}
@@ -97,7 +103,7 @@ export default function AdminPartners() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-4">{editingPartner ? 'Edit' : 'Tambah'} Partner</h3>
+            <h3 className="text-lg font-semibold mb-4">{editing ? 'Edit' : 'Tambah'} Partner</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nama</label>

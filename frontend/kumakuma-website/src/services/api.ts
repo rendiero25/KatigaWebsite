@@ -114,6 +114,11 @@ export const api = {
     return res.json();
   },
 
+  getContactPageContent: async () => {
+    const res = await fetch(`${API_BASE_URL}/contact-page`);
+    return res.json();
+  },
+
   // Footer
   getFooter: async () => {
     const res = await fetch(`${API_BASE_URL}/footer`);
@@ -129,6 +134,11 @@ export const api = {
 
   getNewsSection: async () => {
     const res = await fetch(`${API_BASE_URL}/news/content`);
+    return res.json();
+  },
+
+  getNewsDetail: async (id: string) => {
+    const res = await fetch(`${API_BASE_URL}/news/${id}`);
     return res.json();
   },
 

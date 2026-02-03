@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminDistribution() {
   const [data, setData] = useState<any>({});
@@ -66,7 +67,7 @@ export default function AdminDistribution() {
             <h3 className="font-semibold text-gray-900 mb-4">Gambar Peta</h3>
             <div className="aspect-2/1 bg-gray-100 rounded-lg overflow-hidden mb-4">
               {data.mapImage ? (
-                <img src={`http://localhost:5000${data.mapImage}`} alt="" className="w-full h-full object-contain" />
+                <img src={api.getImageUrl(data.mapImage)} alt="" className="w-full h-full object-contain" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
               )}

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import api from '../../services/api';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminManufacturing() {
   const [data, setData] = useState<any>({});
@@ -143,7 +144,7 @@ export default function AdminManufacturing() {
                <div className="flex items-center gap-4">
                    {data.backgroundImage && (
                        <img 
-                           src={`http://localhost:5000${data.backgroundImage}`} 
+                           src={api.getImageUrl(data.backgroundImage)} 
                            alt="Current Background" 
                            className="w-32 h-20 object-cover rounded-lg border"
                        />
@@ -187,7 +188,7 @@ export default function AdminManufacturing() {
                                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                                      {feature.icon ? (
                                          <img 
-                                            src={`http://localhost:5000${feature.icon}`} 
+                                            src={api.getImageUrl(feature.icon)} 
                                             alt={`Icon ${i+1}`}
                                             className="w-10 h-10 object-contain"
                                          />

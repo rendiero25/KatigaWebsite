@@ -12,8 +12,8 @@ export default function NewsDetail() {
   useEffect(() => {
     if (id) {
       // setLoading(true);
-      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/news/${id}`)
-        .then(res => res.json())
+      // setLoading(true);
+      api.getNewsDetail(id)
         .then(setNewsItem)
         .catch(err => console.error(err))
         .finally(() => setLoading(false));
