@@ -10,35 +10,43 @@ connectDB();
 const app = express();
 
 // Middleware
+// Middleware
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.FRONTEND_URL || 'https://kumakuma-website.vercel.app' // Fallback or env var
+  'https://katiga.id' // Fallback
 ];
+
+// Add FRONTEND_URL from env if it exists
+if (process.env.FRONTEND_URL) {
+  // Support comma-separated URLs and remove trailing slashes
+  const envUrls = process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, ''));
+  allowedOrigins.push(...envUrls);
+}
+
+console.log('Allowed Origins configuration:', allowedOrigins);
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1 && !origin.includes('vercel.app')) {
-       // Optional: Allow all vercel deploy previews via .includes('vercel.app') check if needed, 
-       // or keep it strict. For now, strict check against list + flexible vercel.
-       // flexible check for vercel previews:
-       if (origin.endsWith('.vercel.app')) {
-           return callback(null, true);
-       }
-      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+    
+    // Check if origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
     }
-    return callback(null, true);
+
+    console.log('BLOCKED BY CORS - Origin:', origin);
+    var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
   },
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files with loose CORS (Images are usually public)
+app.use('/uploads', cors({ origin: '*', credentials: false }), express.static(path.join(__dirname, 'uploads')));
 
 // Import Routes
 const siteSettingsRoutes = require('./routes/siteSettingsRoutes');
