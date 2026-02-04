@@ -61,6 +61,8 @@ export function useProducts(params?: { category?: string; featured?: boolean }) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setLoading(true);
     api.getProducts(params).then(setData).finally(() => setLoading(false));
   }, [params?.category, params?.featured]);
 

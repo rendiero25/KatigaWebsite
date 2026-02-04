@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
       } else {
         // If not ID, try to find category by name (case-insensitive)
         const categoryDoc = await ProductCategory.findOne({ 
-          name: { $regex: new RegExp(`^${category}$`, 'i') } 
+          name: { $regex: new RegExp(`^${category.trim()}$`, 'i') } 
         });
         
         if (categoryDoc) {

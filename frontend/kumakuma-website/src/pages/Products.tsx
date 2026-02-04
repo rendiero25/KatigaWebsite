@@ -39,7 +39,9 @@ export default function Products() {
 
   // Determine Category to fetch based on active Tab and Settings
   const currentCategoryName =
-    activeTab === 1 ? settings?.category1?.name : settings?.category2?.name;
+    activeTab === 1
+      ? (settings?.category1?.name || "Perlengkapan Tidur Bayi")
+      : settings?.category2?.name;
 
   const { data: productskumakuma, loading: productsLoading } = useProducts({
     category: currentCategoryName,
