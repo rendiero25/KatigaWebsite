@@ -49,15 +49,15 @@ export default function Katalog() {
           />
 
           {/* Gradient Overlay Layer */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white-50 to-transparent"></div>
+          <div className="absolute inset-0 bg-linear-to-r from-white-50 to-transparent"></div>
 
-          <div className="container mx-auto relative h-full flex items-center z-10">
+          <div className="container mx-auto relative h-full flex items-center z-10 px-4 sm:px-10 lg:px-20 xl:px-30">
             {/* Floating Card */}
             <motion.div 
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="rounded-r-3xl p-8 md:p-12 max-w-xl relative"
+              className="rounded-r-3xl max-w-xl relative"
             >
               {/* Decorative corner shape if needed - standard rounded corners seem enough based on image usually */}
 
@@ -67,7 +67,7 @@ export default function Katalog() {
                   <img
                     src={api.getImageUrl(catalog.cardImage)}
                     alt="Catalog Card"
-                    className="w-1/2 h-auto object-contain rounded-lg" // Adjust sizing as needed
+                    className="mt-15 w-30 sm:w-50 md:w-70 lg:w-40 2xl:w-1/2 h-auto object-contain rounded-lg" // Adjust sizing as needed
                   />
                 </div>
               ) : (

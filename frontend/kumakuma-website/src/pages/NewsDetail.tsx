@@ -62,8 +62,8 @@ export default function NewsDetail() {
                }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 w-full p-4 sm:p-8 md:p-12">
-               <div className="container mx-auto text-white">
+            <div className="absolute bottom-0 left-0 w-full py-4 sm:py-8 md:py-12">
+               <div className="container mx-auto text-white px-4 sm:px-10 lg:px-20 xl:px-30">
                   <div className="flex items-center gap-4 text-sm sm:text-base font-medium mb-2 opacity-90">
                      <span>{newsItem.author || 'Admin'}</span>
                      <span>&bull;</span>
@@ -77,7 +77,7 @@ export default function NewsDetail() {
          </div>
 
          {/* Content */}
-         <div className="container mx-auto px-4 sm:px-6">
+         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
             <div className="prose prose-lg prose-indigo text-gray-700 mx-auto">
                <p className="lead text-xl text-gray-500 font-medium mb-8 border-l-4 border-indigo-500 pl-4 italic">
                   {newsItem.excerpt}

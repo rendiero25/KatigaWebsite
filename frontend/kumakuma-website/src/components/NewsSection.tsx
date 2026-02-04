@@ -15,7 +15,7 @@ export default function NewsSection() {
 
   return (
     <section className="bg-white pt-5">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
           <div>

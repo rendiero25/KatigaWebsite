@@ -20,9 +20,7 @@ export default function ContactPage() {
 
   useEffect(() => {
     // Fetch Page Content
-    api.getContactPageContent()
-      .then(setContent)
-      .catch(console.error);
+    api.getContactPageContent().then(setContent).catch(console.error);
 
     // Fetch Contact Info (Phone, Email, etc.)
     api.getContactInfo().then(setContactInfo).catch(console.error);
@@ -54,10 +52,10 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
 
-      <main className="flex-grow pt-20 pb-16 px-4 md:px-8 container mx-auto w-full">
+      <main className="grow pt-20 md:px-8 container mx-auto w-full px-4 sm:px-10 lg:px-20 xl:px-30">
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
           {/* Left Column: Text & Info */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
@@ -97,7 +95,7 @@ export default function ContactPage() {
           </motion.div>
 
           {/* Right Column: Form */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}

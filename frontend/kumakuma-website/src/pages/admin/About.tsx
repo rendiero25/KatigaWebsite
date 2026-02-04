@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
-import api from '../../services/api';
+import api, { API_BASE_URL } from "../../services/api";
 import { FaTrash, FaPlus } from "react-icons/fa";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = API_BASE_URL;
 
 export default function AdminAbout() {
   const [loading, setLoading] = useState(true);
@@ -40,13 +40,9 @@ export default function AdminAbout() {
         });
         setExistingImages(data.images || []);
         if (data.mission?.backgroundImage)
-          setMissionBgPreview(
-            api.getImageUrl(data.mission.backgroundImage),
-          );
+          setMissionBgPreview(api.getImageUrl(data.mission.backgroundImage));
         if (data.vision?.backgroundImage)
-          setVisionBgPreview(
-            api.getImageUrl(data.vision.backgroundImage),
-          );
+          setVisionBgPreview(api.getImageUrl(data.vision.backgroundImage));
       }
       setLoading(false);
     } catch (e) {

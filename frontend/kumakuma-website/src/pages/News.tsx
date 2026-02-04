@@ -57,7 +57,7 @@ export default function News() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
-      <main className="flex-grow">
+      <main className="grow">
         {/* Banner Section */}
         <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
           <img
@@ -98,7 +98,7 @@ export default function News() {
           </div>
         </div>
 
-        <div className="container mx-auto py-12">
+        <div className="container mx-auto py-12 px-4 sm:px-10 lg:px-20 xl:px-30">
           {/* Search and Filter Section */}
           <div className="flex flex-col md:flex-row w-full justify-between items-center gap-4 mb-10 z-20 relative">
             {/* Search Bar */}

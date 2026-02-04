@@ -86,7 +86,7 @@ export default function AboutUs() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="mb-20 overflow-hidden mt-10 w-full max-w-full"
+          className="mb-5 xl:mb-20 overflow-hidden mt-10 w-full max-w-full"
         >
           <Swiper
             key={content?.images?.length || 0}
@@ -137,27 +137,27 @@ export default function AboutUs() {
             viewport={{ once: true }}
             className="container mx-auto px-4"
         >
-          <p className="text-xl md:text-3xl text-justify text-black leading-relaxed font-normal">
+          <p className="px-4 sm:px-10 lg:px-20 xl:px-30 text-xl md:text-3xl text-justify text-black leading-relaxed font-normal">
             {content?.history}
           </p>
         </motion.section>
 
         {/* 5. Mission & Vision */}
-        <section className="container mx-auto">
+        <section className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           {/* Mission Card */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="relative rounded-3xl overflow-hidden bg-cover bg-center text-white h-[400px] flex justify-center items-center w-full shadow-xl mb-8"
+            className="relative rounded-3xl overflow-hidden bg-cover bg-center text-white h-[600px] xl:h-[400px] flex justify-center items-center w-full shadow-xl mb-8"
             style={{
               backgroundImage: content?.mission?.backgroundImage
                 ? `url(${api.getImageUrl(content.mission.backgroundImage)})`
                 : "",
             }}
           >
-            <div className="flex flex-col md:flex-row items-center justify-between w-full px-15 md:px-50 gap-10 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center justify-between w-full px-15 md:px-50 gap-10 relative z-10">
               <h2 className="text-4xl font-bold w-full md:w-1/3 text-center md:text-left">
                 {content?.mission?.title || "Mission"}
               </h2>
@@ -202,7 +202,7 @@ export default function AboutUs() {
 
         {/* 6. Certification & Technology (New Layout) */}
         {tech && (
-          <section className="max-w-7xl mx-auto px-4 mb-24">
+          <section className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 mb-5 xl:mb-24">
             {/* Header */}
             <div className="mb-20">
               <motion.p 
@@ -272,7 +272,7 @@ export default function AboutUs() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="mb-20 text-3xl md:text-4xl font-bold text-gray-900 mb-6 uppercase leading-tight max-w-xl"
+                className="mb-6 text-3xl md:text-4xl font-bold text-gray-900 uppercase leading-tight max-w-xl"
               >
                 {tech.section2?.title}
               </motion.h3>

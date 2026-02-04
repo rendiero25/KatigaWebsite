@@ -1,18 +1,18 @@
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
-  let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  let url = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   // Remove trailing slashes
-  while (url.endsWith('/')) {
+  while (url.endsWith("/")) {
     url = url.slice(0, -1);
   }
   // Append /api if missing
-  if (!url.endsWith('/api')) {
-    url += '/api';
+  if (!url.endsWith("/api")) {
+    url += "/api";
   }
   return url;
 };
 
-const API_BASE_URL = getBaseUrl();
+export const API_BASE_URL = getBaseUrl();
 
 export const api = {
   // Site Settings
@@ -46,7 +46,9 @@ export const api = {
 
   // Products
   getProducts: async (params?: { category?: string; featured?: boolean }) => {
-    const queryString = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
+    const queryString = params
+      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
+      : "";
     const res = await fetch(`${API_BASE_URL}/products${queryString}`);
     return res.json();
   },
@@ -105,11 +107,17 @@ export const api = {
   },
 
   // Submit Contact Form
-  submitContact: async (data: { name: string; email: string; phone: string; subject: string; message: string }) => {
+  submitContact: async (data: {
+    name: string;
+    email: string;
+    phone: string;
+    subject: string;
+    message: string;
+  }) => {
     const res = await fetch(`${API_BASE_URL}/contact/submit`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     return res.json();
   },
@@ -126,8 +134,16 @@ export const api = {
   },
 
   // News
-  getNews: async (params?: { page?: number; limit?: number; search?: string; category?: string; sort?: string }) => {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+  getNews: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    sort?: string;
+  }) => {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     const res = await fetch(`${API_BASE_URL}/news${queryString}`);
     return res.json();
   },
@@ -145,9 +161,9 @@ export const api = {
   // Auth
   login: async (email: string, password: string) => {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
     return res.json();
   },
@@ -160,17 +176,17 @@ export const api = {
 
   // Get base URL for images
   getImageUrl: (path: string) => {
-    if (!path) return '/placeholder.jpg';
-    if (path.startsWith('http')) return path;
-    
-    // Remove /api from API_BASE_URL to get the root server URL if needed, 
+    if (!path) return "/placeholder.jpg";
+    if (path.startsWith("http")) return path;
+
+    // Remove /api from API_BASE_URL to get the root server URL if needed,
     // or just construct it relative to the domain if hosted appropriately.
     // Assuming API_BASE_URL is like 'https://.../api', we might want the root 'https://...' for static files depending on how they are served.
     // However, the backend serves /uploads relative to root.
-    
-    const baseUrl = API_BASE_URL.replace('/api', '');
+
+    const baseUrl = API_BASE_URL.replace("/api", "");
     return `${baseUrl}${path}`;
-  }
+  },
 };
 
 export default api;

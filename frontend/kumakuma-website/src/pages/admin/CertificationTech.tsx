@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
-import api from "../../services/api";
+import api, { API_BASE_URL } from "../../services/api";
 import { FaPlus, FaTrash, FaSave } from "react-icons/fa";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = API_BASE_URL;
 
 export default function AdminCertificationTech() {
   const [loading, setLoading] = useState(true);

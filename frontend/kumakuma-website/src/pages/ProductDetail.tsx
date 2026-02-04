@@ -1,39 +1,36 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
-import api from '../services/api';
-import { FaWhatsapp } from 'react-icons/fa';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import api from "../services/api";
+import { FaWhatsapp } from "react-icons/fa";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [siteSettings, setSiteSettings] = useState<any>(null);
-  const [activeImage, setActiveImage] = useState<string>('');
+  const [activeImage, setActiveImage] = useState<string>("");
 
   useEffect(() => {
     if (id) {
       // setLoading(true); // Removed to avoid cascading render warning
-      Promise.all([
-        api.getProduct(id),
-        api.getSiteSettings()
-      ])
-      .then(([productData, settingsData]) => {
-        setProduct(productData);
-        setSiteSettings(settingsData);
-        // Initialize active image
-        if (productData.images && productData.images.length > 0) {
-          setActiveImage(productData.images[0]);
-        } else if (productData.image) {
-          setActiveImage(productData.image);
-        }
-      })
-      .finally(() => setLoading(false));
+      Promise.all([api.getProduct(id), api.getSiteSettings()])
+        .then(([productData, settingsData]) => {
+          setProduct(productData);
+          setSiteSettings(settingsData);
+          // Initialize active image
+          if (productData.images && productData.images.length > 0) {
+            setActiveImage(productData.images[0]);
+          } else if (productData.image) {
+            setActiveImage(productData.image);
+          }
+        })
+        .finally(() => setLoading(false));
     }
   }, [id]);
 
@@ -41,7 +38,7 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow flex items-center justify-center">
+        <main className="grow flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
         </main>
         <Footer />
@@ -53,8 +50,10 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Produk tidak ditemukan</h2>
+        <main className="grow flex flex-col items-center justify-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Produk tidak ditemukan
+          </h2>
           <Link to="/produk" className="text-indigo-600 hover:text-indigo-800">
             &larr; Kembali ke daftar produk
           </Link>
@@ -65,40 +64,61 @@ export default function ProductDetail() {
   }
 
   const whatsappMessage = `Halo, saya tertarik dengan produk ${product.name}. Bisakah saya mendapatkan informasi lebih lanjut?`;
-  const whatsappLink = `https://wa.me/${siteSettings?.whatsapp?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappLink = `https://wa.me/${siteSettings?.whatsapp?.replace(/\D/g, "") || ""}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow pt-20 pb-16 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="grow pt-20 pb-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <div className="mb-6">
-            <Link to="/produk" className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+            <Link
+              to="/produk"
+              className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
               Kembali ke Produk
             </Link>
           </div>
 
           <nav className="text-sm text-gray-500 mb-8">
-            <Link to="/" className="hover:text-indigo-600">Beranda</Link>
+            <Link to="/" className="hover:text-indigo-600">
+              Beranda
+            </Link>
             <span className="mx-2">/</span>
-            <Link to="/produk" className="hover:text-indigo-600">Produk</Link>
+            <Link to="/produk" className="hover:text-indigo-600">
+              Produk
+            </Link>
             <span className="mx-2">/</span>
             <span className="text-gray-900">{product.name}</span>
           </nav>
 
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="flex flex-col md:grid md:grid-cols-2 gap-12">
             {/* Image Gallery */}
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-2xl overflow-hidden aspect-square md:aspect-[4/3] relative">
-                <img 
-                  src={activeImage ? api.getImageUrl(activeImage) : api.getImageUrl(product.image)}
+              <div className="bg-gray-50 rounded-2xl overflow-hidden w-full h-auto md:w-[400px] md:h-[300px] xl:w-[600px] xl:h-[550px] relative">
+                <img
+                  src={
+                    activeImage
+                      ? api.getImageUrl(activeImage)
+                      : api.getImageUrl(product.image)
+                  }
                   alt={product.name}
-                  className="w-full h-full object-contain p-4"
+                  className="w-full h-auto md:h-full object-contain p-4"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800";
                   }}
                 />
                 {product.isFeatured && (
@@ -107,11 +127,11 @@ export default function ProductDetail() {
                   </span>
                 )}
               </div>
-              
+
               {/* Thumbnails Swiper */}
               {product.images && product.images.length > 1 && (
                 <div className="w-full">
-                   <Swiper
+                  <Swiper
                     modules={[Navigation]}
                     spaceBetween={10}
                     slidesPerView={4}
@@ -123,10 +143,10 @@ export default function ProductDetail() {
                         <button
                           onClick={() => setActiveImage(img)}
                           className={`cursor-pointer w-full aspect-square rounded-lg overflow-hidden border-2 transition
-                            ${activeImage === img ? 'border-indigo-600 ring-2 ring-indigo-600 ring-offset-2' : 'border-transparent hover:border-gray-300'}
+                            ${activeImage === img ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-transparent hover:border-gray-300"}
                           `}
                         >
-                          <img 
+                          <img
                             src={api.getImageUrl(img)}
                             alt={`${product.name} ${idx + 1}`}
                             className="w-full h-full object-cover"
@@ -143,35 +163,47 @@ export default function ProductDetail() {
             <div>
               <div className="mb-2">
                 <span className="text-indigo-600 font-medium bg-indigo-50 px-3 py-1 rounded-full text-sm">
-                  {product.category?.name || 'Kategori Umum'}
+                  {product.category?.name || "Kategori Umum"}
                 </span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
                 {product.name}
               </h1>
               <p className="text-2xl font-bold text-gray-900 mb-6">
-                {product.price || 'Hubungi untuk harga'}
+                {product.price || "Hubungi untuk harga"}
               </p>
-              
+
               <div className="prose prose-indigo text-gray-600 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Deskripsi Produk</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Deskripsi Produk
+                </h3>
                 <p className="whitespace-pre-line">{product.description}</p>
               </div>
 
               <div className="flex flex-col gap-4">
                 {product.linkTokopedia && (
-                   <a href={product.linkTokopedia} target="_blank" rel="noopener noreferrer" className="bg-[#42B549] text-white font-semibold py-4 px-6 rounded-xl hover:bg-[#3aa341] transition flex items-center justify-center gap-2">
-                     <span className="font-bold">Tokopedia</span>
-                   </a>
-                )}
-                
-                {product.linkShopee && (
-                   <a href={product.linkShopee} target="_blank" rel="noopener noreferrer" className="bg-[#EE4D2D] text-white font-semibold py-4 px-6 rounded-xl hover:bg-[#d64124] transition flex items-center justify-center gap-2">
-                     <span className="font-bold">Shopee</span>
-                   </a>
+                  <a
+                    href={product.linkTokopedia}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#42B549] text-white font-semibold py-4 px-6 rounded-xl hover:bg-[#3aa341] transition flex items-center justify-center gap-2"
+                  >
+                    <span className="font-bold">Tokopedia</span>
+                  </a>
                 )}
 
-                <a 
+                {product.linkShopee && (
+                  <a
+                    href={product.linkShopee}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#EE4D2D] text-white font-semibold py-4 px-6 rounded-xl hover:bg-[#d64124] transition flex items-center justify-center gap-2"
+                  >
+                    <span className="font-bold">Shopee</span>
+                  </a>
+                )}
+
+                <a
                   href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -187,8 +219,10 @@ export default function ProductDetail() {
 
         {/* Featured Products Section */}
         <section className="bg-[#F9F7F2] py-16 mt-15">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Produk Unggulan</h2>
+          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">
+              Produk Unggulan
+            </h2>
             <FeaturedProducts />
           </div>
         </section>
@@ -202,7 +236,7 @@ function FeaturedProducts() {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    api.getProducts({ featured: true }).then(data => {
+    api.getProducts({ featured: true }).then((data) => {
       if (Array.isArray(data)) {
         setProducts(data);
       }
@@ -226,10 +260,13 @@ function FeaturedProducts() {
     >
       {products.map((product) => (
         <SwiperSlide key={product._id} className="h-auto">
-          <Link to={`/produk/${product._id}`} className="block h-full bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition group">
+          <Link
+            to={`/produk/${product._id}`}
+            className="block h-full bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition group"
+          >
             <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
-              <img 
-                src={api.getImageUrl(product.image)} 
+              <img
+                src={api.getImageUrl(product.image)}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
               />
@@ -242,7 +279,7 @@ function FeaturedProducts() {
                 {product.category?.name}
               </p>
               <p className="font-bold text-indigo-600">
-                {product.price || 'Hubungi Kami'}
+                {product.price || "Hubungi Kami"}
               </p>
             </div>
           </Link>

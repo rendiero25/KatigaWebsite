@@ -80,10 +80,10 @@ export default function Products() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
-      <main className="pt-20 flex-grow">
+      <main className="pt-20 grow">
         <div className="">
           {/* Main Header Section */}
-          <div className="container mx-auto mb-20 overflow-hidden">
+          <div className="container mx-auto mb-20 overflow-hidden px-4 sm:px-10 lg:px-20 xl:px-30">
             <motion.p
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -130,14 +130,14 @@ export default function Products() {
             />
           </motion.div>
 
-          <div className="container mx-auto">
+          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
             {/* Controls: Tabs & Search */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+              className="flex flex-col xl:flex-row justify-between items-start md:items-center gap-4 mb-8"
             >
               {/* Tabs */}
               <div className="flex items-center bg-primary p-1 rounded-full self-start md:self-auto">
@@ -277,13 +277,13 @@ export default function Products() {
               transition={{ delay: 0.5 }}
               className="mt-16 flex justify-center items-center gap-4"
             >
-              <button className="p-2 text-gray-400 hover:text-gray-900 disabled:opacity-50">
+              <button className="cursor-pointer p-2 text-gray-400 hover:text-gray-900 disabled:opacity-50">
                 <FaChevronLeft className="w-4 h-4" />
               </button>
-              <span className="font-bold text-gray-900">1</span>
-              <span className="text-gray-400">2</span>
-              <span className="text-gray-400">3</span>
-              <button className="p-2 text-gray-400 hover:text-gray-900">
+              <span className="cursor-pointer font-bold text-gray-900">1</span>
+              <span className="cursor-pointer text-gray-400">2</span>
+              <span className="cursor-pointer text-gray-400">3</span>
+              <button className="cursor-pointer p-2 text-gray-400 hover:text-gray-900">
                 <FaChevronRight className="w-4 h-4" />
               </button>
             </motion.div>

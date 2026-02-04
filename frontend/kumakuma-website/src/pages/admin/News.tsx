@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "../../components/AdminLayout";
-import api from '../../services/api';
+import api, { API_BASE_URL } from "../../services/api";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = API_BASE_URL;
 
 export default function AdminNews() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -120,7 +120,12 @@ export default function AdminNews() {
   };
 
   const resetForm = () => {
-    setFormData({ title: "", excerpt: "", content: "", category: "Company News" });
+    setFormData({
+      title: "",
+      excerpt: "",
+      content: "",
+      category: "Company News",
+    });
     setImageFile(null);
     setEditing(null);
     setShowModal(false);
@@ -289,7 +294,7 @@ export default function AdminNews() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Kategori
@@ -301,7 +306,7 @@ export default function AdminNews() {
                   }
                   className="w-full px-4 py-2 border rounded-lg"
                 >
-                   {categories.map((cat) => (
+                  {categories.map((cat) => (
                     <option key={cat} value={cat}>
                       {cat}
                     </option>
