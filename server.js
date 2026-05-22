@@ -84,13 +84,20 @@ app.use('/api/news', newsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/manufacturing', manufacturingRoutes);
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to KumaKuma API' });
-});
-
 app.use('/api/product-page', require('./routes/productPageRoutes'));
 app.use('/api/contact-page', require('./routes/contactPageRoutes'));
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to KumaKuma API' });
+  });
+}
 
 // Global Error Handler
 app.use((err, req, res, next) => {
