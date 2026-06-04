@@ -68,18 +68,12 @@ router.post('/', auth, upload.any(), async (req, res) => {
   console.log('Body:', req.body);
   console.log('Files:', req.files); // Debug log
   try {
-    const { name, description, category, price, link, linkTokopedia, linkShopee, isFeatured } = req.body;
-    
-    // Manual filtering: prefer 'images' field but fallback to all files if necessary
-    // This robustness helps avoid "Unexpected field" errors from multer strictness
+    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants } = req.body;
+
     let imageFiles = req.files || [];
-    // Optionally filter: imageFiles = req.files.filter(f => f.fieldname === 'images');
-    
-    const imagePaths = imageFiles.map(file => `/uploads/${file.filename}`);
-    
-    // Primary image is the first one, or empty string
+    const imagePaths = imageFiles.map(file => file.path);
     const primaryImage = imagePaths.length > 0 ? imagePaths[0] : '';
-    
+
     console.log('Using image paths:', imagePaths);
 
     const product = new Product({
@@ -87,12 +81,20 @@ router.post('/', auth, upload.any(), async (req, res) => {
       description,
       category,
       price,
+      priceNumeric: Number(priceNumeric) || 0,
+      weightGrams: Number(weightGrams) || 0,
+      dimensions: {
+        length: Number(dimensionLength) || 1,
+        width:  Number(dimensionWidth) || 1,
+        height: Number(dimensionHeight) || 1
+      },
       link,
       linkTokopedia,
       linkShopee,
       isFeatured: isFeatured === 'true',
       image: primaryImage,
-      images: imagePaths
+      images: imagePaths,
+      variants: variants ? JSON.parse(variants) : []
     });
     await product.save();
     console.log('Product saved:', product);
@@ -115,16 +117,26 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const { name, description, category, price, link, linkTokopedia, linkShopee, isFeatured, keptImages } = req.body;
-    
+    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, keptImages, variants } = req.body;
+
     if (name) product.name = name;
     if (description) product.description = description;
     if (category) product.category = category;
     if (price) product.price = price;
+    if (priceNumeric !== undefined) product.priceNumeric = Number(priceNumeric) || 0;
+    if (weightGrams !== undefined) product.weightGrams = Number(weightGrams) || 0;
+    if (dimensionLength !== undefined || dimensionWidth !== undefined || dimensionHeight !== undefined) {
+      product.dimensions = {
+        length: Number(dimensionLength) || product.dimensions?.length || 1,
+        width:  Number(dimensionWidth)  || product.dimensions?.width  || 1,
+        height: Number(dimensionHeight) || product.dimensions?.height || 1
+      };
+    }
     if (link) product.link = link;
     if (linkTokopedia !== undefined) product.linkTokopedia = linkTokopedia;
     if (linkShopee !== undefined) product.linkShopee = linkShopee;
     if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true';
+    if (variants !== undefined) product.variants = JSON.parse(variants);
 
     // Handle images
     // keptImages might be a string (if 1) or array (if multiple) or undefined
@@ -139,7 +151,7 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
 
     // Add new images
     let imageFiles = req.files || [];
-    const newImagePaths = imageFiles.map(file => `/uploads/${file.filename}`);
+    const newImagePaths = imageFiles.map(file => file.path);
     
     const finalImages = [...currentImages, ...newImagePaths];
     product.images = finalImages;

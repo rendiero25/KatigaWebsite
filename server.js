@@ -42,6 +42,9 @@ app.use(cors({
   },
   credentials: true
 }));
+// Midtrans webhook needs raw body for signature verification — must come before express.json()
+app.post('/api/orders/webhook/midtrans', express.raw({ type: '*/*' }), require('./routes/orderRoutes').webhookHandler);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -86,6 +89,11 @@ app.use('/api/manufacturing', manufacturingRoutes);
 
 app.use('/api/product-page', require('./routes/productPageRoutes'));
 app.use('/api/contact-page', require('./routes/contactPageRoutes'));
+
+// Ecommerce routes
+app.use('/api/customers', require('./routes/customerAuthRoutes'));
+app.use('/api/shipping', require('./routes/shippingRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

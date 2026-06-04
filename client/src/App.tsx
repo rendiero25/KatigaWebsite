@@ -27,6 +27,14 @@ import AdminDistribution from './pages/admin/Distribution';
 import AdminManufacturing from './pages/admin/Manufacturing';
 import AdminProductPageContent from './pages/admin/ProductPageContent';
 import AdminContactPageContent from './pages/admin/ContactPageContent';
+import AdminOrders from './pages/admin/Orders';
+import AdminOrderDetail from './pages/admin/OrderDetail';
+import Daftar from './pages/Daftar';
+import Masuk from './pages/Masuk';
+import Keranjang from './pages/Keranjang';
+import Checkout from './pages/Checkout';
+import Pesanan from './pages/Pesanan';
+import PesananDetail from './pages/PesananDetail';
 
 function App() {
   return (
@@ -43,7 +51,13 @@ function App() {
         
 
         <Route path="/kontak" element={<ContactPage />} />
-        
+        <Route path="/daftar" element={<Daftar />} />
+        <Route path="/masuk" element={<Masuk />} />
+        <Route path="/keranjang" element={<Keranjang />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/pesanan" element={<Pesanan />} />
+        <Route path="/pesanan/:id" element={<PesananDetail />} />
+
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
@@ -66,6 +80,8 @@ function App() {
 
         <Route path="/admin/product-page-content" element={<AdminProductPageContent />} />
         <Route path="/admin/contact-page-content" element={<AdminContactPageContent />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
       </Routes>
     </BrowserRouter>
   );

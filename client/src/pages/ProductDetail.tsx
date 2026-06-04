@@ -3,7 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp, FaShoppingCart } from "react-icons/fa";
+import { addToCart } from "../utils/cart";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
@@ -181,27 +182,26 @@ export default function ProductDetail() {
               </div>
 
               <div className="flex flex-col gap-4">
-                {product.linkTokopedia && (
-                  <a
-                    href={product.linkTokopedia}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#42B549] text-white font-semibold py-4 px-6 rounded-xl hover:bg-[#3aa341] transition flex items-center justify-center gap-2"
+                {product.priceNumeric > 0 && (
+                  <button
+                    onClick={() => {
+                      addToCart({
+                        productId: product._id,
+                        name: product.name,
+                        image: product.image || (product.images?.[0] ?? ''),
+                        priceNumeric: product.priceNumeric,
+                        weightGrams: product.weightGrams ?? 0,
+                      });
+                      alert('Produk ditambahkan ke keranjang!');
+                    }}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold py-4 px-6 rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
                   >
-                    <span className="font-bold">Tokopedia</span>
-                  </a>
+                    <FaShoppingCart className="w-5 h-5" />
+                    Tambah ke Keranjang
+                  </button>
                 )}
 
-                {product.linkShopee && (
-                  <a
-                    href={product.linkShopee}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#EE4D2D] text-white font-semibold py-4 px-6 rounded-xl hover:bg-[#d64124] transition flex items-center justify-center gap-2"
-                  >
-                    <span className="font-bold">Shopee</span>
-                  </a>
-                )}
+
 
                 <a
                   href={whatsappLink}

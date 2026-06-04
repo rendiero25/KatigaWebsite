@@ -34,7 +34,7 @@ router.put("/content", auth, upload.single("bannerImage"), async (req, res) => {
     const { title, subtitle } = req.body;
     if (title) content.title = title;
     if (subtitle) content.subtitle = subtitle;
-    if (req.file) content.bannerImage = `/uploads/${req.file.filename}`;
+    if (req.file) content.bannerImage = req.file.path;
 
     await content.save();
     res.json(content);
@@ -118,7 +118,7 @@ router.post("/", auth, upload.single("image"), async (req, res) => {
       content,
       date: date || Date.now(),
       category: category || "Uncategorized",
-      image: req.file ? `/uploads/${req.file.filename}` : "",
+      image: req.file ? req.file.path : "",
     });
     await article.save();
     res.status(201).json(article);
@@ -143,7 +143,7 @@ router.put("/:id", auth, upload.single("image"), async (req, res) => {
     if (content) article.content = content;
     if (date) article.date = date;
     if (category) article.category = category;
-    if (req.file) article.image = `/uploads/${req.file.filename}`;
+    if (req.file) article.image = req.file.path;
 
     await article.save();
     res.json(article);

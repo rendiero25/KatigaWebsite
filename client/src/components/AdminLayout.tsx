@@ -17,6 +17,7 @@ import {
   FaEnvelope,
   FaSignOutAlt,
   FaBars,
+  FaShoppingCart,
 } from "react-icons/fa";
 
 interface AdminLayoutProps {
@@ -69,6 +70,7 @@ const menuItems = [
     ],
   },
   { path: "/admin/footer", icon: FaInfoCircle, label: "Footer" },
+  { path: "/admin/orders", icon: FaShoppingCart, label: "Pesanan" },
   { path: "/admin/settings", icon: FaCog, label: "Pengaturan" },
 ];
 

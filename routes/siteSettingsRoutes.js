@@ -37,7 +37,7 @@ router.put('/', auth, upload.single('logo'), async (req, res) => {
     if (tokopediaUrl) settings.tokopediaUrl = tokopediaUrl;
     if (shopeeUrl) settings.shopeeUrl = shopeeUrl;
     if (instagramUrl) settings.instagramUrl = instagramUrl;
-    if (req.file) settings.logo = `/uploads/${req.file.filename}`;
+    if (req.file) settings.logo = req.file.path;
 
     await settings.save();
     res.json(settings);

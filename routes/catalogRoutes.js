@@ -33,16 +33,16 @@ router.put('/', auth, upload.fields([
       catalog = new Catalog({
         title: title || '',
         description: description || '',
-        backgroundImage: req.files?.backgroundImage ? `/uploads/${req.files.backgroundImage[0].filename}` : '',
-        cardImage: req.files?.cardImage ? `/uploads/${req.files.cardImage[0].filename}` : '',
-        fileUrl: req.files?.file ? `/uploads/${req.files.file[0].filename}` : ''
+        backgroundImage: req.files?.backgroundImage ? req.files.backgroundImage[0].path : '',
+        cardImage: req.files?.cardImage ? req.files.cardImage[0].path : '',
+        fileUrl: req.files?.file ? req.files.file[0].path : ''
       });
     } else {
       if (title) catalog.title = title;
       if (description) catalog.description = description;
-      if (req.files?.backgroundImage) catalog.backgroundImage = `/uploads/${req.files.backgroundImage[0].filename}`;
-      if (req.files?.cardImage) catalog.cardImage = `/uploads/${req.files.cardImage[0].filename}`;
-      if (req.files?.file) catalog.fileUrl = `/uploads/${req.files.file[0].filename}`;
+      if (req.files?.backgroundImage) catalog.backgroundImage = req.files.backgroundImage[0].path;
+      if (req.files?.cardImage) catalog.cardImage = req.files.cardImage[0].path;
+      if (req.files?.file) catalog.fileUrl = req.files.file[0].path;
     }
 
     await catalog.save();

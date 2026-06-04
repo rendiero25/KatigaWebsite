@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { FiMenu, FiX } from "react-icons/fi";
+import { FaShoppingCart } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
-import { useSiteSettings } from "../hooks/useApi";
+import { useSiteSettings, useCartCount } from "../hooks/useApi";
 import api from "../services/api";
-import IconTokopedia from "../assets/icon-tokopedia.png";
-import IconShopee from "../assets/icon-shopee.png";
 
 export default function Header() {
   const { data: settings } = useSiteSettings();
+  const cartCount = useCartCount();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -119,32 +119,17 @@ export default function Header() {
               Shop Now
             </a>
             <div className="flex items-center gap-4">
-              <a
-                href={settings?.tokopediaUrl || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center transition hover:opacity-80"
-              >
-                <img
-                  src={IconTokopedia}
-                  alt="Tokopedia"
-                  className="w-10 object-contain"
-                />
-              </a>
-
-              <a
-                href={settings?.shopeeUrl || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center transition hover:opacity-80"
-              >
-                <img
-                  src={IconShopee}
-                  alt="Shopee"
-                  className="w-10 object-contain"
-                />
-              </a>
             </div>
+
+            {/* Cart Icon */}
+            <Link to="/keranjang" className="relative flex items-center justify-center text-gray-800 hover:text-primary transition">
+              <FaShoppingCart className="w-6 h-6" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {cartCount > 9 ? '9+' : cartCount}
+                </span>
+              )}
+            </Link>
 
             {/* Hamburger Menu Button */}
             <button
@@ -210,33 +195,6 @@ export default function Header() {
               Shop Now
             </a>
 
-            <div className="flex items-center justify-center gap-6 mt-2 border-t border-gray-100 pt-4">
-              <a
-                href={settings?.tokopediaUrl || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition hover:opacity-80"
-              >
-                <img
-                  src={IconTokopedia}
-                  alt="Tokopedia"
-                  className="w-10 object-contain"
-                />
-              </a>
-
-              <a
-                href={settings?.shopeeUrl || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="transition hover:opacity-80"
-              >
-                <img
-                  src={IconShopee}
-                  alt="Shopee"
-                  className="w-10 object-contain"
-                />
-              </a>
-            </div>
           </div>
         )}
       </div>

@@ -6,7 +6,7 @@ export default function ManufacturingSection() {
 
   if (loading) {
     return (
-      <section className="py-20 lg:py-28 relative overflow-hidden bg-[#2C331F]">
+      <section className="pt-10 pb-20 lg:pt-14 lg:pb-28 relative overflow-hidden bg-[#2C331F]">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="h-8 w-64 bg-white/10 mx-auto rounded mb-8 animate-pulse"></div>
           <div className="h-4 w-full bg-white/10 mx-auto rounded animate-pulse"></div>
@@ -31,7 +31,7 @@ export default function ManufacturingSection() {
         ];
 
   return (
-    <section className="py-20 lg:py-28 relative overflow-hidden bg-[#2C331F]">
+    <section className="pt-10 pb-20 lg:pt-14 lg:pb-28 relative overflow-hidden bg-[#2C331F]">
       {/* Background Image */}
       {manufacturing?.backgroundImage ? (
         <div className="absolute inset-0 z-0">
