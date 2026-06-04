@@ -46,10 +46,14 @@ export const api = {
 
   // Products
   getProducts: async (params?: { category?: string; featured?: boolean }) => {
-    const queryString = params
-      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
+    const query: Record<string, string> = {};
+    if (params?.category) query.category = params.category;
+    if (params?.featured !== undefined) query.featured = String(params.featured);
+    const queryString = Object.keys(query).length
+      ? `?${new URLSearchParams(query).toString()}`
       : "";
     const res = await fetch(`${API_BASE_URL}/products${queryString}`);
+    if (!res.ok) throw new Error('Failed to fetch products');
     return res.json();
   },
 
