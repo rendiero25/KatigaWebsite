@@ -1,6 +1,6 @@
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
-  let url = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  let url = import.meta.env.VITE_API_URL || "/api";
   // Remove trailing slashes
   while (url.endsWith("/")) {
     url = url.slice(0, -1);
