@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "motion/react";
+import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { useProducts } from "../hooks/useApi";
+import { useProducts, useCategories } from "../hooks/useApi";
 import api from "../services/api";
 import {
   FaSearch,
@@ -14,58 +14,30 @@ import {
 import PartnersSection from "../components/PartnersSection";
 
 export default function Products() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [settings, setSettings] = useState<any>(null);
-  const [partners, setPartners] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState(1); // 1 or 2
+  const [activeCategory, setActiveCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"default" | "az" | "za">("default");
 
-  // Fetch Page Settings and Partners
+  const { data: categories } = useCategories();
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [settingsData, partnersData] = await Promise.all([
-          api.getProductPageSettings(),
-          api.getPartners(),
-        ]);
-        setSettings(settingsData);
-        setPartners(partnersData);
-      } catch (error) {
-        console.error("Error fetching page data:", error);
-      }
-    };
-    fetchData();
+    api.getProductPageSettings()
+      .then(setSettings)
+      .catch((error) => console.error("Error fetching page data:", error));
   }, []);
 
-  // Determine Category to fetch based on active Tab and Settings
-  const currentCategoryName =
-    activeTab === 1
-      ? (settings?.category1?.name || "Perlengkapan Tidur Bayi")
-      : settings?.category2?.name;
-
   const { data: productskumakuma, loading: productsLoading } = useProducts({
-    category: currentCategoryName,
+    category: activeCategory || undefined,
   });
 
-  const handleTabChange = (tabIndex: number) => {
-    setActiveTab(tabIndex);
-    setSearchQuery("");
-  };
-
-  const currentCategoryTitle =
-    activeTab === 1 ? settings?.category1?.title : settings?.category2?.title;
-
-  const currentCategorySubtitle =
-    activeTab === 1
-      ? settings?.category1?.subtitle
-      : settings?.category2?.subtitle;
-
-  // Filter products based on search query
-  const filteredProducts = (
-    Array.isArray(productskumakuma) ? productskumakuma : []
-  ).filter((product: any) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredProducts = (Array.isArray(productskumakuma) ? productskumakuma : [])
+    .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a: any, b: any) => {
+      if (sortBy === "az") return a.name.localeCompare(b.name);
+      if (sortBy === "za") return b.name.localeCompare(a.name);
+      return 0;
+    });
 
   // Animation Variants
   const fadeInUp = {
@@ -133,85 +105,62 @@ export default function Products() {
           </motion.div>
 
           <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            {/* Controls: Tabs & Search */}
+            {/* Filter Bar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="flex flex-col xl:flex-row justify-between items-start md:items-center gap-4 mb-8"
+              className="flex flex-wrap gap-3 items-center mb-8"
             >
-              {/* Tabs */}
-              <div className="flex items-center bg-primary p-1 rounded-full self-start md:self-auto">
-                <button
-                  onClick={() => handleTabChange(1)}
-                  className={`cursor-pointer px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    activeTab === 1
-                      ? "bg-white text-black shadow-sm"
-                      : "text-white"
-                  }`}
-                >
-                  {settings?.category1?.name || "Perlengkapan Tidur Bayi"}
-                </button>
-
-                <button
-                  onClick={() => handleTabChange(2)}
-                  className={`cursor-pointer px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    activeTab === 2
-                      ? "bg-white text-black shadow-sm"
-                      : "text-white"
-                  }`}
-                >
-                  {settings?.category2?.name}
-                </button>
+              {/* Search */}
+              <div className="relative flex-1 min-w-[200px] max-w-xs">
+                <input
+                  type="text"
+                  placeholder="Cari produk…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                />
+                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
 
-              {/* Search & Category Filter */}
-              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                {/* Search Bar */}
-                <div className="relative flex-grow md:flex-grow-0 md:w-80">
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                  />
-                  <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                </div>
-
-                {/* Category Dropdown */}
-                <div className="relative">
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50">
-                    Category
-                    <FaChevronDown className="w-3 h-3 text-gray-500" />
-                  </button>
-                </div>
+              {/* Category filter */}
+              <div className="relative">
+                <select
+                  value={activeCategory}
+                  onChange={(e) => { setActiveCategory(e.target.value); setSearchQuery(""); }}
+                  className="appearance-none cursor-pointer pl-4 pr-9 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Semua Kategori</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+                <FaChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
               </div>
+
+              {/* Sort */}
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "default" | "az" | "za")}
+                  className="appearance-none cursor-pointer pl-4 pr-9 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="default">Urutan Default</option>
+                  <option value="az">Nama A–Z</option>
+                  <option value="za">Nama Z–A</option>
+                </select>
+                <FaChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
+              </div>
+
+              {/* Result count */}
+              {!productsLoading && (
+                <span className="ml-auto text-sm text-gray-400">
+                  {filteredProducts.length} produk
+                </span>
+              )}
             </motion.div>
-
-            {/* Current Category Title */}
-            <div className="mb-8 overflow-hidden">
-              <motion.p
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="text-lg font-normal text-black mb-1"
-              >
-                {currentCategorySubtitle || "Kenyamanan Tidur Si Kecil"}
-              </motion.p>
-              <motion.h2
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-2xl md:text-3xl font-normal text-black"
-              >
-                {currentCategoryTitle ||
-                  "Perlengkapan Tidur Bayi (Baby Sleep Essentials)"}
-              </motion.h2>
-            </div>
 
             {/* Product Grid */}
             {productsLoading ? (

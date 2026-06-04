@@ -46,25 +46,32 @@ export default function AdminCatalog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    try {
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      if (bgFile) data.append("backgroundImage", bgFile);
+      if (cardFile) data.append("cardImage", cardFile);
+      if (pdfFile) data.append("file", pdfFile);
 
-    const data = new FormData();
-    data.append("title", formData.title);
-    data.append("description", formData.description);
-    if (bgFile) data.append("backgroundImage", bgFile);
-    if (cardFile) data.append("cardImage", cardFile);
-    if (pdfFile) data.append("file", pdfFile);
+      const res = await fetch(`${API_URL}/catalog`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      });
 
-    const res = await fetch(`${API_URL}/catalog`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-      body: data,
-    });
-
-    if (res.ok) {
-      setCatalog(await res.json());
-      alert("Catalog berhasil diperbarui!");
+      if (res.ok) {
+        setCatalog(await res.json());
+        alert("Catalog berhasil diperbarui!");
+      } else {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        alert(`Gagal menyimpan: ${err.message}`);
+      }
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (

@@ -41,7 +41,30 @@ const productSchema = new mongoose.Schema({
   isFeatured: {
     type: Boolean,
     default: false
-  }
+  },
+  priceNumeric: {
+    type: Number,
+    default: 0
+  },
+  weightGrams: {
+    type: Number,
+    default: 0
+  },
+  dimensions: {
+    length: { type: Number, default: 1 },
+    width:  { type: Number, default: 1 },
+    height: { type: Number, default: 1 }
+  },
+  variants: [{
+    name:       { type: String, default: '' },
+    price:      { type: Number, default: 0 },
+    weightGrams:{ type: Number, default: 0 },
+    dimensions: {
+      length: { type: Number, default: 1 },
+      width:  { type: Number, default: 1 },
+      height: { type: Number, default: 1 }
+    }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

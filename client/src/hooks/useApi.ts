@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { getCartCount } from '../utils/cart';
+
+export function useCartCount() {
+  const [count, setCount] = useState(getCartCount());
+  useEffect(() => {
+    const handler = () => setCount(getCartCount());
+    window.addEventListener('cartUpdated', handler);
+    return () => window.removeEventListener('cartUpdated', handler);
+  }, []);
+  return count;
+}
 
 export function useSiteSettings() {
   const [data, setData] = useState<any>(null);

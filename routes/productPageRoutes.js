@@ -42,7 +42,7 @@ router.put('/', [auth, upload.single('bannerImage')], async (req, res) => {
     if (title) settings.title = title;
     
     if (req.file) {
-      settings.bannerImage = `/uploads/${req.file.filename}`;
+      settings.bannerImage = req.file.path;
     }
 
     // Update Category 1

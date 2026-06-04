@@ -132,34 +132,6 @@ export default function AdminSettings() {
                 className="w-full px-4 py-2 border rounded-lg"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tokopedia
-                </label>
-                <input
-                  type="text"
-                  value={formData.tokopediaUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tokopediaUrl: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Shopee
-                </label>
-                <input
-                  type="text"
-                  value={formData.shopeeUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shopeeUrl: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg"
-                />
-              </div>
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Instagram

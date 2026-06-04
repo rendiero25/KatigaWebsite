@@ -53,6 +53,7 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
+          className="-mt-10"
         >
           <ManufacturingSection />
         </motion.div>

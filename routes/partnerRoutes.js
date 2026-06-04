@@ -24,7 +24,7 @@ router.post('/', auth, upload.single('logo'), async (req, res) => {
     const { name, order } = req.body;
     const partner = new Partner({
       name,
-      logo: req.file ? `/uploads/${req.file.filename}` : '',
+      logo: req.file ? req.file.path : '',
       order: order || 0
     });
     await partner.save();
@@ -47,7 +47,7 @@ router.put('/:id', auth, upload.single('logo'), async (req, res) => {
     const { name, order } = req.body;
     if (name) partner.name = name;
     if (order !== undefined) partner.order = order;
-    if (req.file) partner.logo = `/uploads/${req.file.filename}`;
+    if (req.file) partner.logo = req.file.path;
 
     await partner.save();
     res.json(partner);
