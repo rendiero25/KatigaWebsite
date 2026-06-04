@@ -10,12 +10,6 @@ export default function ProductPageContent() {
     subtitle: "",
     title: "",
     bannerImage: "",
-    cat1Name: "",
-    cat1Subtitle: "",
-    cat1Title: "",
-    cat2Name: "",
-    cat2Subtitle: "",
-    cat2Title: "",
   });
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -32,12 +26,6 @@ export default function ProductPageContent() {
           subtitle: data.subtitle || "",
           title: data.title || "",
           bannerImage: data.bannerImage || "",
-          cat1Name: data.category1?.name || "",
-          cat1Subtitle: data.category1?.subtitle || "",
-          cat1Title: data.category1?.title || "",
-          cat2Name: data.category2?.name || "",
-          cat2Subtitle: data.category2?.subtitle || "",
-          cat2Title: data.category2?.title || "",
         });
         if (data.bannerImage) {
           setPreviewUrl(api.getImageUrl(data.bannerImage));
@@ -68,12 +56,6 @@ export default function ProductPageContent() {
 
       data.append("subtitle", formData.subtitle);
       data.append("title", formData.title);
-      data.append("cat1Name", formData.cat1Name);
-      data.append("cat1Subtitle", formData.cat1Subtitle);
-      data.append("cat1Title", formData.cat1Title);
-      data.append("cat2Name", formData.cat2Name);
-      data.append("cat2Subtitle", formData.cat2Subtitle);
-      data.append("cat2Title", formData.cat2Title);
 
       if (bannerFile) {
         data.append("bannerImage", bannerFile);
@@ -167,122 +149,6 @@ export default function ProductPageContent() {
                   <p className="mt-1 text-xs text-gray-500">
                     Format: JPG, PNG, WEBP. Max size: 2MB.
                   </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Category 1 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-              Kategori Tab 1
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nama Tab
-                </label>
-                <input
-                  type="text"
-                  value={formData.cat1Name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, cat1Name: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="Perlengkapan Tidur Bayi"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category Subtitle
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cat1Subtitle}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          cat1Subtitle: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                      placeholder="Kenyamanan Tidur Si Kecil"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category Title
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cat1Title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cat1Title: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                      placeholder="Perlengkapan Tidur Bayi (Baby Sleep Essentials)"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Category 2 */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-              Kategori Tab 2
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nama Tab
-                </label>
-                <input
-                  type="text"
-                  value={formData.cat2Name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, cat2Name: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="Handuk Keluarga"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category Subtitle
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cat2Subtitle}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          cat2Subtitle: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                      placeholder="Kenyamanan Handuk Keluarga"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category Title
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.cat2Title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, cat2Title: e.target.value })
-                      }
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                      placeholder="Handuk Keluarga (Family Towels)"
-                    />
-                  </div>
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const catalogSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true
+    default: ''
   },
   description: {
     type: String,

@@ -31,15 +31,15 @@ router.put('/', auth, upload.fields([
 
     if (!catalog) {
       catalog = new Catalog({
-        title: title || '',
-        description: description || '',
-        backgroundImage: req.files?.backgroundImage ? req.files.backgroundImage[0].path : '',
-        cardImage: req.files?.cardImage ? req.files.cardImage[0].path : '',
-        fileUrl: req.files?.file ? req.files.file[0].path : ''
+        title: title ?? '',
+        description: description ?? '',
+        backgroundImage: req.files?.backgroundImage?.[0]?.path ?? '',
+        cardImage: req.files?.cardImage?.[0]?.path ?? '',
+        fileUrl: req.files?.file?.[0]?.path ?? '',
       });
     } else {
-      if (title) catalog.title = title;
-      if (description) catalog.description = description;
+      if (title !== undefined) catalog.title = title;
+      if (description !== undefined) catalog.description = description;
       if (req.files?.backgroundImage) catalog.backgroundImage = req.files.backgroundImage[0].path;
       if (req.files?.cardImage) catalog.cardImage = req.files.cardImage[0].path;
       if (req.files?.file) catalog.fileUrl = req.files.file[0].path;
