@@ -1,23 +1,35 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import { ChevronDownIcon } from "lucide-react";
+import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useProducts, useCategories } from "../hooks/useApi";
 import api from "../services/api";
 import {
-  FaSearch,
-  FaChevronLeft,
-  FaChevronRight,
-  FaChevronDown,
-} from "react-icons/fa";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 import PartnersSection from "../components/PartnersSection";
+
+const PRODUCTS_PER_PAGE = 12;
+
+const sortLabels: Record<"default" | "az" | "za", string> = {
+  default: "Urutan Default",
+  az: "Nama A–Z",
+  za: "Nama Z–A",
+};
 
 export default function Products() {
   const [settings, setSettings] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"default" | "az" | "za">("default");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: categories } = useCategories();
 
@@ -31,6 +43,10 @@ export default function Products() {
     category: activeCategory || undefined,
   });
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, searchQuery, sortBy]);
+
   const filteredProducts = (Array.isArray(productskumakuma) ? productskumakuma : [])
     .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a: any, b: any) => {
@@ -38,6 +54,19 @@ export default function Products() {
       if (sortBy === "za") return b.name.localeCompare(a.name);
       return 0;
     });
+
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const pagedProducts = filteredProducts.slice(
+    (currentPage - 1) * PRODUCTS_PER_PAGE,
+    currentPage * PRODUCTS_PER_PAGE
+  );
+
+  const getPageNumbers = (): (number | "...")[] => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (currentPage <= 3) return [1, 2, 3, 4, "...", totalPages];
+    if (currentPage >= totalPages - 2) return [1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+  };
 
   // Animation Variants
   const fadeInUp = {
@@ -126,33 +155,39 @@ export default function Products() {
               </div>
 
               {/* Category filter */}
-              <div className="relative">
-                <select
-                  value={activeCategory}
-                  onChange={(e) => { setActiveCategory(e.target.value); setSearchQuery(""); }}
-                  className="appearance-none cursor-pointer pl-4 pr-9 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Semua Kategori</option>
-                  {categories.map((cat) => (
-                    <option key={cat._id} value={cat.name}>{cat.name}</option>
-                  ))}
-                </select>
-                <FaChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-2 pl-4 pr-4 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary">
+                  {activeCategory || "Semua Kategori"}
+                  <ChevronDownIcon className="w-3 h-3 text-gray-500" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => { setActiveCategory(""); setSearchQuery(""); }}>
+                      Semua Kategori
+                    </DropdownMenuItem>
+                    {categories.map((cat) => (
+                      <DropdownMenuItem key={cat._id} onClick={() => { setActiveCategory(cat.name); setSearchQuery(""); }}>
+                        {cat.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Sort */}
-              <div className="relative">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as "default" | "az" | "za")}
-                  className="appearance-none cursor-pointer pl-4 pr-9 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="default">Urutan Default</option>
-                  <option value="az">Nama A–Z</option>
-                  <option value="za">Nama Z–A</option>
-                </select>
-                <FaChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500" />
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-2 pl-4 pr-4 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary">
+                  {sortLabels[sortBy]}
+                  <ChevronDownIcon className="w-3 h-3 text-gray-500" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem onClick={() => setSortBy("default")}>Urutan Default</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("az")}>Nama A–Z</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortBy("za")}>Nama Z–A</DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Result count */}
               {!productsLoading && (
@@ -193,7 +228,7 @@ export default function Products() {
                 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
               >
-                {filteredProducts.map((product: any) => (
+                {pagedProducts.map((product: any) => (
                   <motion.div key={product._id} variants={fadeInUp}>
                     <Link to={`/produk/${product._id}`} className="group block">
                       <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4">
@@ -220,24 +255,52 @@ export default function Products() {
               </motion.div>
             )}
 
-            {/* Pagination (Visual Only for now) */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.5 }}
-              className="mt-16 flex justify-center items-center gap-4"
-            >
-              <button className="cursor-pointer p-2 text-gray-400 hover:text-gray-900 disabled:opacity-50">
-                <FaChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="cursor-pointer font-bold text-gray-900">1</span>
-              <span className="cursor-pointer text-gray-400">2</span>
-              <span className="cursor-pointer text-gray-400">3</span>
-              <button className="cursor-pointer p-2 text-gray-400 hover:text-gray-900">
-                <FaChevronRight className="w-4 h-4" />
-              </button>
-            </motion.div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+                className="mt-16 flex justify-center items-center gap-2"
+              >
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="cursor-pointer p-2 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <FaChevronLeft className="w-4 h-4" />
+                </button>
+
+                {getPageNumbers().map((page, i) =>
+                  page === "..." ? (
+                    <span key={`ellipsis-${i}`} className="px-1 text-gray-400 select-none">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page as number)}
+                      className={`cursor-pointer w-9 h-9 rounded-full text-sm font-medium transition ${
+                        currentPage === page
+                          ? "bg-primary text-white"
+                          : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="cursor-pointer p-2 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <FaChevronRight className="w-4 h-4" />
+                </button>
+              </motion.div>
+            )}
           </div>
         </div>
       </main>

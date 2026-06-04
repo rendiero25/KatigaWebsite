@@ -1,38 +1,85 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import api from "../services/api";
-import { FaWhatsapp, FaShoppingCart } from "react-icons/fa";
-import { addToCart } from "../utils/cart";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ChevronDown, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+
+import api from '../services/api';
+import { addToCart } from '../utils/cart';
+import { cn } from '../lib/utils';
+
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import { Button } from '../components/ui/button';
+import { Spinner } from '../components/ui/spinner';
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '../components/ui/collapsible';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '../components/ui/breadcrumb';
+
+interface Variant {
+  _id: string;
+  name: string;
+  price: number;
+  weightGrams: number;
+  dimensions: { length: number; width: number; height: number };
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  image: string;
+  images: string[];
+  category: { _id: string; name: string } | null;
+  price: string;
+  isFeatured: boolean;
+  priceNumeric: number;
+  weightGrams: number;
+  variants: Variant[];
+}
+
+interface FeaturedProduct {
+  _id: string;
+  name: string;
+  image: string;
+  category: { name: string } | null;
+  priceNumeric: number;
+}
+
+const formatRp = (n: number): string => `Rp ${n.toLocaleString('id-ID')}`;
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [siteSettings, setSiteSettings] = useState<any>(null);
-  const [activeImage, setActiveImage] = useState<string>("");
+  const [activeImage, setActiveImage] = useState('');
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+  const [qty, setQty] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [descOpen, setDescOpen] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      // setLoading(true); // Removed to avoid cascading render warning
-      Promise.all([api.getProduct(id), api.getSiteSettings()])
-        .then(([productData, settingsData]) => {
-          setProduct(productData);
-          setSiteSettings(settingsData);
-          // Initialize active image
-          if (productData.images && productData.images.length > 0) {
-            setActiveImage(productData.images[0]);
-          } else if (productData.image) {
-            setActiveImage(productData.image);
-          }
-        })
-        .finally(() => setLoading(false));
-    }
+    if (!id) return;
+    api
+      .getProduct(id)
+      .then((data: Product) => {
+        setProduct(data);
+        if (data.images.length > 0) setActiveImage(data.images[0]);
+        else if (data.image) setActiveImage(data.image);
+      })
+      .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) {
@@ -40,7 +87,7 @@ export default function ProductDetail() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="grow flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <Spinner className="size-10 text-primary" />
         </main>
         <Footer />
       </div>
@@ -51,11 +98,9 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="grow flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Produk tidak ditemukan
-          </h2>
-          <Link to="/produk" className="text-indigo-600 hover:text-indigo-800">
+        <main className="grow flex flex-col items-center justify-center gap-4">
+          <h2 className="text-2xl font-bold text-gray-900">Produk tidak ditemukan</h2>
+          <Link to="/produk" className="text-primary hover:underline">
             &larr; Kembali ke daftar produk
           </Link>
         </main>
@@ -64,51 +109,53 @@ export default function ProductDetail() {
     );
   }
 
-  const whatsappMessage = `Halo, saya tertarik dengan produk ${product.name}. Bisakah saya mendapatkan informasi lebih lanjut?`;
-  const whatsappLink = `https://wa.me/${siteSettings?.whatsapp?.replace(/\D/g, "") || ""}?text=${encodeURIComponent(whatsappMessage)}`;
+  const variants: Variant[] = product.variants ?? [];
+  const effectivePrice =
+    selectedVariant !== null && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product.priceNumeric ?? 0);
+  const hasPrice = effectivePrice > 0;
+
+  const handleAddToCart = () => {
+    setAdding(true);
+    addToCart({
+      productId: product._id,
+      name: selectedVariant
+        ? `${product.name} - ${selectedVariant.name}`
+        : product.name,
+      image: activeImage || product.image || '',
+      priceNumeric: effectivePrice,
+      weightGrams: selectedVariant?.weightGrams ?? product.weightGrams ?? 0,
+      quantity: qty,
+    });
+    setTimeout(() => setAdding(false), 600);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="grow pt-20 pb-16 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-          <div className="mb-6">
-            <Link
-              to="/produk"
-              className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              Kembali ke Produk
-            </Link>
-          </div>
-
-          <nav className="text-sm text-gray-500 mb-8">
-            <Link to="/" className="hover:text-indigo-600">
-              Beranda
-            </Link>
-            <span className="mx-2">/</span>
-            <Link to="/produk" className="hover:text-indigo-600">
-              Produk
-            </Link>
-            <span className="mx-2">/</span>
-            <span className="text-gray-900">{product.name}</span>
-          </nav>
+          <Breadcrumb className="mb-8">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<Link to="/" />}>Beranda</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<Link to="/produk" />}>Produk</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{product.name}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
           <div className="flex flex-col md:grid md:grid-cols-2 gap-12">
             {/* Image Gallery */}
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-2xl overflow-hidden w-full h-auto md:w-[400px] md:h-[300px] xl:w-[600px] xl:h-[550px] relative">
+            <div className="flex flex-col gap-4">
+              <div className="bg-gray-50 rounded-2xl overflow-hidden relative aspect-square md:aspect-auto md:h-[500px]">
                 <img
                   src={
                     activeImage
@@ -116,113 +163,188 @@ export default function ProductDetail() {
                       : api.getImageUrl(product.image)
                   }
                   alt={product.name}
-                  className="w-full h-auto md:h-full object-contain p-4"
+                  className="w-full h-full object-contain p-4"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800";
+                      'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
                   }}
                 />
                 {product.isFeatured && (
-                  <span className="absolute top-4 left-4 px-3 py-1 bg-pink-500 text-white font-medium rounded-full">
+                  <span className="absolute top-4 left-4 px-3 py-1 bg-pink-500 text-white font-medium rounded-full text-sm">
                     Featured
                   </span>
                 )}
               </div>
 
-              {/* Thumbnails Swiper */}
-              {product.images && product.images.length > 1 && (
-                <div className="w-full">
-                  <Swiper
-                    modules={[Navigation]}
-                    spaceBetween={10}
-                    slidesPerView={4}
-                    navigation
-                    className="w-full"
-                  >
-                    {product.images.map((img: string, idx: number) => (
-                      <SwiperSlide key={idx}>
-                        <button
-                          onClick={() => setActiveImage(img)}
-                          className={`cursor-pointer w-full aspect-square rounded-lg overflow-hidden border-2 transition
-                            ${activeImage === img ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-transparent hover:border-gray-300"}
-                          `}
-                        >
-                          <img
-                            src={api.getImageUrl(img)}
-                            alt={`${product.name} ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      </SwiperSlide>
-                    ))}
-                  </Swiper>
-                </div>
+              {product.images.length > 1 && (
+                <Swiper
+                  modules={[Navigation]}
+                  spaceBetween={10}
+                  slidesPerView={4}
+                  navigation
+                  className="w-full"
+                >
+                  {product.images.map((img, idx) => (
+                    <SwiperSlide key={idx}>
+                      <button
+                        onClick={() => setActiveImage(img)}
+                        className={cn(
+                          'cursor-pointer w-full aspect-square rounded-lg overflow-hidden border-2 transition',
+                          activeImage === img
+                            ? 'border-primary ring-2 ring-primary ring-offset-2'
+                            : 'border-transparent hover:border-gray-300'
+                        )}
+                      >
+                        <img
+                          src={api.getImageUrl(img)}
+                          alt={`${product.name} ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               )}
             </div>
 
             {/* Product Info */}
-            <div>
-              <div className="mb-2">
-                <span className="text-indigo-600 font-medium bg-indigo-50 px-3 py-1 rounded-full text-sm">
-                  {product.category?.name || "Kategori Umum"}
-                </span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            <div className="flex flex-col gap-5">
+              <span className="text-primary font-medium bg-primary/10 px-3 py-1 rounded-full text-sm w-fit">
+                {product.category?.name || 'Kategori Umum'}
+              </span>
+
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
                 {product.name}
               </h1>
-              <p className="text-2xl font-bold text-gray-900 mb-6">
-                {product.price || "Hubungi untuk harga"}
+
+              {variants.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Varian</p>
+                  <div className="flex flex-wrap gap-2">
+                    {variants.map((v) => (
+                      <button
+                        key={v._id}
+                        onClick={() =>
+                          setSelectedVariant(selectedVariant?._id === v._id ? null : v)
+                        }
+                        className={cn(
+                          'px-4 py-2 rounded-lg border text-sm font-medium transition',
+                          selectedVariant?._id === v._id
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                        )}
+                      >
+                        {v.name}
+                        {v.price > 0 && (
+                          <span className="ml-1 text-xs opacity-70">
+                            · {formatRp(v.price)}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="text-2xl font-bold text-gray-900">
+                {hasPrice ? formatRp(effectivePrice) : 'Hubungi untuk harga'}
               </p>
 
-              <div className="prose prose-indigo text-gray-600 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <Collapsible open={descOpen} onOpenChange={setDescOpen}>
+                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 transition cursor-pointer">
                   Deskripsi Produk
-                </h3>
-                <p className="whitespace-pre-line">{product.description}</p>
-              </div>
+                  <ChevronDown
+                    className={cn(
+                      'size-4 text-gray-500 transition-transform duration-200',
+                      descOpen && 'rotate-180'
+                    )}
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent className="data-[closed]:hidden">
+                  <div className="px-4 pt-3 pb-2 text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                    {product.description || 'Tidak ada deskripsi.'}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
-              <div className="flex flex-col gap-4">
-                {product.priceNumeric > 0 && (
-                  <button
-                    onClick={() => {
-                      addToCart({
-                        productId: product._id,
-                        name: product.name,
-                        image: product.image || (product.images?.[0] ?? ''),
-                        priceNumeric: product.priceNumeric,
-                        weightGrams: product.weightGrams ?? 0,
-                      });
-                      alert('Produk ditambahkan ke keranjang!');
-                    }}
-                    className="flex items-center justify-center gap-2 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold py-4 px-6 rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+              {hasPrice && (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                        disabled={qty <= 1}
+                        className="rounded-none border-r border-gray-200"
+                      >
+                        <Minus />
+                      </Button>
+                      <span className="px-4 text-sm font-semibold text-gray-900 select-none min-w-[2.5rem] text-center">
+                        {qty}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setQty((q) => q + 1)}
+                        className="rounded-none border-l border-gray-200"
+                      >
+                        <Plus />
+                      </Button>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      Subtotal:{' '}
+                      <span className="font-semibold text-gray-900">
+                        {formatRp(effectivePrice * qty)}
+                      </span>
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleAddToCart}
+                    disabled={adding}
+                    className="w-full h-12 rounded-xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all duration-300"
                   >
-                    <FaShoppingCart className="w-5 h-5" />
-                    Tambah ke Keranjang
-                  </button>
-                )}
-
-
-
-                <a
-                  href={whatsappLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-green-500 text-white font-semibold py-4 px-6 rounded-xl hover:bg-green-600 transition flex items-center justify-center gap-2"
-                >
-                  <FaWhatsapp className="w-5 h-5" />
-                  Hubungi via WhatsApp
-                </a>
-              </div>
+                    {adding ? (
+                      <>
+                        <Spinner className="text-white mr-2" />
+                        Menambahkan...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="mr-2" />
+                        Tambah ke Keranjang
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Featured Products Section */}
-        <section className="bg-[#F9F7F2] py-16 mt-15">
+        {/* Rating & Reviews */}
+        <section className="py-16 mt-12 bg-[#F9F7F2]">
           <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">
-              Produk Unggulan
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+              Ulasan Pembeli
             </h2>
+            <p className="text-sm text-gray-400 mb-10">0 ulasan</p>
+            <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className="size-8 fill-gray-200 text-gray-200" />
+                ))}
+              </div>
+              <p className="text-gray-400 text-sm">Belum ada ulasan untuk produk ini.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Products */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Produk Unggulan</h2>
             <FeaturedProducts />
           </div>
         </section>
@@ -233,13 +355,11 @@ export default function ProductDetail() {
 }
 
 function FeaturedProducts() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<FeaturedProduct[]>([]);
 
   useEffect(() => {
-    api.getProducts({ featured: true }).then((data) => {
-      if (Array.isArray(data)) {
-        setProducts(data);
-      }
+    api.getProducts({ featured: true }).then((data: FeaturedProduct[]) => {
+      if (Array.isArray(data)) setProducts(data);
     });
   }, []);
 
@@ -258,28 +378,26 @@ function FeaturedProducts() {
       }}
       className="pb-12"
     >
-      {products.map((product) => (
-        <SwiperSlide key={product._id} className="h-auto">
+      {products.map((p) => (
+        <SwiperSlide key={p._id} className="h-auto">
           <Link
-            to={`/produk/${product._id}`}
+            to={`/produk/${p._id}`}
             className="block h-full bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition group"
           >
-            <div className="aspect-[4/3] bg-gray-100 overflow-hidden relative">
+            <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
               <img
-                src={api.getImageUrl(product.image)}
-                alt={product.name}
+                src={api.getImageUrl(p.image)}
+                alt={p.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
               />
             </div>
             <div className="p-4">
-              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition">
-                {product.name}
+              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition">
+                {p.name}
               </h3>
-              <p className="text-gray-500 text-sm mb-3">
-                {product.category?.name}
-              </p>
-              <p className="font-bold text-indigo-600">
-                {product.price || "Hubungi Kami"}
+              <p className="text-gray-500 text-sm mb-3">{p.category?.name}</p>
+              <p className="font-bold text-primary">
+                {p.priceNumeric > 0 ? formatRp(p.priceNumeric) : 'Hubungi Kami'}
               </p>
             </div>
           </Link>
