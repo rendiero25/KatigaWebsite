@@ -181,6 +181,16 @@ export const api = {
     return res.json();
   },
 
+  customerGoogleAuth: async (credential: string): Promise<{ token: string; customer: { _id: string; name: string; email: string; phone: string }; isNew: boolean; message?: string }> => {
+    const res = await fetch(`${API_BASE_URL}/customers/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    });
+    if (!res.ok && res.status !== 400 && res.status !== 401) throw new Error('Google auth failed');
+    return res.json();
+  },
+
   getCustomerProfile: async () => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/customers/me`, {
