@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronDown, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Star } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -14,11 +14,6 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
 import { Spinner } from '../components/ui/spinner';
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from '../components/ui/collapsible';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -68,7 +63,7 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
-  const [descOpen, setDescOpen] = useState(true);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -78,6 +73,7 @@ export default function ProductDetail() {
         setProduct(data);
         if (data.images.length > 0) setActiveImage(data.images[0]);
         else if (data.image) setActiveImage(data.image);
+        if (data.variants?.length > 0) setSelectedVariant(data.variants[0]);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -152,10 +148,10 @@ export default function ProductDetail() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="flex flex-col md:grid md:grid-cols-2 gap-12">
+          <div className="flex flex-col md:flex-row gap-12">
             {/* Image Gallery */}
-            <div className="flex flex-col gap-4">
-              <div className="bg-gray-50 rounded-2xl overflow-hidden relative aspect-square md:aspect-auto md:h-[500px]">
+            <div className="flex flex-col gap-4 md:w-1/2 md:shrink-0 md:sticky md:top-24 md:self-start">
+              <div className="bg-gray-50 rounded-2xl overflow-hidden relative aspect-square">
                 <img
                   src={
                     activeImage
@@ -208,7 +204,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Product Info */}
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-5 md:flex-1">
               <span className="text-primary font-medium bg-primary/10 px-3 py-1 rounded-full text-sm w-fit">
                 {product.category?.name || 'Kategori Umum'}
               </span>
@@ -216,6 +212,15 @@ export default function ProductDetail() {
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
                 {product.name}
               </h1>
+
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} className="size-4 fill-gray-200 text-gray-200" />
+                  ))}
+                </div>
+                <span className="text-sm text-gray-400">0 ulasan</span>
+              </div>
 
               {variants.length > 0 && (
                 <div>
@@ -235,11 +240,6 @@ export default function ProductDetail() {
                         )}
                       >
                         {v.name}
-                        {v.price > 0 && (
-                          <span className="ml-1 text-xs opacity-70">
-                            · {formatRp(v.price)}
-                          </span>
-                        )}
                       </button>
                     ))}
                   </div>
@@ -250,22 +250,22 @@ export default function ProductDetail() {
                 {hasPrice ? formatRp(effectivePrice) : 'Hubungi untuk harga'}
               </p>
 
-              <Collapsible open={descOpen} onOpenChange={setDescOpen}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 transition cursor-pointer">
-                  Deskripsi Produk
-                  <ChevronDown
-                    className={cn(
-                      'size-4 text-gray-500 transition-transform duration-200',
-                      descOpen && 'rotate-180'
-                    )}
-                  />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="data-[closed]:hidden">
-                  <div className="px-4 pt-3 pb-2 text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                    {product.description || 'Tidak ada deskripsi.'}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+              <div>
+                <p
+                  className={cn(
+                    'text-sm text-gray-600 leading-relaxed whitespace-pre-line',
+                    !descExpanded && 'line-clamp-[10]'
+                  )}
+                >
+                  {product.description || 'Tidak ada deskripsi.'}
+                </p>
+                <button
+                  onClick={() => setDescExpanded((v) => !v)}
+                  className="mt-2 text-sm font-semibold text-primary hover:underline"
+                >
+                  {descExpanded ? 'Lihat lebih sedikit' : 'Lihat lebih lanjut'}
+                </button>
+              </div>
 
               {hasPrice && (
                 <div className="flex flex-col gap-4">

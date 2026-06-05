@@ -146,7 +146,7 @@ export const api = {
     sort?: string;
   }) => {
     const queryString = params
-      ? `?${new URLSearchParams(params as any).toString()}`
+      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
       : "";
     const res = await fetch(`${API_BASE_URL}/news${queryString}`);
     return res.json();

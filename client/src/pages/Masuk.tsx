@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import api from '../services/api';
@@ -14,25 +14,7 @@ export default function Masuk() {
   const [coverOffset, setCoverOffset] = useState({ x: 0, y: 0 });
   const coverRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId || !window.google?.accounts?.id) return;
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: handleGoogleResponse,
-    });
-  }, []);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!coverRef.current) return;
-    const rect = coverRef.current.getBoundingClientRect();
-    setCoverOffset({
-      x: ((e.clientX - rect.left) / rect.width - 0.5) * 16,
-      y: ((e.clientY - rect.top) / rect.height - 0.5) * 16,
-    });
-  };
-
-  const handleGoogleResponse = async (response: { credential: string }) => {
+  const handleGoogleResponse = useCallback(async (response: { credential: string }) => {
     setError('');
     setLoading(true);
     try {
@@ -49,6 +31,24 @@ export default function Masuk() {
     } finally {
       setLoading(false);
     }
+  }, [navigate]);
+
+  useEffect(() => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId || !window.google?.accounts?.id) return;
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleResponse,
+    });
+  }, [handleGoogleResponse]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!coverRef.current) return;
+    const rect = coverRef.current.getBoundingClientRect();
+    setCoverOffset({
+      x: ((e.clientX - rect.left) / rect.width - 0.5) * 16,
+      y: ((e.clientY - rect.top) / rect.height - 0.5) * 16,
+    });
   };
 
   const handleGoogleClick = () => {
