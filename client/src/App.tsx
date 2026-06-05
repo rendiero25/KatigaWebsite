@@ -35,6 +35,7 @@ import Keranjang from './pages/Keranjang';
 import Checkout from './pages/Checkout';
 import Pesanan from './pages/Pesanan';
 import PesananDetail from './pages/PesananDetail';
+import Profil from './pages/Profil';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/pesanan" element={<Pesanan />} />
         <Route path="/pesanan/:id" element={<PesananDetail />} />
+        <Route path="/profil" element={<Profil />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
