@@ -4,8 +4,9 @@ const bcrypt = require('bcryptjs');
 const customerSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true },
-  phone: { type: String, required: true, trim: true },
+  password: { type: String, default: '' },
+  phone: { type: String, default: '', trim: true },
+  googleId: { type: String, default: '', index: true },
   defaultAddress: {
     recipientName: { type: String, default: '' },
     phone:         { type: String, default: '' },
@@ -19,12 +20,13 @@ const customerSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 customerSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.password || !this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 customerSchema.methods.matchPassword = async function (entered) {
+  if (!this.password) return false;
   return bcrypt.compare(entered, this.password);
 };
 
