@@ -36,6 +36,7 @@ import Checkout from './pages/Checkout';
 import Pesanan from './pages/Pesanan';
 import PesananDetail from './pages/PesananDetail';
 import Profil from './pages/Profil';
+import PengaturanAkun from './pages/PengaturanAkun';
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
         <Route path="/pesanan" element={<Pesanan />} />
         <Route path="/pesanan/:id" element={<PesananDetail />} />
         <Route path="/profil" element={<Profil />} />
+        <Route path="/profil/pengaturan" element={<PengaturanAkun />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

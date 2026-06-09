@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import api from '../services/api';
 
 export default function Daftar() {
@@ -9,6 +10,7 @@ export default function Daftar() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState({ password: false, confirmPassword: false });
   const [coverOffset, setCoverOffset] = useState({ x: 0, y: 0 });
   const coverRef = useRef<HTMLDivElement>(null);
 
@@ -174,15 +176,44 @@ export default function Daftar() {
                 <label htmlFor={f.id} className="block text-sm font-medium text-black mb-1.5">
                   {f.label}
                 </label>
-                <input
-                  id={f.id}
-                  type={f.type}
-                  value={form[f.field]}
-                  onChange={(e) => setForm({ ...form, [f.field]: e.target.value })}
-                  required={f.required !== false}
-                  placeholder={f.placeholder}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200 text-sm"
-                />
+                {f.type === 'password' ? (
+                  <div className="relative">
+                    <input
+                      id={f.id}
+                      type={(f.field === 'password' ? showPw.password : showPw.confirmPassword) ? 'text' : 'password'}
+                      value={form[f.field]}
+                      onChange={(e) => setForm({ ...form, [f.field]: e.target.value })}
+                      required={f.required !== false}
+                      placeholder={f.placeholder}
+                      className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPw((prev) =>
+                          f.field === 'password'
+                            ? { ...prev, password: !prev.password }
+                            : { ...prev, confirmPassword: !prev.confirmPassword }
+                        )
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                    >
+                      {(f.field === 'password' ? showPw.password : showPw.confirmPassword)
+                        ? <FiEyeOff className="w-4 h-4" />
+                        : <FiEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    id={f.id}
+                    type={f.type}
+                    value={form[f.field]}
+                    onChange={(e) => setForm({ ...form, [f.field]: e.target.value })}
+                    required={f.required !== false}
+                    placeholder={f.placeholder}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200 text-sm"
+                  />
+                )}
               </motion.div>
             ))}
 

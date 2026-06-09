@@ -14,11 +14,15 @@ export default function Keranjang() {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate('/masuk?redirect=/keranjang');
+      return;
+    }
     setCart(getCart());
     const handler = () => setCart(getCart());
     window.addEventListener('cartUpdated', handler);
     return () => window.removeEventListener('cartUpdated', handler);
-  }, []);
+  }, [navigate]);
 
   const handleCheckout = () => {
     const token = localStorage.getItem('customerToken');

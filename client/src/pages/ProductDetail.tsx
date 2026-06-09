@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, ShoppingCart, Star } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
@@ -57,6 +57,7 @@ const formatRp = (n: number): string => `Rp ${n.toLocaleString('id-ID')}`;
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState('');
@@ -113,6 +114,10 @@ export default function ProductDetail() {
   const hasPrice = effectivePrice > 0;
 
   const handleAddToCart = () => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate(`/masuk?redirect=/produk/${id}`);
+      return;
+    }
     setAdding(true);
     addToCart({
       productId: product._id,

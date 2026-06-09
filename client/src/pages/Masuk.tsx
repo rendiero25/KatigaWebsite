@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import api from '../services/api';
 
 export default function Masuk() {
@@ -11,6 +12,7 @@ export default function Masuk() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [coverOffset, setCoverOffset] = useState({ x: 0, y: 0 });
   const coverRef = useRef<HTMLDivElement>(null);
 
@@ -158,15 +160,36 @@ export default function Masuk() {
                 <label htmlFor={f.id} className="block text-sm font-medium text-black mb-1.5">
                   {f.label}
                 </label>
-                <input
-                  id={f.id}
-                  type={f.type}
-                  value={f.value}
-                  onChange={(e) => setForm({ ...form, [f.field]: e.target.value })}
-                  required
-                  placeholder={f.placeholder}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200 text-sm"
-                />
+                {f.type === 'password' ? (
+                  <div className="relative">
+                    <input
+                      id={f.id}
+                      type={showPassword ? 'text' : 'password'}
+                      value={f.value}
+                      onChange={(e) => setForm({ ...form, [f.field]: e.target.value })}
+                      required
+                      placeholder={f.placeholder}
+                      className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                    >
+                      {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    id={f.id}
+                    type={f.type}
+                    value={f.value}
+                    onChange={(e) => setForm({ ...form, [f.field]: e.target.value })}
+                    required
+                    placeholder={f.placeholder}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all duration-200 text-sm"
+                  />
+                )}
               </motion.div>
             ))}
 

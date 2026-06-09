@@ -1,101 +1,213 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import api from '../services/api';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Package, CreditCard, CheckCircle, Clock, User, Phone, Mail, ArrowRight } from 'lucide-react'
+import type { CustomerProfile, Order } from '../types/ecommerce'
+import api from '../services/api'
+import UserLayout from '../components/UserLayout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
-interface CustomerData {
-  _id: string;
-  name: string;
-  email: string;
-  phone: string;
+const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+  awaiting_payment: { label: 'Menunggu Bayar', color: 'bg-amber-100 text-amber-700' },
+  processing: { label: 'Diproses', color: 'bg-blue-100 text-blue-700' },
+  shipped: { label: 'Dikirim', color: 'bg-indigo-100 text-indigo-700' },
+  delivered: { label: 'Selesai', color: 'bg-emerald-100 text-emerald-700' },
+  cancelled: { label: 'Dibatalkan', color: 'bg-red-100 text-red-700' },
 }
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+
 export default function Profil() {
-  const navigate = useNavigate();
-  const [customer, setCustomer] = useState<CustomerData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [customer, setCustomer] = useState<CustomerProfile | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('customerToken');
-    if (!token) {
-      navigate('/masuk');
-      return;
-    }
-    api.getCustomerProfile()
-      .then((data: CustomerData & { message?: string }) => {
-        if (data._id) setCustomer(data);
-        else navigate('/masuk');
+    Promise.all([
+      api.getCustomerProfile() as Promise<CustomerProfile & { message?: string }>,
+      api.getMyOrders() as Promise<Order[] | { message: string }>,
+    ])
+      .then(([profile, orderData]) => {
+        if (profile._id) setCustomer(profile)
+        setOrders(Array.isArray(orderData) ? orderData : [])
       })
-      .catch(() => navigate('/masuk'))
-      .finally(() => setLoading(false));
-  }, [navigate]);
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem('customerToken');
-    localStorage.removeItem('customerName');
-    navigate('/');
-  };
+  const activeOrders = orders.filter((o) =>
+    ['awaiting_payment', 'processing', 'shipped'].includes(o.orderStatus)
+  ).length
+  const doneOrders = orders.filter((o) => o.orderStatus === 'delivered').length
+  const totalSpent = orders
+    .filter((o) => o.orderStatus === 'delivered')
+    .reduce((s, o) => s + o.total, 0)
+
+  const stats = [
+    { label: 'Total Pesanan', value: String(orders.length), icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Sedang Berjalan', value: String(activeOrders), icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Selesai', value: String(doneOrders), icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Total Belanja', value: fmt(totalSpent), icon: CreditCard, color: 'text-violet-600', bg: 'bg-violet-50' },
+  ]
+
+  const recent = orders.slice(0, 3)
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+      <UserLayout title="Beranda">
+        <div className="space-y-6 w-full">
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          </div>
+          <div className="grid lg:grid-cols-5 gap-6">
+            <Skeleton className="lg:col-span-3 h-64 rounded-2xl" />
+            <Skeleton className="lg:col-span-2 h-64 rounded-2xl" />
+          </div>
+        </div>
+      </UserLayout>
+    )
   }
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-32 pb-16">
-        <div className="container mx-auto px-4 sm:px-10 lg:px-20 max-w-2xl">
-          <motion.div
-            className="bg-white rounded-2xl shadow-sm p-8"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <h1 className="text-2xl font-bold text-black mb-6">Profil Saya</h1>
-            {customer && (
-              <div className="space-y-5">
-                {[
-                  { label: 'Nama', value: customer.name },
-                  { label: 'Email', value: customer.email },
-                  ...(customer.phone ? [{ label: 'No. HP', value: customer.phone }] : []),
-                ].map((item, i) => (
-                  <motion.div
-                    key={item.label}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + i * 0.06, duration: 0.4 }}
-                  >
-                    <p className="text-xs font-medium text-black/40 uppercase tracking-wider mb-1">{item.label}</p>
-                    <p className="text-base text-black">{item.value}</p>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.35, duration: 0.4 }}
-              className="mt-8 pt-6 border-t border-gray-100"
-            >
-              <motion.button
-                onClick={handleLogout}
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full hover:shadow-lg transition-all duration-300 text-sm tracking-wide"
-              >
-                Keluar
-              </motion.button>
-            </motion.div>
-          </motion.div>
+    <UserLayout title="Beranda">
+      <div className="space-y-6 w-full">
+        {/* Welcome banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] p-6 text-white">
+          <div
+            className="absolute inset-0 opacity-[0.05]"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+              backgroundSize: '24px 24px',
+            }}
+          />
+          <div className="relative">
+            <p className="text-white/60 text-sm mb-1">Selamat datang kembali,</p>
+            <h2 className="text-2xl font-bold">{customer?.name || 'Pelanggan'} 👋</h2>
+            <p className="text-white/50 text-sm mt-2">Kelola pesanan dan akun kamu dari sini.</p>
+          </div>
         </div>
-      </main>
-      <Footer />
-    </>
-  );
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon
+            return (
+              <Card key={stat.label} className="border-0 shadow-sm bg-white rounded-xl">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-gray-500 mb-1 truncate">{stat.label}</p>
+                      <p className={`text-lg font-bold ${stat.color} truncate`}>{stat.value}</p>
+                    </div>
+                    <div className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center shrink-0 ml-2`}>
+                      <Icon className={`w-4 h-4 ${stat.color}`} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {/* Bottom row */}
+        <div className="grid lg:grid-cols-5 gap-6">
+          {/* Recent orders */}
+          <Card className="lg:col-span-3 border-0 shadow-sm bg-white rounded-2xl">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-900">Pesanan Terbaru</CardTitle>
+                <Link to="/pesanan" className="text-xs text-primary hover:underline flex items-center gap-1">
+                  Lihat semua <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {recent.length === 0 ? (
+                <div className="text-center py-10">
+                  <Package className="w-8 h-8 text-gray-200 mx-auto mb-3" />
+                  <p className="text-sm text-gray-400 mb-3">Belum ada pesanan</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={<Link to="/produk" />}
+                    className="rounded-full"
+                  >
+                    Mulai Belanja
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {recent.map((order) => {
+                    const s = STATUS_LABEL[order.orderStatus] ?? {
+                      label: order.orderStatus,
+                      color: 'bg-gray-100 text-gray-700',
+                    }
+                    return (
+                      <Link
+                        key={order._id}
+                        to={`/pesanan/${order._id}`}
+                        className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-gray-400 mb-0.5">
+                            #{order._id.slice(-8).toUpperCase()}
+                          </p>
+                          <p className="text-sm font-semibold text-gray-900">{fmt(order.total)}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{order.items.length} item</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${s.color}`}>
+                            {s.label}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary transition" />
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Profile summary */}
+          <Card className="lg:col-span-2 border-0 shadow-sm bg-white rounded-2xl">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold text-gray-900">Profil Saya</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  render={<Link to="/profil/pengaturan" />}
+                  className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                >
+                  Edit
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              {customer &&
+                [
+                  { icon: User, label: customer.name },
+                  { icon: Mail, label: customer.email },
+                  ...(customer.phone ? [{ icon: Phone, label: customer.phone }] : []),
+                ].map((item, i) => {
+                  const Icon = item.icon
+                  return (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
+                        <Icon className="w-3.5 h-3.5 text-gray-400" />
+                      </div>
+                      <p className="text-sm text-gray-700 truncate">{item.label}</p>
+                    </div>
+                  )
+                })}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </UserLayout>
+  )
 }

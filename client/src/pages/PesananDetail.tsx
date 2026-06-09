@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { Order } from '../types/ecommerce';
-import api from '../services/api';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import type { Order } from '../types/ecommerce'
+import api from '../services/api'
+import UserLayout from '../components/UserLayout'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -43,35 +42,29 @@ export default function PesananDetail() {
   };
 
   if (loading) return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
+    <UserLayout title="Detail Pesanan">
+      <div className="flex items-center justify-center py-20">
         <div className="animate-pulse text-black/40">Memuat...</div>
-      </main>
-      <Footer />
-    </>
-  );
+      </div>
+    </UserLayout>
+  )
 
   if (!order) return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center">
+    <UserLayout title="Detail Pesanan">
+      <div className="flex flex-col items-center justify-center py-20">
         <p className="text-xl font-bold text-black mb-4">Pesanan tidak ditemukan</p>
         <Link to="/pesanan" className="text-primary hover:underline">← Kembali</Link>
-      </main>
-      <Footer />
-    </>
-  );
+      </div>
+    </UserLayout>
+  )
 
   const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: 'bg-gray-100 text-gray-700' };
   const canRepay = order.paymentStatus === 'pending' && order.orderStatus === 'awaiting_payment' && order.midtransToken;
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-10 pb-20">
-        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 max-w-3xl">
-          <Link to="/pesanan" className="text-sm text-black/60 hover:text-black mb-6 block">← Semua Pesanan</Link>
+    <UserLayout title="Detail Pesanan">
+      <div className="w-full">
+        <Link to="/pesanan" className="text-sm text-black/60 hover:text-black mb-6 block">← Semua Pesanan</Link>
 
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -136,8 +129,6 @@ export default function PesananDetail() {
             </button>
           )}
         </div>
-      </main>
-      <Footer />
-    </>
-  );
+    </UserLayout>
+  )
 }
