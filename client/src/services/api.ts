@@ -283,6 +283,58 @@ export const api = {
     return res.json();
   },
 
+  // Admin Customer Management
+  getAdminCustomers: async (params?: { search?: string; page?: number; limit?: number }) => {
+    const token = localStorage.getItem('adminToken');
+    const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/admin/customers${qs}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to fetch customers');
+    return res.json();
+  },
+
+  getAdminCustomer: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/admin/customers/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to fetch customer');
+    return res.json();
+  },
+
+  updateAdminCustomer: async (id: string, data: object) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/admin/customers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update customer');
+    return res.json();
+  },
+
+  deleteAdminCustomer: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/admin/customers/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to delete customer');
+    return res.json();
+  },
+
+  resetCustomerPassword: async (id: string, password: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/admin/customers/${id}/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) throw new Error('Failed to reset password');
+    return res.json();
+  },
+
   // Admin Auth
   login: async (email: string, password: string) => {
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
