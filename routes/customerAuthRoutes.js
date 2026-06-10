@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const mongoose = require('mongoose');
 const Customer = require('../models/Customer');
 const customerAuth = require('../middleware/customerAuth');
 const { sendWelcomeEmail } = require('../services/emailService');
@@ -113,6 +114,7 @@ router.get('/wishlist', customerAuth, async (req, res) => {
   try {
     const customer = await Customer.findById(req.customer._id)
       .populate('wishlist', '_id name image images priceNumeric');
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
     const wishlist = (customer.wishlist || []).filter(Boolean);
     res.json({ wishlist });
   } catch (err) {
@@ -122,9 +124,13 @@ router.get('/wishlist', customerAuth, async (req, res) => {
 
 // POST /api/customers/wishlist/:productId
 router.post('/wishlist/:productId', customerAuth, async (req, res) => {
+  const { productId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    return res.status(400).json({ message: 'Invalid product ID' });
+  }
   try {
-    const { productId } = req.params;
     const customer = await Customer.findById(req.customer._id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
     const alreadyIn = customer.wishlist.some(id => id.toString() === productId);
     if (!alreadyIn) {
       customer.wishlist.push(productId);
@@ -138,9 +144,13 @@ router.post('/wishlist/:productId', customerAuth, async (req, res) => {
 
 // DELETE /api/customers/wishlist/:productId
 router.delete('/wishlist/:productId', customerAuth, async (req, res) => {
+  const { productId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    return res.status(400).json({ message: 'Invalid product ID' });
+  }
   try {
-    const { productId } = req.params;
     const customer = await Customer.findById(req.customer._id);
+    if (!customer) return res.status(404).json({ message: 'Customer not found' });
     customer.wishlist = customer.wishlist.filter(id => id.toString() !== productId);
     await customer.save();
     res.json({ message: 'OK' });
