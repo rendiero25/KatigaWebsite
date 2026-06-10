@@ -39,7 +39,7 @@ import PesananDetail from './pages/PesananDetail';
 import Profil from './pages/Profil';
 import PengaturanAkun from './pages/PengaturanAkun'
 import AlamatSaya from './pages/AlamatSaya'
-import WishlistSaya from './pages/WishlistSaya';
+import WishlistSaya from './pages/WishlistSaya'
 
 function App() {
   return (
