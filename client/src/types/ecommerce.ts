@@ -110,3 +110,11 @@ export interface Pagination {
   pages: number;
   limit: number;
 }
+
+export interface WishlistProduct {
+  _id: string
+  name: string
+  image: string
+  images: string[]
+  priceNumeric: number
+}

@@ -1,3 +1,4 @@
+import type { WishlistProduct } from '../types/ecommerce';
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
   let url = import.meta.env.VITE_API_URL || "/api";
@@ -207,6 +208,33 @@ export const api = {
       body: JSON.stringify(data),
     });
     return res.json();
+  },
+
+  getWishlist: async (): Promise<{ wishlist: WishlistProduct[] }> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/wishlist`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to fetch wishlist');
+    return res.json();
+  },
+
+  addToWishlist: async (productId: string): Promise<void> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/wishlist/${productId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to add to wishlist');
+  },
+
+  removeFromWishlist: async (productId: string): Promise<void> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/wishlist/${productId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to remove from wishlist');
   },
 
   // Shipping (Biteship)
