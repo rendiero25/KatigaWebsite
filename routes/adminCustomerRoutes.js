@@ -3,14 +3,17 @@ const router = express.Router();
 const Customer = require('../models/Customer');
 const auth = require('../middleware/auth');
 
+// Helper: escape special regex characters in user input
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // GET /api/admin/customers?search=&page=1&limit=20
 router.get('/', auth, async (req, res) => {
   try {
     const { search = '', page = 1, limit = 20 } = req.query;
     const query = search
       ? { $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
+          { name: { $regex: escapeRegex(search), $options: 'i' } },
+          { email: { $regex: escapeRegex(search), $options: 'i' } },
         ]}
       : {};
     const total = await Customer.countDocuments(query);
@@ -40,6 +43,10 @@ router.get('/:id', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     const { name, email, phone, suspended } = req.body;
+    if (email) {
+      const existing = await Customer.findOne({ email, _id: { $ne: req.params.id } });
+      if (existing) return res.status(400).json({ message: 'Email sudah digunakan' });
+    }
     const customer = await Customer.findByIdAndUpdate(
       req.params.id,
       { name, email, phone, suspended },
@@ -72,7 +79,7 @@ router.post('/:id/reset-password', auth, async (req, res) => {
     }
     const customer = await Customer.findById(req.params.id);
     if (!customer) return res.status(404).json({ message: 'User tidak ditemukan' });
-    customer.password = password;
+    customer.password = password; // pre('save') hook in Customer model will hash this
     await customer.save();
     res.json({ message: 'Password berhasil direset' });
   } catch (err) {
