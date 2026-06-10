@@ -32,7 +32,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // Check if origin is allowed
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+    const isLocalhost = /^https?:\/\/localhost(:\d+)?$/.test(origin);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || (process.env.NODE_ENV !== 'production' && isLocalhost)) {
       return callback(null, true);
     }
 
@@ -94,6 +95,7 @@ app.use('/api/contact-page', require('./routes/contactPageRoutes'));
 app.use('/api/customers', require('./routes/customerAuthRoutes'));
 app.use('/api/shipping', require('./routes/shippingRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/admin/customers', require('./routes/adminCustomerRoutes'));
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
