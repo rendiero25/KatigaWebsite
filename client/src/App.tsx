@@ -29,6 +29,7 @@ import AdminProductPageContent from './pages/admin/ProductPageContent';
 import AdminContactPageContent from './pages/admin/ContactPageContent';
 import AdminOrders from './pages/admin/Orders';
 import AdminOrderDetail from './pages/admin/OrderDetail';
+import AdminUsers from './pages/admin/Users';
 import Daftar from './pages/Daftar';
 import Masuk from './pages/Masuk';
 import Keranjang from './pages/Keranjang';
@@ -86,6 +87,7 @@ function App() {
         <Route path="/admin/contact-page-content" element={<AdminContactPageContent />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
       </Routes>
     </BrowserRouter>
   );
