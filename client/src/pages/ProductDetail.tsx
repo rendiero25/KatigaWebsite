@@ -9,8 +9,10 @@ import 'swiper/css/navigation';
 import api from '../services/api';
 import { addToCart } from '../utils/cart';
 import { cn } from '../lib/utils';
+import { useWishlist } from '../hooks/useApi';
 
 import Header from '../components/Header';
+import WishlistButton from '../components/WishlistButton';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
 import { Spinner } from '../components/ui/spinner';
@@ -65,6 +67,16 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+
+  const { wishlistIds, add, remove } = useWishlist();
+
+  const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
+    if (currentlyInWishlist) {
+      remove(productId);
+    } else {
+      add(productId);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -170,6 +182,14 @@ export default function ProductDetail() {
                       'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
                   }}
                 />
+                {product && (
+                  <WishlistButton
+                    productId={product._id}
+                    inWishlist={wishlistIds.has(product._id)}
+                    onToggle={handleToggleWishlist}
+                    size="md"
+                  />
+                )}
                 {product.isFeatured && (
                   <span className="absolute top-4 left-4 px-3 py-1 bg-pink-500 text-white font-medium rounded-full text-sm">
                     Featured
