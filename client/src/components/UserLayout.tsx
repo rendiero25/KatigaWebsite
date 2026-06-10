@@ -19,7 +19,6 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 
 interface Props {
   children: ReactNode
@@ -29,12 +28,9 @@ interface Props {
 const NAV_MAIN = [
   { label: 'Beranda', icon: LayoutDashboard, href: '/profil' },
   { label: 'Pesanan Saya', icon: Package, href: '/pesanan' },
+  { label: 'Alamat', icon: MapPin, href: '/profil/alamat' },
+  { label: 'Wishlist', icon: Heart, href: '/profil/wishlist' },
   { label: 'Pengaturan', icon: Settings, href: '/profil/pengaturan' },
-]
-
-const NAV_SOON = [
-  { label: 'Alamat', icon: MapPin },
-  { label: 'Wishlist', icon: Heart },
 ]
 
 function initials(name: string) {
@@ -104,36 +100,6 @@ export default function UserLayout({ children, title }: Props) {
                         >
                           <Icon />
                           <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {NAV_SOON.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <SidebarMenuItem key={item.label}>
-                        <SidebarMenuButton
-                          disabled
-                          tooltip={item.label}
-                          className="opacity-40 cursor-not-allowed"
-                        >
-                          <Icon />
-                          <span className="flex items-center gap-2">
-                            {item.label}
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] px-1.5 py-0 h-4 font-normal border-sidebar-border text-sidebar-foreground/40"
-                            >
-                              Segera
-                            </Badge>
-                          </span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     )
