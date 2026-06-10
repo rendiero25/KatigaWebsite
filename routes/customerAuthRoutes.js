@@ -108,4 +108,45 @@ router.put('/me', customerAuth, async (req, res) => {
   }
 });
 
+// GET /api/customers/wishlist
+router.get('/wishlist', customerAuth, async (req, res) => {
+  try {
+    const customer = await Customer.findById(req.customer._id)
+      .populate('wishlist', '_id name image images priceNumeric');
+    const wishlist = (customer.wishlist || []).filter(Boolean);
+    res.json({ wishlist });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/customers/wishlist/:productId
+router.post('/wishlist/:productId', customerAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const customer = await Customer.findById(req.customer._id);
+    const alreadyIn = customer.wishlist.some(id => id.toString() === productId);
+    if (!alreadyIn) {
+      customer.wishlist.push(productId);
+      await customer.save();
+    }
+    res.json({ message: 'OK' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/customers/wishlist/:productId
+router.delete('/wishlist/:productId', customerAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const customer = await Customer.findById(req.customer._id);
+    customer.wishlist = customer.wishlist.filter(id => id.toString() !== productId);
+    await customer.save();
+    res.json({ message: 'OK' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

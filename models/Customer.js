@@ -17,7 +17,8 @@ const customerSchema = new mongoose.Schema({
     postalCode:    { type: String, default: '' },
     areaId:        { type: String, default: '' },
     areaName:      { type: String, default: '' },
-  }
+  },
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
 }, { timestamps: true });
 
 customerSchema.pre('save', async function (next) {
