@@ -15,6 +15,7 @@ import {
   Layers,
   ShoppingCart,
   ExternalLink,
+  Users as UsersIcon,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -22,6 +23,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -60,54 +62,82 @@ interface MenuItem {
   children?: ChildMenuItem[]
 }
 
-const menuItems: MenuItem[] = [
-  { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+interface MenuGroup {
+  label?: string
+  items: MenuItem[]
+}
+
+const menuGroups: MenuGroup[] = [
   {
-    path: '/admin/home',
-    icon: Home,
-    label: 'Home',
-    children: [
-      { path: '/admin/hero', label: 'Hero Section' },
-      { path: '/admin/partners', label: 'Partners' },
-      { path: '/admin/advantages', label: 'Keunggulan' },
-      { path: '/admin/manufacturing', label: 'Manufacturing' },
+    items: [{ path: '/admin', icon: LayoutDashboard, label: 'Dashboard' }],
+  },
+  {
+    label: 'Halaman Website',
+    items: [
+      {
+        path: '/admin/home',
+        icon: Home,
+        label: 'Home',
+        children: [
+          { path: '/admin/hero', label: 'Hero Section' },
+          { path: '/admin/partners', label: 'Partners' },
+          { path: '/admin/advantages', label: 'Keunggulan' },
+          { path: '/admin/manufacturing', label: 'Manufacturing' },
+        ],
+      },
+      {
+        path: '/admin/about',
+        icon: Info,
+        label: 'Tentang Kami',
+        children: [
+          { path: '/admin/about', label: 'General Info' },
+          { path: '/admin/certification-tech', label: 'Technology' },
+          { path: '/admin/distribution', label: 'Distribution' },
+        ],
+      },
+      {
+        path: '/admin/contact-group',
+        icon: Phone,
+        label: 'Kontak',
+        children: [
+          { path: '/admin/contact', label: 'Info Kontak' },
+          { path: '/admin/contact-page-content', label: 'Konten Hal. Kontak' },
+        ],
+      },
+      { path: '/admin/footer', icon: Layers, label: 'Footer' },
     ],
   },
   {
-    path: '/admin/about',
-    icon: Info,
-    label: 'Tentang Kami',
-    children: [
-      { path: '/admin/about', label: 'General Info' },
-      { path: '/admin/certification-tech', label: 'Technology' },
-      { path: '/admin/distribution', label: 'Distribution' },
+    label: 'Produk & Katalog',
+    items: [
+      {
+        path: '/admin/products-group',
+        icon: Package,
+        label: 'Produk',
+        children: [
+          { path: '/admin/categories', label: 'Kategori' },
+          { path: '/admin/products', label: 'Produk' },
+          { path: '/admin/product-page-content', label: 'Konten Hal. Produk' },
+        ],
+      },
+      { path: '/admin/catalog', icon: BookOpen, label: 'E-Catalog' },
     ],
   },
   {
-    path: '/admin/products-group',
-    icon: Package,
-    label: 'Produk',
-    children: [
-      { path: '/admin/categories', label: 'Kategori' },
-      { path: '/admin/products', label: 'Produk' },
-      { path: '/admin/product-page-content', label: 'Konten Hal. Produk' },
-    ],
+    label: 'Konten',
+    items: [{ path: '/admin/news', icon: Newspaper, label: 'Berita' }],
   },
-  { path: '/admin/catalog', icon: BookOpen, label: 'E-Catalog' },
-  { path: '/admin/news', icon: Newspaper, label: 'Berita' },
   {
-    path: '/admin/contact-group',
-    icon: Phone,
-    label: 'Kontak',
-    children: [
-      { path: '/admin/contact', label: 'Info Kontak' },
-      { path: '/admin/contact-page-content', label: 'Konten Hal. Kontak' },
-    ],
+    label: 'Transaksi',
+    items: [{ path: '/admin/orders', icon: ShoppingCart, label: 'Pesanan' }, { path: '/admin/users', icon: UsersIcon, label: 'Users' }],
   },
-  { path: '/admin/footer', icon: Layers, label: 'Footer' },
-  { path: '/admin/orders', icon: ShoppingCart, label: 'Pesanan' },
-  { path: '/admin/settings', icon: Settings, label: 'Pengaturan' },
+  {
+    label: 'Sistem',
+    items: [{ path: '/admin/settings', icon: Settings, label: 'Pengaturan' }],
+  },
 ]
+
+const allMenuItems = menuGroups.flatMap(group => group.items)
 
 export default function AdminLayout({ children, title }: Props) {
   const location = useLocation()
@@ -116,7 +146,7 @@ export default function AdminLayout({ children, title }: Props) {
 
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
-    menuItems.forEach(item => {
+    allMenuItems.forEach(item => {
       if (item.children?.some(child => location.pathname === child.path)) {
         initial[item.label] = true
       }
@@ -140,6 +170,74 @@ export default function AdminLayout({ children, title }: Props) {
     setExpandedMenus(prev => ({ ...prev, [label]: !prev[label] }))
   }
 
+  const menuClassName =
+    'gap-2 [&_[data-sidebar=menu-button]]:cursor-pointer [&_[data-sidebar=menu-sub-button]]:cursor-pointer'
+
+  const renderMenuItem = (item: MenuItem) => {
+    const Icon = item.icon
+    const isActive =
+      location.pathname === item.path ||
+      (item.children?.some(child => location.pathname === child.path) ?? false)
+    const isExpanded = expandedMenus[item.label] ?? false
+
+    if (item.children) {
+      return (
+        <SidebarMenuItem key={item.label}>
+          <Collapsible
+            open={isExpanded}
+            onOpenChange={() => toggleMenu(item.label)}
+            className="w-full"
+          >
+            <SidebarMenuButton
+              render={<CollapsibleTrigger className="w-full text-left" />}
+              isActive={isActive}
+              tooltip={item.label}
+            >
+              <Icon />
+              <span>{item.label}</span>
+              <ChevronRight
+                className={cn(
+                  'ml-auto size-4 transition-transform duration-200',
+                  isExpanded && 'rotate-90',
+                )}
+              />
+            </SidebarMenuButton>
+            <CollapsibleContent>
+              <SidebarMenuSub className="gap-1.5 py-1">
+                {item.children.map(child => {
+                  const isChildActive = location.pathname === child.path
+                  return (
+                    <SidebarMenuSubItem key={child.path}>
+                      <SidebarMenuSubButton
+                        render={<Link to={child.path} />}
+                        isActive={isChildActive}
+                      >
+                        <span>{child.label}</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )
+                })}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarMenuItem>
+      )
+    }
+
+    return (
+      <SidebarMenuItem key={item.path}>
+        <SidebarMenuButton
+          render={<Link to={item.path} />}
+          tooltip={item.label}
+          isActive={isActive}
+        >
+          <Icon />
+          <span>{item.label}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
+  }
+
   return (
     <TooltipProvider>
       <SidebarProvider>
@@ -161,85 +259,24 @@ export default function AdminLayout({ children, title }: Props) {
           </SidebarHeader>
 
           <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map(item => {
-                    const Icon = item.icon
-                    const isActive =
-                      location.pathname === item.path ||
-                      (item.children?.some(child => location.pathname === child.path) ?? false)
-                    const isExpanded = expandedMenus[item.label] ?? false
-
-                    if (item.children) {
-                      return (
-                        <SidebarMenuItem key={item.label}>
-                          <Collapsible
-                            open={isExpanded}
-                            onOpenChange={() => toggleMenu(item.label)}
-                            className="w-full"
-                          >
-                            <SidebarMenuButton
-                              render={<CollapsibleTrigger className="w-full text-left" />}
-                              isActive={isActive}
-                              tooltip={item.label}
-                            >
-                              <Icon />
-                              <span>{item.label}</span>
-                              <ChevronRight
-                                className={cn(
-                                  'ml-auto size-4 transition-transform duration-200',
-                                  isExpanded && 'rotate-90',
-                                )}
-                              />
-                            </SidebarMenuButton>
-                            <CollapsibleContent>
-                              <SidebarMenuSub>
-                                {item.children.map(child => {
-                                  const isChildActive = location.pathname === child.path
-                                  return (
-                                    <SidebarMenuSubItem key={child.path}>
-                                      <SidebarMenuSubButton
-                                        render={<Link to={child.path} />}
-                                        isActive={isChildActive}
-                                      >
-                                        <span>{child.label}</span>
-                                      </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                  )
-                                })}
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        </SidebarMenuItem>
-                      )
-                    }
-
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton
-                          render={<Link to={item.path} />}
-                          tooltip={item.label}
-                          isActive={isActive}
-                        >
-                          <Icon />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {menuGroups.map(group => (
+              <SidebarGroup key={group.label ?? 'dashboard'}>
+                {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+                <SidebarGroupContent>
+                  <SidebarMenu className={menuClassName}>
+                    {group.items.map(renderMenuItem)}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
           </SidebarContent>
 
           <SidebarFooter>
-            <SidebarMenu>
+            <SidebarMenu className="[&_[data-sidebar=menu-button]]:cursor-pointer">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip="Logout"
                   onClick={handleLogout}
-                  className="cursor-pointer"
                 >
                   <LogOut />
                   <span>Logout</span>
