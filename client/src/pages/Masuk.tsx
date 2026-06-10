@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
@@ -13,8 +13,6 @@ export default function Masuk() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [coverOffset, setCoverOffset] = useState({ x: 0, y: 0 });
-  const coverRef = useRef<HTMLDivElement>(null);
 
   const handleGoogleResponse = useCallback(async (response: { credential: string }) => {
     setError('');
@@ -43,15 +41,6 @@ export default function Masuk() {
       callback: handleGoogleResponse,
     });
   }, [handleGoogleResponse]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!coverRef.current) return;
-    const rect = coverRef.current.getBoundingClientRect();
-    setCoverOffset({
-      x: ((e.clientX - rect.left) / rect.width - 0.5) * 16,
-      y: ((e.clientY - rect.top) / rect.height - 0.5) * 16,
-    });
-  };
 
   const handleGoogleClick = () => {
     if (!window.google?.accounts?.id) {
@@ -88,43 +77,12 @@ export default function Masuk() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left — brand cover */}
-      <div
-        ref={coverRef}
-        className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] items-center justify-center"
-        onMouseMove={handleMouseMove}
-      >
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '28px 28px' }} />
-        <motion.div
-          className="relative text-center text-white px-12 select-none"
-          animate={{ x: coverOffset.x, y: coverOffset.y }}
-          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-        >
-          <motion.div
-            className="w-16 h-16 mx-auto mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span className="text-white text-2xl font-black tracking-tight">K</span>
-          </motion.div>
-          <motion.h2
-            className="text-4xl font-bold mb-4 leading-tight"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          >
-            Selamat Datang
-          </motion.h2>
-          <motion.p
-            className="text-white/70 text-lg leading-relaxed"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          >
-            Masuk untuk melanjutkan<br />pengalaman belanja kamu
-          </motion.p>
-        </motion.div>
+      <div className="relative hidden min-h-screen overflow-hidden lg:block">
+        <img
+          src="/login-image.jpg"
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+        />
       </div>
 
       {/* Right — form */}
@@ -204,7 +162,7 @@ export default function Masuk() {
                 disabled={loading}
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full py-3.5 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full shadow-[0_10px_20px_rgba(79,104,175,0.25)] hover:shadow-[0_14px_28px_rgba(79,104,175,0.35)] transition-all duration-300 disabled:opacity-60 text-sm tracking-wide"
+                className="w-full py-3.5 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full shadow-[0_10px_20px_rgba(79,104,175,0.25)] hover:shadow-[0_14px_28px_rgba(79,104,175,0.35)] transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer text-sm tracking-wide"
               >
                 {loading ? 'Memproses...' : 'Masuk'}
               </motion.button>
@@ -228,7 +186,7 @@ export default function Masuk() {
               onClick={handleGoogleClick}
               whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-3.5 bg-white border border-gray-200 text-black font-medium rounded-full hover:border-gray-300 hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm"
+              className="w-full py-3.5 bg-white border border-gray-200 text-black font-medium rounded-full hover:border-gray-300 hover:shadow-md transition-all duration-300 flex items-center justify-center gap-3 text-sm cursor-pointer"
             >
               <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

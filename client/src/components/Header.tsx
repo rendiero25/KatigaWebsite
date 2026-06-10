@@ -139,6 +139,25 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
+            {/* Cart */}
+            <button
+              onClick={() => {
+                if (!localStorage.getItem("customerToken")) {
+                  navigate("/masuk?redirect=/keranjang");
+                } else {
+                  navigate("/keranjang");
+                }
+              }}
+              className="relative flex items-center justify-center text-gray-800 hover:text-primary transition cursor-pointer"
+            >
+              <FaShoppingCart className="w-6 h-6" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </button>
+
             {/* Auth — desktop */}
             <div className="hidden sm:flex items-center gap-2">
               {customer ? (
@@ -202,25 +221,6 @@ export default function Header() {
                 </>
               )}
             </div>
-
-            {/* Cart */}
-            <button
-              onClick={() => {
-                if (!localStorage.getItem("customerToken")) {
-                  navigate("/masuk?redirect=/keranjang");
-                } else {
-                  navigate("/keranjang");
-                }
-              }}
-              className="relative flex items-center justify-center text-gray-800 hover:text-primary transition"
-            >
-              <FaShoppingCart className="w-6 h-6" />
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {cartCount > 9 ? "9+" : cartCount}
-                </span>
-              )}
-            </button>
 
             {/* Hamburger */}
             <button

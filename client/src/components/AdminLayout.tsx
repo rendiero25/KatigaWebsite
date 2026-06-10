@@ -289,7 +289,7 @@ export default function AdminLayout({ children, title }: Props) {
         </Sidebar>
 
         <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+          <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-1 h-4" />
             <h1 className="text-base font-semibold text-foreground">{title}</h1>
