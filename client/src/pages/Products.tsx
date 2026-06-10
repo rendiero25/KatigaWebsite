@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { ChevronDownIcon } from "lucide-react";
 import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { useProducts, useCategories } from "../hooks/useApi";
+import { useProducts, useCategories, useWishlist } from "../hooks/useApi";
 import api from "../services/api";
+import WishlistButton from "../components/WishlistButton";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -30,6 +31,16 @@ export default function Products() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"default" | "az" | "za">("default");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { wishlistIds, add, remove } = useWishlist();
+
+  const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
+    if (currentlyInWishlist) {
+      remove(productId);
+    } else {
+      add(productId);
+    }
+  };
 
   const { data: categories } = useCategories();
 
@@ -236,6 +247,11 @@ export default function Products() {
                           src={api.getImageUrl(product.image)}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        />
+                        <WishlistButton
+                          productId={product._id}
+                          inWishlist={wishlistIds.has(product._id)}
+                          onToggle={handleToggleWishlist}
                         />
                       </div>
                       <div>
