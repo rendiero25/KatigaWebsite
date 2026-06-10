@@ -189,3 +189,36 @@ export function useManufacturing() {
 
   return { data, loading };
 }
+
+interface CustomerData {
+  _id: string
+  name: string
+  email: string
+  phone: string
+  suspended: boolean
+  googleId: string
+  createdAt: string
+}
+
+interface CustomersResponse {
+  customers: CustomerData[]
+  total: number
+  pages: number
+  page: number
+}
+
+export function useAdminCustomers(params?: { search?: string; page?: number; limit?: number }) {
+  const [data, setData] = useState<CustomersResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoading(true);
+    api.getAdminCustomers(params)
+      .then(setData)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [params?.search, params?.page, params?.limit]);
+
+  return { data, loading, error };
+}
