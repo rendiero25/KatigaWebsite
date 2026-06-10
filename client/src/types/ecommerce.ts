@@ -112,9 +112,9 @@ export interface Pagination {
 }
 
 export interface WishlistProduct {
-  _id: string
-  name: string
-  image: string
-  images: string[]
-  priceNumeric: number
+  _id: string;
+  name: string;
+  image: string;
+  images: string[];
+  priceNumeric: number;
 }

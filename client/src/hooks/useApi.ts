@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import type { WishlistProduct } from '../types/ecommerce';
 import { getCartCount } from '../utils/cart';
@@ -237,7 +237,7 @@ export function useWishlist() {
       .finally(() => setLoading(false))
   }, [])
 
-  const wishlistIds = new Set(wishlist.map(p => p._id))
+  const wishlistIds = useMemo(() => new Set(wishlist.map(p => p._id)), [wishlist])
 
   const add = useCallback(async (productId: string) => {
     setWishlist(prev =>
@@ -251,8 +251,14 @@ export function useWishlist() {
   }, [])
 
   const remove = useCallback(async (productId: string) => {
-    setWishlist(prev => prev.filter(p => p._id !== productId))
-    await api.removeFromWishlist(productId).catch(() => {})
+    let removed: WishlistProduct | undefined
+    setWishlist(prev => {
+      removed = prev.find(p => p._id === productId)
+      return prev.filter(p => p._id !== productId)
+    })
+    await api.removeFromWishlist(productId).catch(() => {
+      if (removed) setWishlist(prev => [...prev, removed!])
+    })
   }, [])
 
   return { wishlist, wishlistIds, loading, add, remove }
