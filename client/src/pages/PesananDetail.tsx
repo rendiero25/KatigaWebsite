@@ -170,24 +170,22 @@ export default function PesananDetail() {
             </button>
           )}
         </div>
-      {reviewFormItem && (
-        <ReviewForm
-          open={!!reviewFormItem}
-          onClose={() => setReviewFormItem(null)}
-          onSuccess={() => {
-            if (!order || !reviewFormItem) return;
-            const key = `${reviewFormItem.orderId}-${reviewFormItem.productId}`;
-            setReviewStatuses((prev) => ({
-              ...prev,
-              [key]: { canReview: false, alreadyReviewed: true },
-            }));
-            setReviewFormItem(null);
-          }}
-          productId={reviewFormItem.productId}
-          orderId={reviewFormItem.orderId}
-          productName={reviewFormItem.productName}
-        />
-      )}
+      <ReviewForm
+        open={!!reviewFormItem}
+        onClose={() => setReviewFormItem(null)}
+        onSuccess={() => {
+          if (!order || !reviewFormItem) return;
+          const key = `${reviewFormItem.orderId}-${reviewFormItem.productId}`;
+          setReviewStatuses((prev) => ({
+            ...prev,
+            [key]: { canReview: false, alreadyReviewed: true },
+          }));
+          setReviewFormItem(null);
+        }}
+        productId={reviewFormItem?.productId ?? ''}
+        orderId={reviewFormItem?.orderId ?? ''}
+        productName={reviewFormItem?.productName ?? ''}
+      />
     </UserLayout>
   )
 }
