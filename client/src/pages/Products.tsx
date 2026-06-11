@@ -6,6 +6,7 @@ import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { useProducts, useCategories, useWishlist } from "../hooks/useApi";
 import api from "../services/api";
 import WishlistButton from "../components/WishlistButton";
+import StarRating from '../components/StarRating';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -258,6 +259,12 @@ export default function Products() {
                         <h3 className="text-sm font-bold text-gray-900 mb-1">
                           {product.name}
                         </h3>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <StarRating value={product.ratingAvg ?? 0} size="sm" />
+                          {product.reviewCount > 0 && (
+                            <span className="text-xs text-gray-400">({product.reviewCount})</span>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 line-clamp-2 mb-2">
                           {product.description}
                         </p>

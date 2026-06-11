@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useProducts } from "../hooks/useApi";
 import api from "../services/api";
+import StarRating from './StarRating';
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
@@ -85,6 +86,12 @@ export default function ProductsSection() {
                     <h3 className="max-w-xs xl:max-w-lg text-2xl font-bold text-black mb-2 leading-tight">
                       {product.name}
                     </h3>
+                    {product.reviewCount > 0 && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <StarRating value={product.ratingAvg ?? 0} size="sm" />
+                        <span className="text-xs text-black/50">({product.reviewCount})</span>
+                      </div>
+                    )}
                     <p className="text-lg text-black/80 max-w-xs xl:max-w-lg line-clamp-2 mb-4 leading-relaxed ">
                       {product.description}
                     </p>
