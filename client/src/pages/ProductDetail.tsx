@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, ShoppingCart, Star } from 'lucide-react';
+import { Minus, Plus, ShoppingCart } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -9,12 +9,14 @@ import 'swiper/css/navigation';
 import api from '../services/api';
 import { addToCart } from '../utils/cart';
 import { cn } from '../lib/utils';
-import { useWishlist } from '../hooks/useApi';
+import { useWishlist, useProductReviews } from '../hooks/useApi';
 
 import Header from '../components/Header';
 import WishlistButton from '../components/WishlistButton';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
+import StarRating from '../components/StarRating';
+import ReviewCard from '../components/ReviewCard';
 import { Spinner } from '../components/ui/spinner';
 import {
   Breadcrumb,
@@ -45,6 +47,8 @@ interface Product {
   priceNumeric: number;
   weightGrams: number;
   variants: Variant[];
+  ratingAvg: number;
+  reviewCount: number;
 }
 
 interface FeaturedProduct {
@@ -69,6 +73,7 @@ export default function ProductDetail() {
   const [descExpanded, setDescExpanded] = useState(false);
 
   const { wishlistIds, add, remove } = useWishlist();
+  const { reviews, meta, loading: reviewsLoading, loadingMore, loadMore } = useProductReviews(id ?? '');
 
   const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
     if (currentlyInWishlist) {
@@ -239,12 +244,10 @@ export default function ProductDetail() {
               </h1>
 
               <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className="size-4 fill-gray-200 text-gray-200" />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-400">0 ulasan</span>
+                <StarRating value={product.ratingAvg} size="sm" />
+                <span className="text-sm text-gray-400">
+                  {product.reviewCount > 0 ? `${product.reviewCount} ulasan` : 'Belum ada ulasan'}
+                </span>
               </div>
 
               {variants.length > 0 && (
@@ -354,15 +357,67 @@ export default function ProductDetail() {
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
               Ulasan Pembeli
             </h2>
-            <p className="text-sm text-gray-400 mb-10">0 ulasan</p>
-            <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className="size-8 fill-gray-200 text-gray-200" />
-                ))}
+            <p className="text-sm text-gray-400 mb-8">{product.reviewCount} ulasan</p>
+
+            {reviewsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-pulse h-6 w-40 bg-gray-200 rounded" />
               </div>
-              <p className="text-gray-400 text-sm">Belum ada ulasan untuk produk ini.</p>
-            </div>
+            ) : meta && meta.total > 0 ? (
+              <>
+                {/* Summary */}
+                <div className="flex flex-col sm:flex-row gap-8 mb-10 p-6 bg-white rounded-2xl">
+                  <div className="flex flex-col items-center justify-center shrink-0">
+                    <p className="text-5xl font-bold text-gray-900">{meta.ratingAvg.toFixed(1)}</p>
+                    <StarRating value={meta.ratingAvg} size="md" />
+                    <p className="text-sm text-gray-400 mt-1">{meta.total} ulasan</p>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {([5, 4, 3, 2, 1] as const).map((star) => {
+                      const count = meta.ratingDistribution[star] ?? 0;
+                      const pct   = meta.total > 0 ? Math.round((count / meta.total) * 100) : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 w-6 text-right">{star}★</span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-amber-400 h-2 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400 w-6">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Review list */}
+                <div className="bg-white rounded-2xl px-6">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review._id} review={review} />
+                  ))}
+                </div>
+
+                {/* Load more */}
+                {meta.page < meta.pages && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-8 py-2.5 rounded-full border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                    >
+                      {loadingMore ? 'Memuat...' : 'Muat lebih banyak'}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+                <StarRating value={0} size="lg" />
+                <p className="text-gray-400 text-sm">Belum ada ulasan untuk produk ini.</p>
+              </div>
+            )}
           </div>
         </section>
 
