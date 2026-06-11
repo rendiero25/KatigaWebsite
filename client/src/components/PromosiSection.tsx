@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { useActivePromotions, useProducts } from '../hooks/useApi';
 import api from '../services/api';
 import StarRating from './StarRating';
 
@@ -125,19 +126,11 @@ function PromoTab({ promo, products }: PromoTabProps) {
 }
 
 export default function PromosiSection() {
-  const [promos, setPromos] = useState<ActivePromotion[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { data: promos, loading: promosLoading } = useActivePromotions();
+  const { data: products, loading: productsLoading } = useProducts();
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([api.getActivePromotions(), api.getProducts()])
-      .then(([p, prods]) => {
-        setPromos(p);
-        setProducts(prods);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const loading = promosLoading || productsLoading;
 
   if (loading || promos.length === 0) return null;
 

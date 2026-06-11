@@ -37,6 +37,7 @@ router.get('/', async (req, res) => {
 
     const now = new Date();
     const activePromos = await Promotion.find({
+      isVisible: true,
       startDate: { $lte: now },
       endDate: { $gte: now },
     });
@@ -78,6 +79,7 @@ router.get('/:id', async (req, res) => {
 
     const now = new Date();
     const activePromos = await Promotion.find({
+      isVisible: true,
       startDate: { $lte: now },
       endDate: { $gte: now },
     });
