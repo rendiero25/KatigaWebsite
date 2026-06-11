@@ -49,6 +49,7 @@ interface Product {
   variants: Variant[];
   ratingAvg: number;
   reviewCount: number;
+  activePromotion: { _id: string; name: string; discountPercent: number } | null;
 }
 
 interface FeaturedProduct {
@@ -274,9 +275,26 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              <p className="text-2xl font-bold text-gray-900">
-                {hasPrice ? formatRp(effectivePrice) : 'Hubungi untuk harga'}
-              </p>
+              {hasPrice ? (
+                product.activePromotion ? (
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-red-600">
+                        {formatRp(Math.round(effectivePrice * (1 - product.activePromotion.discountPercent / 100)))}
+                      </span>
+                      <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">
+                        -{product.activePromotion.discountPercent}%
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-400 line-through">{formatRp(effectivePrice)}</span>
+                    <span className="text-xs text-primary mt-0.5">{product.activePromotion.name}</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">{formatRp(effectivePrice)}</p>
+                )
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">Hubungi untuk harga</p>
+              )}
 
               <div>
                 <p

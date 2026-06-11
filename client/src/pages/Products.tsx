@@ -268,6 +268,19 @@ export default function Products() {
                         <p className="text-xs text-gray-500 line-clamp-2 mb-2">
                           {product.description}
                         </p>
+                        {product.priceNumeric > 0 && product.activePromotion && (
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <span className="text-sm font-bold text-red-600">
+                              {`Rp ${Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}`}
+                            </span>
+                            <span className="text-xs text-gray-400 line-through">
+                              {`Rp ${product.priceNumeric.toLocaleString('id-ID')}`}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded-full">
+                              -{product.activePromotion.discountPercent}%
+                            </span>
+                          </div>
+                        )}
                         <button className="cursor-pointer text-sm font-semibold text-indigo-600 hover:text-indigo-700">
                           Lihat Detail
                         </button>
