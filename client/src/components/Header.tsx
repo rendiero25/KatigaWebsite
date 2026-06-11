@@ -64,6 +64,11 @@ export default function Header() {
       .join("")
       .toUpperCase();
 
+  const profileMenuItemClass =
+    "rounded-lg cursor-pointer gap-2.5 !text-gray-700 transition-colors hover:!text-indigo-600 focus:bg-transparent data-highlighted:bg-transparent focus:!text-indigo-600 data-highlighted:!text-indigo-600 hover:[&_svg]:!text-indigo-600 focus:[&_svg]:!text-indigo-600 data-highlighted:[&_svg]:!text-indigo-600 focus:**:!text-indigo-600 data-highlighted:**:!text-indigo-600";
+  const profileMenuIconClass = "w-4 h-4 shrink-0 transition-colors";
+  const profileMenuLabelClass = "text-sm font-medium";
+
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === "/"
@@ -168,8 +173,8 @@ export default function Header() {
               {customer ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
-                    <Avatar className="size-9 [&::after]:hidden ring-2 ring-primary/20 hover:ring-primary/50 transition-all rounded-full">
-                      {customer.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
+                    <Avatar className="size-9 [&::after]:hidden ring-2 ring-primary/20 rounded-full">
+                      {customer.avatar && <AvatarImage src={api.getImageUrl(customer.avatar)} alt={customer.name} />}
                       <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
                         {initials(customer.name)}
                       </AvatarFallback>
@@ -186,27 +191,26 @@ export default function Header() {
                     </div>
                     <DropdownMenuSeparator className="bg-gray-100" />
                     <DropdownMenuItem
-                      className="rounded-lg cursor-pointer gap-2.5 focus:bg-transparent data-highlighted:bg-transparent focus:text-black data-highlighted:text-black focus:[&_svg]:text-black data-highlighted:[&_svg]:text-black"
+                      className={profileMenuItemClass}
                       onClick={() => navigate("/profil")}
                     >
-                      <FiUser className="w-4 h-4 text-gray-400 transition-colors" />
-                      <span className="text-sm text-gray-700 transition-colors">Dashboard</span>
+                      <FiUser className={profileMenuIconClass} />
+                      <span className={profileMenuLabelClass}>Dashboard</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="rounded-lg cursor-pointer gap-2.5 focus:bg-transparent data-highlighted:bg-transparent focus:text-black data-highlighted:text-black focus:[&_svg]:text-black data-highlighted:[&_svg]:text-black"
+                      className={profileMenuItemClass}
                       onClick={() => navigate("/pesanan")}
                     >
-                      <FiPackage className="w-4 h-4 text-gray-400 transition-colors" />
-                      <span className="text-sm text-gray-700 transition-colors">Pesanan</span>
+                      <FiPackage className={profileMenuIconClass} />
+                      <span className={profileMenuLabelClass}>Pesanan</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-gray-100" />
                     <DropdownMenuItem
-                      variant="destructive"
-                      className="rounded-lg cursor-pointer gap-2.5 focus:bg-transparent data-highlighted:bg-transparent focus:text-black data-highlighted:text-black focus:[&_svg]:text-black data-highlighted:[&_svg]:text-black"
+                      className="rounded-lg cursor-pointer gap-2.5 text-red-500 transition-colors hover:text-red-600 focus:bg-transparent data-highlighted:bg-transparent focus:text-red-600 data-highlighted:text-red-600 hover:**:text-red-600 focus:**:text-red-600 data-highlighted:**:text-red-600"
                       onClick={handleLogout}
                     >
-                      <FiLogOut className="w-4 h-4 transition-colors" />
-                      <span className="text-sm transition-colors">Keluar</span>
+                      <FiLogOut className="w-4 h-4 shrink-0" />
+                      <span className="text-sm font-medium">Keluar</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -290,7 +294,7 @@ export default function Header() {
               <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
                 <div className="flex items-center gap-3 px-1 pb-1">
                   <Avatar className="size-9 shrink-0 [&::after]:hidden">
-                    {customer.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
+                    {customer.avatar && <AvatarImage src={api.getImageUrl(customer.avatar)} alt={customer.name} />}
                     <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
                       {initials(customer.name)}
                     </AvatarFallback>
