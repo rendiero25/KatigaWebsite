@@ -310,3 +310,28 @@ export function useProductReviews(productId: string) {
 
   return { reviews, meta, loading, loadingMore, loadMore };
 }
+
+export function usePromotions() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refetch = useCallback(() => {
+    setLoading(true);
+    api.getPromotions().then(setData).finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { refetch(); }, [refetch]);
+
+  return { data, loading, refetch };
+}
+
+export function useActivePromotions() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getActivePromotions().then(setData).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}

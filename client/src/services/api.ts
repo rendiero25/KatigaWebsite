@@ -445,6 +445,75 @@ export const api = {
     }
     return res.json();
   },
+
+  // Promotions
+  getPromotions: async () => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/promotions`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to fetch promotions');
+    return res.json();
+  },
+
+  getActivePromotions: async () => {
+    const res = await fetch(`${API_BASE_URL}/promotions/active`);
+    if (!res.ok) throw new Error('Failed to fetch active promotions');
+    return res.json();
+  },
+
+  createPromotion: async (formData: FormData) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/promotions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Failed to create promotion');
+    return res.json();
+  },
+
+  updatePromotion: async (id: string, formData: FormData) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/promotions/${id}`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Failed to update promotion');
+    return res.json();
+  },
+
+  deletePromotion: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/promotions/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to delete promotion');
+    return res.json();
+  },
+
+  reorderPromotions: async (order: { id: string; displayOrder: number }[]) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/promotions/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(order),
+    });
+    if (!res.ok) throw new Error('Failed to reorder promotions');
+    return res.json();
+  },
+
+  togglePromotion: async (id: string): Promise<{ isVisible: boolean }> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/promotions/${id}/toggle`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to toggle promotion');
+    return res.json();
+  },
 };
 
 export default api;
