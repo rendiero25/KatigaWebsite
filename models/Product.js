@@ -64,7 +64,9 @@ const productSchema = new mongoose.Schema({
       width:  { type: Number, default: 1 },
       height: { type: Number, default: 1 }
     }
-  }]
+  }],
+  ratingAvg:   { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);
