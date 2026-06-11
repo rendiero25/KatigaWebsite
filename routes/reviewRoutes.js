@@ -13,10 +13,14 @@ router.get('/can-review', customerAuth, async (req, res) => {
     const { productId, orderId } = req.query;
     if (!productId || !orderId) return res.status(400).json({ message: 'productId and orderId required' });
 
+    if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(orderId))
+      return res.status(400).json({ message: 'productId and orderId tidak valid' });
+
     const order = await Order.findOne({
       _id: orderId,
       customer: req.customer._id,
       orderStatus: 'delivered',
+      paymentStatus: 'paid',
     });
     if (!order) return res.json({ canReview: false, alreadyReviewed: false });
 
@@ -88,7 +92,7 @@ router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
       return res.status(400).json({ message: 'productId, orderId, dan rating wajib diisi' });
 
     const ratingNum = parseInt(rating);
-    if (ratingNum < 1 || ratingNum > 5)
+    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5)
       return res.status(400).json({ message: 'Rating harus antara 1 dan 5' });
 
     if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(orderId))
@@ -99,6 +103,7 @@ router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
       _id: orderId,
       customer: req.customer._id,
       orderStatus: 'delivered',
+      paymentStatus: 'paid',
     });
     if (!order) return res.status(403).json({ message: 'Pesanan tidak ditemukan atau belum selesai' });
 
@@ -115,7 +120,7 @@ router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
     });
     if (existing) return res.status(409).json({ message: 'Kamu sudah mengulas produk ini untuk pesanan ini' });
 
-    const photos = (req.files || []).map((f) => f.path);
+    const photos = (req.files || []).map((f) => f.secure_url || f.path);
 
     const review = await Review.create({
       product:  productId,
