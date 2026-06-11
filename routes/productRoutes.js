@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 const ProductCategory = require('../models/ProductCategory');
+const Promotion = require('../models/Promotion');
 
 // @route   GET /api/products
 // @desc    Get all products
@@ -13,24 +14,18 @@ router.get('/', async (req, res) => {
   try {
     const { category, featured } = req.query;
     let query = {};
-    
+
     if (category) {
-      // Check if category is a valid ObjectId
       const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(category);
-      
       if (isValidObjectId) {
         query.category = category;
       } else {
-        // If not ID, try to find category by name (case-insensitive)
-        const categoryDoc = await ProductCategory.findOne({ 
-          name: { $regex: new RegExp(`^${category.trim()}$`, 'i') } 
+        const categoryDoc = await ProductCategory.findOne({
+          name: { $regex: new RegExp(`^${category.trim()}$`, 'i') }
         });
-        
         if (categoryDoc) {
           query.category = categoryDoc._id;
         } else {
-          // Category name provided but not found -> return empty, or maybe return all?
-          // If filtering by specific non-existent category, result should be empty.
           return res.json([]);
         }
       }
@@ -39,7 +34,35 @@ router.get('/', async (req, res) => {
     if (featured === 'true') query.isFeatured = true;
 
     const products = await Product.find(query).populate('category');
-    res.json(products);
+
+    const now = new Date();
+    const activePromos = await Promotion.find({
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+
+    const promoByProduct = {};
+    const promoByCategory = {};
+    for (const promo of activePromos) {
+      if (promo.type === 'products') {
+        for (const pid of promo.productIds) {
+          promoByProduct[pid.toString()] = { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent };
+        }
+      } else if (promo.type === 'category' && promo.categoryId) {
+        promoByCategory[promo.categoryId.toString()] = { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent };
+      }
+    }
+
+    const result = products.map(p => {
+      const obj = p.toObject();
+      obj.activePromotion =
+        promoByProduct[p._id.toString()] ||
+        promoByCategory[p.category?._id?.toString() ?? ''] ||
+        null;
+      return obj;
+    });
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -51,10 +74,24 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('category');
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    res.json(product);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const now = new Date();
+    const activePromos = await Promotion.find({
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+
+    const obj = product.toObject();
+    const promo = activePromos.find(p =>
+      (p.type === 'products' && p.productIds.some(pid => pid.toString() === product._id.toString())) ||
+      (p.type === 'category' && p.categoryId?.toString() === product.category?._id?.toString())
+    );
+    obj.activePromotion = promo
+      ? { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent }
+      : null;
+
+    res.json(obj);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
