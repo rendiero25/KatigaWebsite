@@ -16,6 +16,7 @@ import {
   ShoppingCart,
   ExternalLink,
   Users as UsersIcon,
+  MessageSquare,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -129,7 +130,11 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Transaksi',
-    items: [{ path: '/admin/orders', icon: ShoppingCart, label: 'Pesanan' }, { path: '/admin/users', icon: UsersIcon, label: 'Users' }],
+    items: [
+      { path: '/admin/orders',  icon: ShoppingCart,  label: 'Pesanan' },
+      { path: '/admin/users',   icon: UsersIcon,     label: 'Users'   },
+      { path: '/admin/reviews', icon: MessageSquare, label: 'Ulasan'  },
+    ],
   },
   {
     label: 'Sistem',
