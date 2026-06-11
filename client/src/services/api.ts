@@ -210,6 +210,28 @@ export const api = {
     return res.json();
   },
 
+  uploadCustomerAvatar: async (file: File): Promise<{ avatar?: string; message?: string }> => {
+    const token = localStorage.getItem('customerToken');
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const res = await fetch(`${API_BASE_URL}/customers/me/avatar`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    return res.json();
+  },
+
+  changeCustomerPassword: async (data: { currentPassword?: string; newPassword: string }): Promise<{ message: string }> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/me/password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+
   getWishlist: async (): Promise<{ wishlist: WishlistProduct[] }> => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/customers/wishlist`, {

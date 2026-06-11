@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import type { WishlistProduct } from '../types/ecommerce';
-import { getCartCount } from '../utils/cart';
+import { getCartCount, clearCart } from '../utils/cart';
 
 export function useCartCount() {
-  const [count, setCount] = useState(getCartCount());
+  const [count, setCount] = useState(() => {
+    if (!localStorage.getItem('customerToken')) {
+      clearCart();
+      return 0;
+    }
+    return getCartCount();
+  });
   useEffect(() => {
     const handler = () => setCount(getCartCount());
     window.addEventListener('cartUpdated', handler);

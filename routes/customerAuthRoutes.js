@@ -5,6 +5,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const Customer = require('../models/Customer');
 const customerAuth = require('../middleware/customerAuth');
+const upload = require('../middleware/upload');
 const { sendWelcomeEmail } = require('../services/emailService');
 
 const signToken = (id) => {
@@ -26,7 +27,7 @@ router.post('/register', async (req, res) => {
     const customer = await Customer.create({ name, email, password, phone: phone || '' });
     sendWelcomeEmail(customer.name, customer.email);
     const token = signToken(customer._id);
-    res.status(201).json({ token, customer: { _id: customer._id, name: customer.name, email: customer.email, phone: customer.phone } });
+    res.status(201).json({ token, customer: { _id: customer._id, name: customer.name, email: customer.email, phone: customer.phone, avatar: customer.avatar || '' } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -41,7 +42,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Email atau password salah' });
     }
     const token = signToken(customer._id);
-    res.json({ token, customer: { _id: customer._id, name: customer.name, email: customer.email, phone: customer.phone } });
+    res.json({ token, customer: { _id: customer._id, name: customer.name, email: customer.email, phone: customer.phone, avatar: customer.avatar || '' } });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -80,11 +81,51 @@ router.post('/google', async (req, res) => {
     if (isNew) sendWelcomeEmail(customer.name, customer.email);
 
     const token = signToken(customer._id);
-    res.json({ token, customer: { _id: customer._id, name: customer.name, email: customer.email, phone: customer.phone }, isNew });
+    res.json({ token, customer: { _id: customer._id, name: customer.name, email: customer.email, phone: customer.phone, avatar: customer.avatar || '' }, isNew });
   } catch (err) {
     if (err.response?.status === 400) {
       return res.status(401).json({ message: 'Token Google tidak valid' });
     }
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/customers/me/avatar
+router.post('/me/avatar', customerAuth, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'Tidak ada file yang diunggah' });
+    const customer = await Customer.findById(req.customer._id);
+    if (!customer) return res.status(404).json({ message: 'Customer tidak ditemukan' });
+    customer.avatar = req.file.path;
+    await customer.save();
+    res.json({ avatar: customer.avatar });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/customers/me/password
+router.put('/me/password', customerAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password baru minimal 6 karakter' });
+    }
+    const customer = await Customer.findById(req.customer._id);
+    if (!customer) return res.status(404).json({ message: 'Customer tidak ditemukan' });
+    if (customer.password) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Password saat ini wajib diisi' });
+      }
+      const isMatch = await customer.matchPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Password saat ini salah' });
+      }
+    }
+    customer.password = newPassword;
+    await customer.save();
+    res.json({ message: 'Password berhasil diubah' });
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });

@@ -3,6 +3,7 @@ import { FiMenu, FiX, FiUser, FiPackage, FiLogOut } from "react-icons/fi";
 import { FaShoppingCart } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSiteSettings, useCartCount } from "../hooks/useApi";
+import { clearCart } from "../utils/cart";
 import api from "../services/api";
 import {
   DropdownMenu,
@@ -11,10 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Customer {
   name: string;
+  avatar?: string;
 }
 
 export default function Header() {
@@ -36,7 +38,8 @@ export default function Header() {
     const syncAuth = () => {
       const token = localStorage.getItem("customerToken");
       const name = localStorage.getItem("customerName");
-      setCustomer(token && name ? { name } : null);
+      const avatar = localStorage.getItem("customerAvatar") || undefined;
+      setCustomer(token && name ? { name, avatar } : null);
     };
     syncAuth();
     window.addEventListener("storage", syncAuth);
@@ -46,6 +49,8 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("customerToken");
     localStorage.removeItem("customerName");
+    localStorage.removeItem("customerAvatar");
+    clearCart();
     setCustomer(null);
     setIsMobileMenuOpen(false);
     navigate("/");
@@ -151,7 +156,7 @@ export default function Header() {
               className="relative flex items-center justify-center text-gray-800 hover:text-primary transition cursor-pointer"
             >
               <FaShoppingCart className="w-6 h-6" />
-              {cartCount > 0 && (
+              {customer && cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {cartCount > 9 ? "9+" : cartCount}
                 </span>
@@ -164,6 +169,7 @@ export default function Header() {
                 <DropdownMenu>
                   <DropdownMenuTrigger className="cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
                     <Avatar className="size-9 [&::after]:hidden ring-2 ring-primary/20 hover:ring-primary/50 transition-all rounded-full">
+                      {customer.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
                       <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
                         {initials(customer.name)}
                       </AvatarFallback>
@@ -180,27 +186,27 @@ export default function Header() {
                     </div>
                     <DropdownMenuSeparator className="bg-gray-100" />
                     <DropdownMenuItem
-                      className="rounded-lg focus:bg-gray-50 focus:text-gray-900 cursor-pointer gap-2.5"
+                      className="rounded-lg cursor-pointer gap-2.5 focus:bg-transparent data-highlighted:bg-transparent focus:text-black data-highlighted:text-black focus:[&_svg]:text-black data-highlighted:[&_svg]:text-black"
                       onClick={() => navigate("/profil")}
                     >
-                      <FiUser className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700">Dashboard</span>
+                      <FiUser className="w-4 h-4 text-gray-400 transition-colors" />
+                      <span className="text-sm text-gray-700 transition-colors">Dashboard</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="rounded-lg focus:bg-gray-50 focus:text-gray-900 cursor-pointer gap-2.5"
+                      className="rounded-lg cursor-pointer gap-2.5 focus:bg-transparent data-highlighted:bg-transparent focus:text-black data-highlighted:text-black focus:[&_svg]:text-black data-highlighted:[&_svg]:text-black"
                       onClick={() => navigate("/pesanan")}
                     >
-                      <FiPackage className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700">Pesanan</span>
+                      <FiPackage className="w-4 h-4 text-gray-400 transition-colors" />
+                      <span className="text-sm text-gray-700 transition-colors">Pesanan</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-gray-100" />
                     <DropdownMenuItem
                       variant="destructive"
-                      className="rounded-lg focus:bg-red-50 cursor-pointer gap-2.5"
+                      className="rounded-lg cursor-pointer gap-2.5 focus:bg-transparent data-highlighted:bg-transparent focus:text-black data-highlighted:text-black focus:[&_svg]:text-black data-highlighted:[&_svg]:text-black"
                       onClick={handleLogout}
                     >
-                      <FiLogOut className="w-4 h-4" />
-                      <span className="text-sm">Keluar</span>
+                      <FiLogOut className="w-4 h-4 transition-colors" />
+                      <span className="text-sm transition-colors">Keluar</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -283,9 +289,12 @@ export default function Header() {
             {customer ? (
               <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
                 <div className="flex items-center gap-3 px-1 pb-1">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                    {initials(customer.name)}
-                  </div>
+                  <Avatar className="size-9 shrink-0 [&::after]:hidden">
+                    {customer.avatar && <AvatarImage src={customer.avatar} alt={customer.name} />}
+                    <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
+                      {initials(customer.name)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{customer.name}</p>
                     <p className="text-xs text-gray-400">Pelanggan</p>

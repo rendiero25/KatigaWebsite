@@ -22,6 +22,7 @@ export default function Daftar() {
       if (data.token) {
         localStorage.setItem('customerToken', data.token);
         localStorage.setItem('customerName', data.customer.name);
+        localStorage.setItem('customerAvatar', data.customer.avatar || '');
         navigate('/profil');
       } else {
         setError(data.message || 'Daftar dengan Google gagal');
@@ -81,6 +82,7 @@ export default function Daftar() {
       if (data.token) {
         localStorage.setItem('customerToken', data.token);
         localStorage.setItem('customerName', data.customer.name);
+        localStorage.setItem('customerAvatar', data.customer.avatar || '');
         navigate('/profil');
       } else {
         setError(data.message || 'Pendaftaran gagal');

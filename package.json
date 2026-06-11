@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "predev": "lsof -ti:8000 | xargs kill -9 2>/dev/null || true",
+    "predev": "npx kill-port 8000 || exit 0",
     "dev": "concurrently \"nodemon server.js\" \"cd client && npx vite\"",
     "build": "cd client && npm install && npm run build",
     "install:all": "npm install && cd client && npm install",

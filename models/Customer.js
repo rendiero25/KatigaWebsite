@@ -6,6 +6,7 @@ const customerSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, default: '' },
   phone: { type: String, default: '', trim: true },
+  avatar: { type: String, default: '' },
   googleId: { type: String, default: '', index: true },
   suspended: { type: Boolean, default: false },
   defaultAddress: {

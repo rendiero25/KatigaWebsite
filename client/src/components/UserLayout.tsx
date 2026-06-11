@@ -158,13 +158,13 @@ export default function UserLayout({ children, title }: Props) {
           <SidebarRail />
         </Sidebar>
 
-        <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
+        <SidebarInset className="bg-gray-50">
+          <header className="flex h-14 shrink-0 items-center gap-2 bg-gray-50 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-1 h-4" />
             {title && <h1 className="text-base font-semibold text-foreground">{title}</h1>}
           </header>
-          <main className="flex flex-1 flex-col p-6 min-h-0 w-full bg-[#F9F7F2]" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+          <main className="flex flex-1 flex-col p-6 min-h-0 w-full bg-gray-50" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
             {children}
           </main>
         </SidebarInset>
