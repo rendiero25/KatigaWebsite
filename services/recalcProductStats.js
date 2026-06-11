@@ -1,9 +1,11 @@
+const { Types } = require('mongoose');
 const Review  = require('../models/Review');
 const Product = require('../models/Product');
 
 async function recalcProductStats(productId) {
+  const oid = new Types.ObjectId(productId);
   const stats = await Review.aggregate([
-    { $match: { product: productId, isVisible: true } },
+    { $match: { product: oid, isVisible: true } },
     { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
   ]);
   await Product.findByIdAndUpdate(productId, {
