@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node scripts/migrateToCloudinary.js)"
+      "Bash(node scripts/migrateToCloudinary.js)",
+      "Bash(npx tsc *)"
     ]
   }
 }
