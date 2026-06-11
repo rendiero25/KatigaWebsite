@@ -5,6 +5,7 @@ import HeroSection from '../components/HeroSection';
 import PartnersSection from '../components/PartnersSection';
 import AdvantagesSection from '../components/AdvantagesSection';
 import ProductsSection from '../components/ProductsSection';
+import PromosiSection from '../components/PromosiSection';
 import ManufacturingSection from '../components/ManufacturingSection';
 import NewsSection from '../components/NewsSection';
 
@@ -46,6 +47,15 @@ export default function Home() {
           viewport={{ once: true }}
         >
           <ProductsSection />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+        >
+          <PromosiSection />
         </motion.div>
 
         <motion.div
