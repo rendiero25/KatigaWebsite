@@ -1,4 +1,4 @@
-import type { WishlistProduct } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse } from '../types/ecommerce';
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
   let url = import.meta.env.VITE_API_URL || "/api";
@@ -413,6 +413,37 @@ export const api = {
 
     const baseUrl = API_BASE_URL.replace("/api", "");
     return `${baseUrl}${path}`;
+  },
+
+  // Reviews
+  getProductReviews: async (productId: string, page = 1): Promise<ReviewsResponse> => {
+    const res = await fetch(`${API_BASE_URL}/reviews/product/${productId}?page=${page}&limit=10`);
+    if (!res.ok) throw new Error('Gagal memuat ulasan');
+    return res.json();
+  },
+
+  canReview: async (productId: string, orderId: string): Promise<CanReviewResponse> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(
+      `${API_BASE_URL}/reviews/can-review?productId=${productId}&orderId=${orderId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return { canReview: false, alreadyReviewed: false };
+    return res.json();
+  },
+
+  submitReview: async (data: FormData): Promise<Review> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/reviews`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: data,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as { message?: string }).message || 'Gagal menyimpan ulasan');
+    }
+    return res.json();
   },
 };
 

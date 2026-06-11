@@ -120,3 +120,29 @@ export interface WishlistProduct {
   images: string[];
   priceNumeric: number;
 }
+
+export interface Review {
+  _id: string;
+  product: string;
+  customer: { _id: string; name: string; avatar?: string };
+  order: string;
+  rating: number;
+  comment: string;
+  photos: string[];
+  isVisible: boolean;
+  createdAt: string;
+}
+
+export interface ReviewsResponse {
+  reviews: Review[];
+  total: number;
+  page: number;
+  pages: number;
+  ratingAvg: number;
+  ratingDistribution: { 1: number; 2: number; 3: number; 4: number; 5: number };
+}
+
+export interface CanReviewResponse {
+  canReview: boolean;
+  alreadyReviewed: boolean;
+}

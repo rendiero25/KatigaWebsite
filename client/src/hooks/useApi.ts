@@ -269,3 +269,44 @@ export function useWishlist() {
 
   return { wishlist, wishlistIds, loading, add, remove }
 }
+
+export function useProductReviews(productId: string) {
+  const [reviews, setReviews] = useState<import('../types/ecommerce').Review[]>([]);
+  const [meta, setMeta] = useState<{
+    total: number; pages: number; page: number;
+    ratingAvg: number;
+    ratingDistribution: { 1: number; 2: number; 3: number; 4: number; 5: number };
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    if (!productId) return;
+    setLoading(true);
+    api.getProductReviews(productId, 1)
+      .then((data) => {
+        setReviews(data.reviews);
+        setMeta({ total: data.total, pages: data.pages, page: data.page, ratingAvg: data.ratingAvg, ratingDistribution: data.ratingDistribution });
+        setPage(1);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [productId]);
+
+  const loadMore = useCallback(async () => {
+    if (!meta || page >= meta.pages) return;
+    const next = page + 1;
+    setLoadingMore(true);
+    try {
+      const data = await api.getProductReviews(productId, next);
+      setReviews((prev) => [...prev, ...data.reviews]);
+      setPage(next);
+      setMeta((prev) => prev ? { ...prev, page: next } : prev);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [productId, page, meta]);
+
+  return { reviews, meta, loading, loadingMore, loadMore };
+}
