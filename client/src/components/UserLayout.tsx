@@ -1,6 +1,9 @@
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart } from 'lucide-react'
+
+import api from '../services/api'
+
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +21,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 interface Props {
   children: ReactNode
@@ -45,7 +48,8 @@ function initials(name: string) {
 export default function UserLayout({ children, title }: Props) {
   const location = useLocation()
   const navigate = useNavigate()
-  const customerName = localStorage.getItem('customerName') || ''
+  const [customerName, setCustomerName] = useState(() => localStorage.getItem('customerName') || '')
+  const [customerAvatar, setCustomerAvatar] = useState(() => localStorage.getItem('customerAvatar') || '')
 
   useEffect(() => {
     if (!localStorage.getItem('customerToken')) {
@@ -53,9 +57,19 @@ export default function UserLayout({ children, title }: Props) {
     }
   }, [navigate, location.pathname])
 
+  useEffect(() => {
+    const sync = () => {
+      setCustomerName(localStorage.getItem('customerName') || '')
+      setCustomerAvatar(localStorage.getItem('customerAvatar') || '')
+    }
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
+
   const handleLogout = () => {
     localStorage.removeItem('customerToken')
     localStorage.removeItem('customerName')
+    localStorage.removeItem('customerAvatar')
     navigate('/')
   }
 
@@ -130,6 +144,7 @@ export default function UserLayout({ children, title }: Props) {
               <SidebarMenuItem>
                 <SidebarMenuButton size="lg" className="pointer-events-none select-none">
                   <Avatar className="size-8 rounded-lg [&::after]:hidden shrink-0">
+                    {customerAvatar && <AvatarImage src={api.getImageUrl(customerAvatar)} alt={customerName} className="rounded-lg" />}
                     <AvatarFallback className="rounded-lg bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
                       {customerName ? initials(customerName) : 'U'}
                     </AvatarFallback>
