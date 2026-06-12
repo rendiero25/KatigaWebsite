@@ -1,6 +1,19 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const savedAddressSchema = new mongoose.Schema({
+  label:         { type: String, default: '' },
+  recipientName: { type: String, default: '' },
+  phone:         { type: String, default: '' },
+  street:        { type: String, default: '' },
+  city:          { type: String, default: '' },
+  province:      { type: String, default: '' },
+  postalCode:    { type: String, default: '' },
+  areaId:        { type: String, default: '' },
+  areaName:      { type: String, default: '' },
+  isDefault:     { type: Boolean, default: false },
+});
+
 const customerSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -19,6 +32,7 @@ const customerSchema = new mongoose.Schema({
     areaId:        { type: String, default: '' },
     areaName:      { type: String, default: '' },
   },
+  addresses: [savedAddressSchema],
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
 }, { timestamps: true });
 
