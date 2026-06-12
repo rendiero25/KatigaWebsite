@@ -14,7 +14,9 @@ function saveCart(cart: CartItem[]): void {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-export function addToCart(item: Omit<CartItem, 'quantity'> & { quantity?: number }): void {
+export function addToCart(
+  item: Omit<CartItem, 'quantity'> & { quantity?: number }
+): void {
   const cart = getCart();
   const existing = cart.find((c) => c.productId === item.productId);
   if (existing) {
@@ -50,4 +52,10 @@ export function getCartCount(): number {
 
 export function getCartTotal(): number {
   return getCart().reduce((sum, c) => sum + c.priceNumeric * c.quantity, 0);
+}
+
+export function getSelectedTotal(selectedIds: Set<string>): number {
+  return getCart()
+    .filter((c) => selectedIds.has(c.productId))
+    .reduce((sum, c) => sum + c.priceNumeric * c.quantity, 0);
 }
