@@ -7,6 +7,7 @@ const Product = require('../models/Product');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customerAuth');
 const { createOrder: biteshipCreateOrder } = require('../services/biteshipService');
+const Voucher = require('../models/Voucher');
 
 const snap = new midtransClient.Snap({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
@@ -68,7 +69,11 @@ const webhookHandler = async (req, res) => {
 // ─── POST /api/orders — create order + get Snap token ───
 router.post('/', customerAuth, async (req, res) => {
   try {
-    const { items, shippingAddress, shippingCourier, shippingService, shippingServiceName, shippingCost, estimatedDays } = req.body;
+    const {
+      items, shippingAddress, shippingCourier, shippingService,
+      shippingServiceName, shippingCost, estimatedDays,
+      voucherCode, voucherDiscount,
+    } = req.body;
 
     if (!items?.length || !shippingAddress || !shippingCourier || shippingCost === undefined) {
       return res.status(400).json({ message: 'Data tidak lengkap' });
@@ -91,8 +96,31 @@ router.post('/', customerAuth, async (req, res) => {
       });
     }
 
+    // Server-side voucher re-validation
+    let appliedVoucherCode = '';
+    let appliedVoucherDiscount = 0;
+    let voucherDoc = null;
+
+    if (voucherCode && Number(voucherDiscount) > 0) {
+      voucherDoc = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
+      if (!voucherDoc) return res.status(400).json({ message: 'Voucher tidak valid' });
+
+      const now = new Date();
+      const itemsSubtotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
+      if (
+        now < voucherDoc.startDate || now > voucherDoc.endDate ||
+        itemsSubtotal < voucherDoc.minOrderAmount ||
+        (voucherDoc.usageLimit > 0 && voucherDoc.usedCount >= voucherDoc.usageLimit)
+      ) {
+        return res.status(400).json({ message: 'Voucher tidak dapat digunakan' });
+      }
+
+      appliedVoucherCode = voucherDoc.code;
+      appliedVoucherDiscount = Number(voucherDiscount);
+    }
+
     const subtotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
-    const total = subtotal + Number(shippingCost);
+    const total = subtotal - appliedVoucherDiscount + Number(shippingCost);
 
     const order = new Order({
       customer: req.customer._id,
@@ -106,6 +134,8 @@ router.post('/', customerAuth, async (req, res) => {
       shippingService,
       shippingServiceName: shippingServiceName ?? '',
       estimatedDays: estimatedDays ?? '',
+      voucherCode: appliedVoucherCode,
+      voucherDiscount: appliedVoucherDiscount,
     });
     await order.save();
     order.midtransOrderId = order._id.toString();
@@ -124,21 +154,37 @@ router.post('/', customerAuth, async (req, res) => {
           postal_code: shippingAddress.postalCode,
         },
       },
-      item_details: orderItems.map((i) => ({
-        id: i.product.toString(),
-        price: i.priceNumeric,
-        quantity: i.quantity,
-        name: i.name.substring(0, 50),
-      })).concat([{
-        id: 'SHIPPING',
-        price: Number(shippingCost),
-        quantity: 1,
-        name: `Ongkir ${shippingCourier.toUpperCase()} ${shippingService}`,
-      }]),
+      item_details: (() => {
+        const itemDetails = orderItems.map((i) => ({
+          id: i.product.toString(),
+          price: i.priceNumeric,
+          quantity: i.quantity,
+          name: i.name.substring(0, 50),
+        }));
+        itemDetails.push({
+          id: 'SHIPPING',
+          price: Number(shippingCost),
+          quantity: 1,
+          name: `Ongkir ${shippingCourier.toUpperCase()} ${shippingService}`,
+        });
+        if (appliedVoucherDiscount > 0) {
+          itemDetails.push({
+            id: 'VOUCHER',
+            price: -appliedVoucherDiscount,
+            quantity: 1,
+            name: `Diskon ${appliedVoucherCode}`,
+          });
+        }
+        return itemDetails;
+      })(),
     });
 
     order.midtransToken = snapTransaction.token;
     await order.save();
+
+    if (voucherDoc) {
+      await Voucher.findByIdAndUpdate(voucherDoc._id, { $inc: { usedCount: 1 } });
+    }
 
     res.status(201).json({ orderId: order._id, snapToken: snapTransaction.token });
   } catch (err) {
