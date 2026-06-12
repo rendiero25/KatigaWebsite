@@ -92,6 +92,8 @@ app.use('/api/product-page', require('./routes/productPageRoutes'));
 app.use('/api/contact-page', require('./routes/contactPageRoutes'));
 
 // Ecommerce routes
+app.use('/api/customers/me/addresses', require('./routes/customerAddresses'));
+app.use('/api/vouchers', require('./routes/vouchers'));
 app.use('/api/customers', require('./routes/customerAuthRoutes'));
 app.use('/api/shipping', require('./routes/shippingRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
