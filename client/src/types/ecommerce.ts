@@ -9,6 +9,27 @@ export interface ShippingAddress {
   areaName: string;
 }
 
+export interface SavedAddress {
+  _id: string;
+  label: string;
+  recipientName: string;
+  phone: string;
+  street: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  areaId: string;
+  areaName: string;
+  isDefault: boolean;
+}
+
+export interface VoucherValidation {
+  valid: boolean;
+  voucherId?: string;
+  discountAmount?: number;
+  message: string;
+}
+
 export interface CustomerProfile {
   _id: string;
   name: string;
@@ -26,6 +47,9 @@ export interface CartItem {
   priceNumeric: number;
   weightGrams: number;
   quantity: number;
+  originalPrice?: number;
+  discountPercent?: number;
+  categoryId?: string;
 }
 
 export interface BiteshipArea {
@@ -67,6 +91,8 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   shippingCost: number;
+  voucherCode: string;
+  voucherDiscount: number;
   total: number;
   shippingAddress: ShippingAddress;
   shippingCourier: string;
@@ -94,6 +120,8 @@ export interface CreateOrderPayload {
   shippingServiceName: string;
   shippingCost: number;
   estimatedDays: string;
+  voucherCode?: string;
+  voucherDiscount?: number;
 }
 
 export interface AdminOrdersParams {
