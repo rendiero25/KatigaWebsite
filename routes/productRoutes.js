@@ -12,7 +12,7 @@ const Promotion = require('../models/Promotion');
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const { category, featured } = req.query;
+    const { category, featured, categories, exclude, limit } = req.query;
     let query = {};
 
     if (category) {
@@ -33,7 +33,20 @@ router.get('/', async (req, res) => {
 
     if (featured === 'true') query.isFeatured = true;
 
-    const products = await Product.find(query).populate('category');
+    if (categories) {
+      const catIds = String(categories).split(',').filter((id) => /^[0-9a-fA-F]{24}$/.test(id));
+      if (catIds.length) query.category = { $in: catIds };
+    }
+
+    if (exclude) {
+      const excludeIds = String(exclude).split(',').filter((id) => /^[0-9a-fA-F]{24}$/.test(id));
+      if (excludeIds.length) query._id = { $nin: excludeIds };
+    }
+
+    const productLimit = limit ? parseInt(String(limit), 10) : 0;
+    let productsQuery = Product.find(query).populate('category');
+    if (productLimit > 0) productsQuery = productsQuery.limit(productLimit);
+    const products = await productsQuery;
 
     const now = new Date();
     const activePromos = await Promotion.find({
