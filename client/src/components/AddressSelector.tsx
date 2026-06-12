@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { ShippingAddress, SavedAddress, BiteshipArea } from '../types/ecommerce';
 import { useCustomerAddresses } from '../hooks/useApi';
 import api from '../services/api';
@@ -29,12 +29,12 @@ export default function AddressSelector({ selected, onSelect }: Props) {
   const [areaKeyword, setAreaKeyword] = useState('');
   const [areaResults, setAreaResults] = useState<BiteshipArea[]>([]);
   const [saving, setSaving] = useState(false);
-  const [areaTimer, setAreaTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const areaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleAreaSearch = (keyword: string) => {
     setAreaKeyword(keyword);
     setForm((f) => ({ ...f, areaId: '', areaName: '', city: '', province: '', postalCode: '' }));
-    if (areaTimer) clearTimeout(areaTimer);
+    if (areaTimer.current) clearTimeout(areaTimer.current);
     if (keyword.length < 3) { setAreaResults([]); return; }
     const timer = setTimeout(async () => {
       try {
@@ -42,7 +42,7 @@ export default function AddressSelector({ selected, onSelect }: Props) {
         setAreaResults(Array.isArray(results) ? results : []);
       } catch { setAreaResults([]); }
     }, 500);
-    setAreaTimer(timer);
+    areaTimer.current = timer;
   };
 
   const selectArea = (area: BiteshipArea) => {

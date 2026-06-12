@@ -101,7 +101,7 @@ router.post('/', customerAuth, async (req, res) => {
     let appliedVoucherDiscount = 0;
     let voucherDoc = null;
 
-    if (voucherCode && Number(voucherDiscount) > 0) {
+    if (voucherCode) {
       voucherDoc = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
       if (!voucherDoc) return res.status(400).json({ message: 'Voucher tidak valid' });
 
@@ -116,7 +116,13 @@ router.post('/', customerAuth, async (req, res) => {
       }
 
       appliedVoucherCode = voucherDoc.code;
-      appliedVoucherDiscount = Number(voucherDiscount);
+      let recalcDiscount = voucherDoc.discountType === 'percent'
+        ? Math.round(itemsSubtotal * voucherDoc.discountValue / 100)
+        : voucherDoc.discountValue;
+      if (voucherDoc.discountType === 'percent' && voucherDoc.maxDiscount != null && voucherDoc.maxDiscount > 0) {
+        recalcDiscount = Math.min(recalcDiscount, voucherDoc.maxDiscount);
+      }
+      appliedVoucherDiscount = Math.min(recalcDiscount, itemsSubtotal);
     }
 
     const subtotal = orderItems.reduce((s, i) => s + i.subtotal, 0);

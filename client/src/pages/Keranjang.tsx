@@ -44,7 +44,7 @@ export default function Keranjang() {
     () => cart.filter((i) => selectedIds.has(i.productId)).reduce((s, i) => s + i.quantity, 0),
     [cart, selectedIds],
   );
-  const selectedTotal = useMemo(() => getSelectedTotal(selectedIds), [selectedIds]);
+  const selectedTotal = useMemo(() => getSelectedTotal(selectedIds), [cart, selectedIds]);
 
   const toggleAll = () => {
     if (allSelected) {
