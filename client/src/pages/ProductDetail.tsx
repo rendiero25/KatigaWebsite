@@ -137,15 +137,27 @@ export default function ProductDetail() {
       return;
     }
     setAdding(true);
+
+    const promo = product.activePromotion;
+    const basePrice = selectedVariant !== null && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product.priceNumeric ?? 0);
+    const discountedPrice = promo
+      ? Math.round(basePrice * (1 - promo.discountPercent / 100))
+      : basePrice;
+
     addToCart({
       productId: product._id,
       name: selectedVariant
         ? `${product.name} - ${selectedVariant.name}`
         : product.name,
       image: activeImage || product.image || '',
-      priceNumeric: effectivePrice,
+      priceNumeric: discountedPrice,
       weightGrams: selectedVariant?.weightGrams ?? product.weightGrams ?? 0,
       quantity: qty,
+      originalPrice: promo ? basePrice : undefined,
+      discountPercent: promo ? promo.discountPercent : undefined,
+      categoryId: product.category?._id ?? undefined,
     });
     setTimeout(() => setAdding(false), 600);
   };
