@@ -7,7 +7,7 @@ const voucherSchema = new mongoose.Schema({
   discountType:   { type: String, enum: ['percent', 'fixed'], required: true },
   discountValue:  { type: Number, required: true, min: 0 },
   minOrderAmount: { type: Number, default: 0 },
-  maxDiscount:    { type: Number, default: 0 },
+  maxDiscount:    { type: Number, default: null },
   usageLimit:     { type: Number, default: 0 },
   usedCount:      { type: Number, default: 0 },
   perUserLimit:   { type: Number, default: 0 },

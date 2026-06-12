@@ -5,19 +5,23 @@ const customerAuth = require('../middleware/customerAuth');
 
 router.use(customerAuth);
 
-router.get('/', async (req, res) => {
-  try {
-    const customer = await Customer.findById(req.customer._id).select('addresses');
-    res.json(customer.addresses ?? []);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+router.get('/', (req, res) => {
+  res.json(req.customer.addresses ?? []);
 });
 
 router.post('/', async (req, res) => {
   try {
     const { label, recipientName, phone, street, city, province, postalCode, areaId, areaName, isDefault } = req.body;
+
+    if (!recipientName?.trim() || !street?.trim() || !areaId) {
+      return res.status(400).json({ message: 'Nama penerima, alamat, dan area wajib diisi' });
+    }
+
     const customer = await Customer.findById(req.customer._id);
+
+    if (customer.addresses.length >= 10) {
+      return res.status(400).json({ message: 'Maksimal 10 alamat tersimpan' });
+    }
 
     if (isDefault) {
       for (const a of customer.addresses) a.isDefault = false;
@@ -40,6 +44,11 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { label, recipientName, phone, street, city, province, postalCode, areaId, areaName, isDefault } = req.body;
+
+    if (!recipientName?.trim() || !street?.trim() || !areaId) {
+      return res.status(400).json({ message: 'Nama penerima, alamat, dan area wajib diisi' });
+    }
+
     const customer = await Customer.findById(req.customer._id);
     const addr = customer.addresses.id(req.params.id);
     if (!addr) return res.status(404).json({ message: 'Alamat tidak ditemukan' });
