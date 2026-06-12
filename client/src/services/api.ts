@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, SavedAddress, VoucherValidation, CreateOrderPayload } from '../types/ecommerce';
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
   let url = import.meta.env.VITE_API_URL || "/api";
@@ -46,14 +46,21 @@ export const api = {
   },
 
   // Products
-  getProducts: async (params?: { category?: string; featured?: boolean }) => {
+  getProducts: async (params?: {
+    category?: string;
+    featured?: boolean;
+    categories?: string;
+    exclude?: string;
+    limit?: number;
+  }) => {
     const query: Record<string, string> = {};
     if (params?.category) query.category = params.category;
-    if (params?.featured !== undefined) query.featured = String(params.featured);
-    const queryString = Object.keys(query).length
-      ? `?${new URLSearchParams(query).toString()}`
-      : "";
-    const res = await fetch(`${API_BASE_URL}/products${queryString}`);
+    if (params?.featured) query.featured = 'true';
+    if (params?.categories) query.categories = params.categories;
+    if (params?.exclude) query.exclude = params.exclude;
+    if (params?.limit) query.limit = String(params.limit);
+    const qs = new URLSearchParams(query).toString();
+    const res = await fetch(`${API_BASE_URL}/products${qs ? `?${qs}` : ''}`);
     if (!res.ok) throw new Error('Failed to fetch products');
     return res.json();
   },
@@ -279,7 +286,7 @@ export const api = {
   },
 
   // Orders — customer
-  createOrder: async (payload: object) => {
+  createOrder: async (payload: CreateOrderPayload) => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',
@@ -512,6 +519,68 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Failed to toggle promotion');
+    return res.json();
+  },
+
+  // Customer Addresses
+  getCustomerAddresses: async (): Promise<SavedAddress[]> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/me/addresses`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to fetch addresses');
+    return res.json();
+  },
+
+  addCustomerAddress: async (data: Omit<SavedAddress, '_id'>): Promise<SavedAddress> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/me/addresses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to add address');
+    return res.json();
+  },
+
+  updateCustomerAddress: async (id: string, data: Partial<SavedAddress>): Promise<SavedAddress> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/me/addresses/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update address');
+    return res.json();
+  },
+
+  deleteCustomerAddress: async (id: string): Promise<void> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/me/addresses/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to delete address');
+  },
+
+  setDefaultAddress: async (id: string): Promise<void> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/customers/me/addresses/${id}/default`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to set default address');
+  },
+
+  // Vouchers
+  validateVoucher: async (code: string, subtotal: number): Promise<VoucherValidation> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/vouchers/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ code, subtotal }),
+    });
+    if (!res.ok) throw new Error('Failed to validate voucher');
     return res.json();
   },
 };
