@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api';
-import type { WishlistProduct } from '../types/ecommerce';
+import type { WishlistProduct, SavedAddress, VoucherValidation } from '../types/ecommerce';
 import { getCartCount, clearCart } from '../utils/cart';
 
 export function useCartCount() {
@@ -334,4 +334,78 @@ export function useActivePromotions() {
   }, []);
 
   return { data, loading };
+}
+
+export function useCustomerAddresses() {
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.getCustomerAddresses();
+      setAddresses(data);
+    } catch {
+      setAddresses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const addAddress = async (data: Omit<SavedAddress, '_id'>): Promise<SavedAddress> => {
+    const result = await api.addCustomerAddress(data);
+    await refresh();
+    return result;
+  };
+
+  const updateAddress = async (id: string, data: Partial<SavedAddress>): Promise<SavedAddress> => {
+    const result = await api.updateCustomerAddress(id, data);
+    await refresh();
+    return result;
+  };
+
+  const deleteAddress = async (id: string): Promise<void> => {
+    await api.deleteCustomerAddress(id);
+    setAddresses((prev) => prev.filter((a) => a._id !== id));
+  };
+
+  const setDefault = async (id: string): Promise<void> => {
+    await api.setDefaultAddress(id);
+    setAddresses((prev) => prev.map((a) => ({ ...a, isDefault: a._id === id })));
+  };
+
+  return { addresses, loading, addAddress, updateAddress, deleteAddress, setDefault, refresh };
+}
+
+export function useVoucher() {
+  const [voucher, setVoucher] = useState<VoucherValidation | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const apply = async (code: string, subtotal: number): Promise<void> => {
+    setApplying(true);
+    setError(null);
+    try {
+      const result = await api.validateVoucher(code, subtotal);
+      if (result.valid) {
+        setVoucher(result);
+      } else {
+        setError(result.message);
+        setVoucher(null);
+      }
+    } catch {
+      setError('Gagal memvalidasi voucher');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const clear = () => {
+    setVoucher(null);
+    setError(null);
+  };
+
+  return { voucher, applying, error, apply, clear };
 }
