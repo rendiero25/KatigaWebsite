@@ -9,17 +9,9 @@ export interface ShippingAddress {
   areaName: string;
 }
 
-export interface SavedAddress {
+export interface SavedAddress extends ShippingAddress {
   _id: string;
   label: string;
-  recipientName: string;
-  phone: string;
-  street: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  areaId: string;
-  areaName: string;
   isDefault: boolean;
 }
 
@@ -91,8 +83,8 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   shippingCost: number;
-  voucherCode: string;
-  voucherDiscount: number;
+  voucherCode?: string;
+  voucherDiscount?: number;
   total: number;
   shippingAddress: ShippingAddress;
   shippingCourier: string;
