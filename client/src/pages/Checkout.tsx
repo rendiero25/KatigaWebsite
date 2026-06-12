@@ -39,6 +39,7 @@ export default function Checkout() {
       : allCart;
 
     if (!filtered.length) { navigate('/keranjang'); return; }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCart(filtered);
   }, [navigate, location.state]);
 
@@ -81,12 +82,12 @@ export default function Checkout() {
       alert(err instanceof Error ? err.message : 'Terjadi kesalahan, coba lagi.');
       setPaying(false);
     }
-  }, [cart, selectedAddress, selectedRate, appliedVoucher, voucherDiscount, voucherCode, navigate]);
+  }, [cart, selectedAddress, selectedRate, voucherDiscount, voucherCode, navigate]);
 
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-10 pb-20">
+      <main className="min-h-screen bg-white pt-10 pb-20">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <h1 className="text-3xl font-bold text-black mb-8">Checkout</h1>
 
@@ -95,7 +96,7 @@ export default function Checkout() {
             <div className="flex-1 space-y-6">
 
               {/* Address */}
-              <div className="bg-white rounded-2xl p-6">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6">
                 <h2 className="text-base font-bold text-black mb-4">Alamat Pengiriman</h2>
                 <AddressSelector
                   selected={selectedAddress}
@@ -116,7 +117,7 @@ export default function Checkout() {
 
               {/* Shipping */}
               {selectedAddress && (
-                <div className="bg-white rounded-2xl p-6">
+                <div className="bg-white border border-gray-100 rounded-2xl p-6">
                   <h2 className="text-base font-bold text-black mb-4">Pilih Pengiriman</h2>
                   <ShippingSelector
                     address={selectedAddress}
@@ -128,7 +129,7 @@ export default function Checkout() {
 
               {/* Voucher */}
               {selectedRate && (
-                <div className="bg-white rounded-2xl p-6">
+                <div className="bg-white border border-gray-100 rounded-2xl p-6">
                   <h2 className="text-base font-bold text-black mb-4">Kode Voucher</h2>
                   <VoucherInput
                     subtotal={subtotal}
@@ -141,7 +142,7 @@ export default function Checkout() {
 
             {/* Right — summary */}
             <div className="lg:w-80 shrink-0">
-              <div className="bg-white rounded-2xl p-6 sticky top-24">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 sticky top-24">
                 <h2 className="text-base font-bold text-black mb-4">Ringkasan Pesanan</h2>
 
                 {/* Items */}

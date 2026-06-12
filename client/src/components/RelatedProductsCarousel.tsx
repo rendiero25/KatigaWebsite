@@ -24,22 +24,24 @@ const fmt = (n: number) =>
 
 export default function RelatedProductsCarousel({ categoryIds, excludeIds }: Props) {
   const [products, setProducts] = useState<RelatedProduct[]>([]);
+  const categoryKey = categoryIds.join(',');
+  const excludeKey = excludeIds.join(',');
 
   useEffect(() => {
-    if (!categoryIds.length) return;
+    if (!categoryKey) return;
     api.getProducts({
-      categories: categoryIds.join(','),
-      exclude: excludeIds.join(','),
+      categories: categoryKey,
+      exclude: excludeKey,
       limit: 12,
     })
       .then((data: RelatedProduct[]) => setProducts(Array.isArray(data) ? data : []))
       .catch(() => setProducts([]));
-  }, [categoryIds.join(','), excludeIds.join(',')]);
+  }, [categoryKey, excludeKey]);
 
   if (!products.length) return null;
 
   return (
-    <section className="bg-[#F9F7F2] pt-10 pb-16">
+    <section className="bg-white border-t border-gray-100 pt-10 pb-16">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <h2 className="text-2xl font-bold text-black mb-6">Produk Lainnya</h2>
         <Swiper

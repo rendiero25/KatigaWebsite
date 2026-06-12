@@ -5,6 +5,7 @@ import api, { API_BASE_URL } from "../../services/api";
 const API_URL = API_BASE_URL;
 
 export default function AdminHero() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [hero, setHero] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

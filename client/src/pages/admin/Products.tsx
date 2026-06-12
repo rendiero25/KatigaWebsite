@@ -23,7 +23,7 @@ interface Product {
   _id: string;
   name: string;
   description?: string;
-  category: any;
+  category: string | { _id: string; name: string };
   price: string;
   weightGrams: number;
   dimensions?: { length: number; width: number; height: number };
@@ -58,6 +58,7 @@ const emptyForm = {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"list" | "form">("list");
@@ -78,7 +79,7 @@ export default function AdminProducts() {
       const res = await fetch(`${API_URL}/products`);
       const data = await res.json();
       setProducts(data);
-    } catch {}
+    } catch { /* ignore fetch errors */ }
   }, []);
 
   const fetchCategories = useCallback(async () => {
@@ -86,7 +87,7 @@ export default function AdminProducts() {
       const res = await fetch(`${API_URL}/categories`);
       const data = await res.json();
       setCategories(data);
-    } catch {}
+    } catch { /* ignore fetch errors */ }
   }, []);
 
   useEffect(() => {
@@ -156,8 +157,8 @@ export default function AdminProducts() {
         const err = await res.json();
         alert(`Gagal: ${err.message || "Unknown error"}`);
       }
-    } catch (error: any) {
-      alert(`Error: ${error.message}`);
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }

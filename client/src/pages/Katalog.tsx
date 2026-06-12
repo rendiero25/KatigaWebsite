@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import api from "../services/api";
 
 export default function Katalog() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [catalog, setCatalog] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

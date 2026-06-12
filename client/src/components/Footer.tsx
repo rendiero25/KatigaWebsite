@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { useFooter, useContactInfo } from "../hooks/useApi";
 import { FaPhone, FaWhatsapp, FaEnvelope, FaInstagram } from "react-icons/fa";
-import { div } from "motion/react-client";
 
 export default function Footer() {
   const { data: footer } = useFooter();

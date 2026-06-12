@@ -26,7 +26,7 @@ export default function Dashboard() {
     },
     {
       label: 'Featured',
-      value: products?.filter((p: any) => p.isFeatured)?.length ?? 0,
+      value: products?.filter((p: any) => p.isFeatured)?.length ?? 0, // eslint-disable-line @typescript-eslint/no-explicit-any
       icon: Star,
       description: 'Produk unggulan',
     },
@@ -120,7 +120,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {products?.slice(0, 5).map((product: any) => (
+                {products?.slice(0, 5).map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                   <tr key={product._id} className="border-b border-border/50 last:border-0">
                     <td className="py-3">
                       <div className="flex items-center gap-3">

@@ -5,7 +5,9 @@ import Footer from "../components/Footer";
 import api from "../services/api";
 
 export default function ContactPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [content, setContent] = useState<any>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [contactInfo, setContactInfo] = useState<any>({});
 
   // Form State

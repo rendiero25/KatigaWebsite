@@ -32,7 +32,7 @@ export default function NewsSection() {
 
         {/* News Grid */}
         <div className="grid md:grid-cols-3 gap-8">
-          {latestNews.map((article: any) => (
+          {latestNews.map((article: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
             <Link 
               key={article._id}
               to={`/berita/${article._id}`}

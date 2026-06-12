@@ -21,6 +21,7 @@ export default function Keranjang() {
       return;
     }
     const c = getCart();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCart(c);
     setSelectedIds(new Set(c.map((i) => i.productId)));
     const handler = () => {
@@ -43,7 +44,7 @@ export default function Keranjang() {
     () => cart.filter((i) => selectedIds.has(i.productId)).reduce((s, i) => s + i.quantity, 0),
     [cart, selectedIds],
   );
-  const selectedTotal = useMemo(() => getSelectedTotal(selectedIds), [cart, selectedIds]);
+  const selectedTotal = useMemo(() => getSelectedTotal(selectedIds), [selectedIds]);
 
   const toggleAll = () => {
     if (allSelected) {
@@ -80,7 +81,7 @@ export default function Keranjang() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-20">
+        <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-20">
           <p className="text-2xl font-bold text-black mb-4">Keranjang Kosong</p>
           <p className="text-black/60 mb-8">Belum ada produk di keranjang kamu.</p>
           <Link
@@ -98,7 +99,7 @@ export default function Keranjang() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-10 pb-0">
+      <main className="min-h-screen bg-white pt-10 pb-0">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 pb-16">
           <h1 className="text-3xl font-bold text-black mb-6">Keranjang Belanja</h1>
 
@@ -106,7 +107,7 @@ export default function Keranjang() {
             {/* Item list */}
             <div className="flex-1 min-w-0">
               {/* Select all */}
-              <label className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 mb-3 cursor-pointer select-none">
+              <label className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-3 mb-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -134,7 +135,7 @@ export default function Keranjang() {
 
             {/* Summary */}
             <div className="lg:w-72 shrink-0">
-              <div className="bg-white rounded-2xl p-6 sticky top-24">
+              <div className="bg-white border border-gray-100 rounded-2xl p-6 sticky top-24">
                 <h2 className="text-base font-bold text-black mb-4">Ringkasan</h2>
                 <div className="flex justify-between text-sm text-black/70 mb-1">
                   <span>Produk dipilih</span>

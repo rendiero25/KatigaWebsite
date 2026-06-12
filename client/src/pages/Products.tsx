@@ -27,6 +27,7 @@ const sortLabels: Record<"default" | "az" | "za", string> = {
 };
 
 export default function Products() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [settings, setSettings] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,12 +57,13 @@ export default function Products() {
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [activeCategory, searchQuery, sortBy]);
 
   const filteredProducts = (Array.isArray(productskumakuma) ? productskumakuma : [])
-    .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a: any, b: any) => {
+    .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase())) // eslint-disable-line @typescript-eslint/no-explicit-any
+    .sort((a: any, b: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       if (sortBy === "az") return a.name.localeCompare(b.name);
       if (sortBy === "za") return b.name.localeCompare(a.name);
       return 0;
@@ -240,7 +242,7 @@ export default function Products() {
                 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
               >
-                {pagedProducts.map((product: any) => (
+                {pagedProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                   <motion.div key={product._id} variants={fadeInUp}>
                     <Link to={`/produk/${product._id}`} className="group block">
                       <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4">

@@ -17,7 +17,7 @@ export default function ProductsSection() {
 
   // Get featured products or latest 8
   const featuredProducts =
-    products?.filter((p: any) => p.isFeatured) || products?.slice(0, 8) || [];
+    products?.filter((p: any) => p.isFeatured) || products?.slice(0, 8) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   if (loading) {
     return (
@@ -46,7 +46,7 @@ export default function ProductsSection() {
               1280: { slidesPerView: 4, spaceBetween: 40 },
             }}
           >
-            {featuredProducts.map((product: any) => (
+            {featuredProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <SwiperSlide key={product._id} className="w-auto!">
                 <div className="group h-full flex flex-col">
                   {/* Image Card */}

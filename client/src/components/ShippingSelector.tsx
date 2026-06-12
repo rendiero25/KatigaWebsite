@@ -37,7 +37,7 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [address.areaId, cart]);
+  }, [address.areaId, cart, onSelect]);
 
   useEffect(() => { fetchRates(); }, [fetchRates]);
 

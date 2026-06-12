@@ -14,7 +14,7 @@ const fmt = (n: number) =>
 
 export default function CartItemCard({ item, selected, onToggle, onQtyChange, onRemove }: Props) {
   return (
-    <div className={`bg-white rounded-2xl p-4 flex gap-3 items-start transition-shadow ${selected ? 'ring-2 ring-primary/40' : ''}`}>
+    <div className={`bg-white border border-gray-100 rounded-2xl p-4 flex gap-3 items-start transition-shadow ${selected ? 'ring-2 ring-primary/40' : ''}`}>
       <input
         type="checkbox"
         checked={selected}
