@@ -16,7 +16,7 @@ export default function VoucherInput({ subtotal, onApply, onClear }: Props) {
   const { voucher, applying, error, apply, clear } = useVoucher();
 
   useEffect(() => {
-    if (voucher?.valid && voucher.discountAmount) {
+    if (voucher?.valid) {
       onApply(voucher, code);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
