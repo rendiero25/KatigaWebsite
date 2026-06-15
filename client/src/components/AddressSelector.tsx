@@ -15,6 +15,7 @@ const emptyForm = {
   street: '',
   areaId: '',
   areaName: '',
+  kecamatan: '',
   city: '',
   province: '',
   postalCode: '',
@@ -51,6 +52,7 @@ export default function AddressSelector({ selected, onSelect }: Props) {
       ...f,
       areaId: area.area_id,
       areaName: label,
+      kecamatan: area.administrative_division_level_3_name,
       city: area.administrative_division_level_2_name,
       province: area.administrative_division_level_1_name,
       postalCode: area.postal_code,
@@ -201,28 +203,55 @@ export default function AddressSelector({ selected, onSelect }: Props) {
             className={inputCls}
           />
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Cari kecamatan / kota (min. 3 huruf)"
-              value={areaKeyword}
-              onChange={(e) => handleAreaSearch(e.target.value)}
-              className={inputCls}
-            />
-            {areaResults.length > 0 && (
-              <ul className="absolute z-20 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto">
-                {areaResults.map((area) => (
-                  <li
-                    key={area.area_id}
-                    className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm"
-                    onClick={() => selectArea(area)}
+            {form.areaId ? (
+              <div className="border border-green-200 bg-green-50 rounded-lg p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-0.5 text-sm">
+                    <p className="text-xs font-semibold text-green-700 mb-1.5">✓ Area terpilih</p>
+                    <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Kecamatan</span>{form.kecamatan}</p>
+                    <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Kota</span>{form.city}</p>
+                    <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Provinsi</span>{form.province}</p>
+                    <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Kode Pos</span>{form.postalCode}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAreaKeyword('');
+                      setAreaResults([]);
+                      setForm((f) => ({ ...f, areaId: '', areaName: '', kecamatan: '', city: '', province: '', postalCode: '' }));
+                    }}
+                    className="text-xs text-primary underline shrink-0 hover:opacity-70 transition"
                   >
-                    {area.administrative_division_level_3_name},{' '}
-                    {area.administrative_division_level_2_name},{' '}
-                    {area.administrative_division_level_1_name}{' '}
-                    {area.postal_code}
-                  </li>
-                ))}
-              </ul>
+                    Ganti
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Cari nama kecamatan atau kelurahan..."
+                  value={areaKeyword}
+                  onChange={(e) => handleAreaSearch(e.target.value)}
+                  className={inputCls}
+                />
+                {areaResults.length > 0 && (
+                  <ul className="absolute z-20 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto">
+                    {areaResults.map((area) => (
+                      <li
+                        key={area.area_id}
+                        className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm"
+                        onClick={() => selectArea(area)}
+                      >
+                        {area.administrative_division_level_3_name},{' '}
+                        {area.administrative_division_level_2_name},{' '}
+                        {area.administrative_division_level_1_name}{' '}
+                        {area.postal_code}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </div>
           <label className="flex items-center gap-2 text-sm text-black/70 cursor-pointer">
