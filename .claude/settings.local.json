@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(node scripts/migrateToCloudinary.js)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "PowerShell(git *)",
+      "Bash(git -C \"G:\\\\WebsiteDevelopment\\\\KatigaWebsite\" add client/src/pages/ProductDetail.tsx)",
+      "Bash(git -C 'G:\\\\WebsiteDevelopment\\\\KatigaWebsite' commit -m ' *)"
     ]
   }
 }

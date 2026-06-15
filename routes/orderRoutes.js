@@ -18,8 +18,13 @@ const snap = new midtransClient.Snap({
 // ─── Midtrans webhook (registered in server.js with express.raw BEFORE express.json) ───
 const webhookHandler = async (req, res) => {
   try {
-    const notification = JSON.parse(req.body.toString());
+    const raw = req.body ? req.body.toString() : '';
+    if (!raw || raw === '{}' || raw === '') return res.status(200).json({ message: 'OK' });
+
+    const notification = JSON.parse(raw);
     const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status, payment_type } = notification;
+
+    if (!order_id) return res.status(200).json({ message: 'OK' });
 
     const expectedSig = crypto
       .createHash('sha512')
