@@ -69,6 +69,7 @@ const footerRoutes = require('./routes/footerRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const authRoutes = require('./routes/authRoutes');
 const manufacturingRoutes = require('./routes/manufacturingRoutes');
+const shippingSettingsRoutes = require('./routes/shippingSettingsRoutes');
 
 // Use Routes
 app.use('/api/site-settings', siteSettingsRoutes);
@@ -101,6 +102,8 @@ app.use('/api/admin/customers', require('./routes/adminCustomerRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/admin/reviews', require('./routes/adminReviewRoutes'));
 app.use('/api/promotions', require('./routes/promotionRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/shipping-settings', shippingSettingsRoutes);
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {

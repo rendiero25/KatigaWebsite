@@ -18,6 +18,8 @@ import {
   Users as UsersIcon,
   MessageSquare,
   Tag,
+  BarChart3,
+  Truck,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -135,6 +137,7 @@ const menuGroups: MenuGroup[] = [
       { path: '/admin/orders',  icon: ShoppingCart,  label: 'Pesanan' },
       { path: '/admin/users',   icon: UsersIcon,     label: 'Users'   },
       { path: '/admin/reviews', icon: MessageSquare, label: 'Ulasan'  },
+      { path: '/admin/laporan', icon: BarChart3,     label: 'Laporan' },
     ],
   },
   {
@@ -153,7 +156,10 @@ const menuGroups: MenuGroup[] = [
   },
   {
     label: 'Sistem',
-    items: [{ path: '/admin/settings', icon: Settings, label: 'Pengaturan' }],
+    items: [
+      { path: '/admin/settings', icon: Settings, label: 'Pengaturan' },
+      { path: '/admin/shipping', icon: Truck, label: 'Pengiriman' },
+    ],
   },
 ]
 

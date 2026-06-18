@@ -2,10 +2,17 @@ const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema({
   product:      { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  variantId:    { type: String, default: '' },
+  variantName:  { type: String, default: '' },
   name:         { type: String, required: true },
   image:        { type: String, default: '' },
   priceNumeric: { type: Number, required: true },
   weightGrams:  { type: Number, default: 0 },
+  dimensions: {
+    length: { type: Number, default: 1 },
+    width:  { type: Number, default: 1 },
+    height: { type: Number, default: 1 },
+  },
   quantity:     { type: Number, required: true, min: 1 },
   subtotal:     { type: Number, required: true },
 }, { _id: false });
@@ -35,6 +42,8 @@ const orderSchema = new mongoose.Schema({
   shippingCost:    { type: Number, required: true },
   voucherCode:     { type: String, default: '' },
   voucherDiscount: { type: Number, default: 0 },
+  voucherReserved: { type: Boolean, default: false },
+  voucherConsumed: { type: Boolean, default: false },
   total:           { type: Number, required: true },
 
   shippingAddress:     shippingAddressSchema,

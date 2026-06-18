@@ -1,4 +1,17 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, SavedAddress, VoucherValidation, CreateOrderPayload } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse } from '../types/ecommerce';
+
+interface ShippingRateRequestItem {
+  name: string;
+  priceNumeric: number;
+  weightGrams: number;
+  quantity: number;
+  dimensions?: {
+    length?: number;
+    width?: number;
+    height?: number;
+  };
+}
+
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
   let url = import.meta.env.VITE_API_URL || "/api";
@@ -272,16 +285,50 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/shipping/areas?keyword=${encodeURIComponent(keyword)}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) throw new Error('Failed to search areas');
     return res.json();
   },
 
-  getShippingRates: async (payload: { destinationAreaId: string; items: object[] }) => {
+  getShippingRates: async (payload: { destinationAreaId: string; items: ShippingRateRequestItem[] }): Promise<ShippingRatesResponse> => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/shipping/rates`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) {
+      const error = await res.json().catch(() => null);
+      throw new Error(error?.message || 'Gagal mengambil metode pengiriman');
+    }
+    return res.json();
+  },
+
+  getShippingSettings: async (): Promise<ShippingSettings> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/shipping-settings`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat pengaturan pengiriman');
+    return res.json();
+  },
+
+  updateShippingSettings: async (data: {
+    enabledCouriers: string[];
+    emptyStateMessage: string;
+  }): Promise<ShippingSettings> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/shipping-settings`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const error = await res.json().catch(() => null);
+      throw new Error(error?.message || 'Gagal menyimpan pengaturan pengiriman');
+    }
     return res.json();
   },
 
@@ -327,6 +374,16 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/orders/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    return res.json();
+  },
+
+  // Reports — admin
+  getReportsSummary: async (range: ReportsRange): Promise<ReportsSummary> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/reports/summary?range=${range}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat laporan');
     return res.json();
   },
 

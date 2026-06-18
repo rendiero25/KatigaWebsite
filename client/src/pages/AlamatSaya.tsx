@@ -112,7 +112,7 @@ export default function AlamatSaya() {
   return (
     <UserLayout title="Alamat Saya">
       <div className="w-full space-y-4">
-        <Card>
+        <Card className="overflow-visible">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
               <CardTitle className="flex items-center gap-2 text-lg">

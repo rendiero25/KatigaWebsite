@@ -45,11 +45,11 @@ export default function Profil() {
     .filter((o) => o.orderStatus === 'delivered')
     .reduce((s, o) => s + o.total, 0)
 
-  const stats = [
+  const stats: { label: string; value: string; icon: typeof Package; color: string; bg: string; path?: string }[] = [
     { label: 'Total Pesanan', value: String(orders.length), icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Sedang Berjalan', value: String(activeOrders), icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
     { label: 'Selesai', value: String(doneOrders), icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Total Belanja', value: fmt(totalSpent), icon: CreditCard, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'Total Belanja', value: fmt(totalSpent), icon: CreditCard, color: 'text-violet-600', bg: 'bg-violet-50', path: '/profil/laporan-keuangan' },
   ]
 
   const recent = orders.slice(0, 3)
@@ -94,8 +94,8 @@ export default function Profil() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => {
             const Icon = stat.icon
-            return (
-              <Card key={stat.label} className="border-0 shadow-sm bg-white rounded-xl">
+            const content = (
+              <Card className={`border-0 shadow-sm bg-white rounded-xl ${stat.path ? 'transition-shadow hover:shadow-md' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="min-w-0 flex-1">
@@ -108,6 +108,11 @@ export default function Profil() {
                   </div>
                 </CardContent>
               </Card>
+            )
+            return stat.path ? (
+              <Link key={stat.label} to={stat.path}>{content}</Link>
+            ) : (
+              <div key={stat.label}>{content}</div>
             )
           })}
         </div>

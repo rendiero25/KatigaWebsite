@@ -4,9 +4,14 @@ const crypto = require('crypto');
 const midtransClient = require('midtrans-client');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Promotion = require('../models/Promotion');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customerAuth');
-const { createOrder: biteshipCreateOrder } = require('../services/biteshipService');
+const {
+  createOrder: biteshipCreateOrder,
+  getRates,
+} = require('../services/biteshipService');
+const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
 
 const snap = new midtransClient.Snap({
@@ -14,6 +19,81 @@ const snap = new midtransClient.Snap({
   serverKey: process.env.MIDTRANS_SERVER_KEY,
   clientKey: process.env.MIDTRANS_CLIENT_KEY,
 });
+
+const resolvePositiveNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
+const resolvePriceNumeric = (primaryValue, fallbackValue) =>
+  resolvePositiveNumber(primaryValue) ?? resolvePositiveNumber(fallbackValue) ?? 0;
+
+const resolveShippingWeight = (primaryValue, fallbackValue) =>
+  resolvePositiveNumber(primaryValue) ?? resolvePositiveNumber(fallbackValue) ?? 100;
+
+const normalizeDimensions = (primaryDimensions, fallbackDimensions) => ({
+  length:
+    resolvePositiveNumber(primaryDimensions?.length) ??
+    resolvePositiveNumber(fallbackDimensions?.length) ??
+    1,
+  width:
+    resolvePositiveNumber(primaryDimensions?.width) ??
+    resolvePositiveNumber(fallbackDimensions?.width) ??
+    1,
+  height:
+    resolvePositiveNumber(primaryDimensions?.height) ??
+    resolvePositiveNumber(fallbackDimensions?.height) ??
+    1,
+});
+
+const buildVoucherUsageFilter = (baseFilter = {}) => ({
+  ...baseFilter,
+  $or: [
+    { voucherReserved: true },
+    { voucherConsumed: true },
+    {
+      voucherReserved: { $exists: false },
+      voucherConsumed: { $exists: false },
+      paymentStatus: 'paid',
+    },
+  ],
+});
+
+const buildPromotionMaps = (promotions = []) => {
+  const promoByProduct = {};
+  const promoByCategory = {};
+
+  for (const promo of promotions) {
+    if (promo.type === 'products') {
+      for (const productId of promo.productIds ?? []) {
+        promoByProduct[productId.toString()] = promo;
+      }
+      continue;
+    }
+
+    if (promo.type === 'category' && promo.categoryId) {
+      promoByCategory[promo.categoryId.toString()] = promo;
+    }
+  }
+
+  return { promoByProduct, promoByCategory };
+};
+
+const resolveActivePromotion = (product, promotionMaps) =>
+  promotionMaps.promoByProduct[product._id.toString()] ??
+  promotionMaps.promoByCategory[product.category?.toString() ?? ''] ??
+  null;
+
+const applyPromotionPrice = (priceNumeric, promotion) => {
+  if (!promotion?.discountPercent) {
+    return priceNumeric;
+  }
+
+  return Math.max(
+    0,
+    Math.round(priceNumeric * (1 - Number(promotion.discountPercent) / 100))
+  );
+};
 
 // ─── Midtrans webhook (registered in server.js with express.raw BEFORE express.json) ───
 const webhookHandler = async (req, res) => {
@@ -51,6 +131,33 @@ const webhookHandler = async (req, res) => {
     const wasPending = order.paymentStatus !== 'paid';
     order.paymentStatus = newPaymentStatus;
 
+    if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
+      if (newPaymentStatus === 'paid') {
+        order.voucherReserved = false;
+        order.voucherConsumed = true;
+      } else if (['failed', 'expired'].includes(newPaymentStatus)) {
+        try {
+          const releasedVoucher = await Voucher.findOneAndUpdate(
+            { code: order.voucherCode, usedCount: { $gt: 0 } },
+            { $inc: { usedCount: -1 } }
+          );
+
+          if (!releasedVoucher) {
+            console.error(
+              `[Voucher] Voucher ${order.voucherCode} tidak ditemukan saat release order ${order._id}`
+            );
+          }
+        } catch (voucherErr) {
+          console.error('[Voucher] Release on failed payment failed:', voucherErr.message);
+        }
+
+        order.voucherReserved = false;
+      }
+    } else if (newPaymentStatus === 'paid' && order.voucherCode && !order.voucherConsumed) {
+      // Backfill legacy orders that were already counted before voucher reservations existed.
+      order.voucherConsumed = true;
+    }
+
     if (newPaymentStatus === 'paid' && wasPending && order.orderStatus === 'awaiting_payment') {
       order.orderStatus = 'processing';
       try {
@@ -73,32 +180,123 @@ const webhookHandler = async (req, res) => {
 
 // ─── POST /api/orders — create order + get Snap token ───
 router.post('/', customerAuth, async (req, res) => {
+  let reservedVoucherId = null;
+
   try {
     const {
       items, shippingAddress, shippingCourier, shippingService,
-      shippingServiceName, shippingCost, estimatedDays,
-      voucherCode, voucherDiscount,
+      voucherCode,
     } = req.body;
+    const normalizedVoucherCode = typeof voucherCode === 'string' ? voucherCode.trim().toUpperCase() : '';
 
-    if (!items?.length || !shippingAddress || !shippingCourier || shippingCost === undefined) {
+    if (
+      !items?.length ||
+      !shippingAddress ||
+      !shippingAddress.areaId ||
+      !shippingCourier ||
+      !shippingService
+    ) {
       return res.status(400).json({ message: 'Data tidak lengkap' });
     }
 
+    const activePromotions = await Promotion.find({
+      isVisible: true,
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() },
+    });
+    const promotionMaps = buildPromotionMaps(activePromotions);
+
     // Fetch products from DB — never trust client prices
     const orderItems = [];
-    for (const { productId, quantity } of items) {
+    for (const { productId, quantity, variantId } of items) {
+      const normalizedVariantId =
+        typeof variantId === 'string' && variantId.trim() ? variantId.trim() : undefined;
+      const parsedQuantity = Number(quantity);
+
+      if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+        return res.status(400).json({ message: `Kuantitas produk ${productId} tidak valid` });
+      }
+
       const product = await Product.findById(productId);
       if (!product) return res.status(404).json({ message: `Produk ${productId} tidak ditemukan` });
-      if (!product.priceNumeric) return res.status(400).json({ message: `Produk ${product.name} belum memiliki harga numeric` });
+
+      const matchedVariant = normalizedVariantId
+        ? product.variants?.find((variant) => variant._id?.toString() === normalizedVariantId)
+        : null;
+
+      if (normalizedVariantId && !matchedVariant) {
+        return res.status(400).json({
+          message: `Varian ${normalizedVariantId} untuk produk ${product.name} tidak ditemukan`,
+        });
+      }
+
+      const variantLabel = matchedVariant?.name || 'Varian';
+      const priceNumeric = resolvePriceNumeric(matchedVariant?.price, product.priceNumeric);
+      if (!priceNumeric) {
+        return res.status(400).json({
+          message: `Produk ${product.name}${matchedVariant ? ` - ${variantLabel}` : ''} belum memiliki harga numeric`,
+        });
+      }
+      const activePromotion = resolveActivePromotion(product, promotionMaps);
+      const finalPriceNumeric = applyPromotionPrice(priceNumeric, activePromotion);
+
+      const weightGrams = resolveShippingWeight(
+        matchedVariant?.weightGrams,
+        product.weightGrams
+      );
+      const dimensions = normalizeDimensions(
+        matchedVariant?.dimensions,
+        product.dimensions
+      );
+
       orderItems.push({
         product: product._id,
-        name: product.name,
+        variantId: matchedVariant?._id?.toString(),
+        variantName: matchedVariant?.name,
+        name: matchedVariant ? `${product.name} - ${variantLabel}` : product.name,
         image: product.image || (product.images?.[0] ?? ''),
-        priceNumeric: product.priceNumeric,
-        weightGrams: product.weightGrams ?? 0,
-        quantity,
-        subtotal: product.priceNumeric * quantity,
+        priceNumeric: finalPriceNumeric,
+        weightGrams,
+        dimensions,
+        quantity: parsedQuantity,
+        subtotal: finalPriceNumeric * parsedQuantity,
       });
+    }
+
+    let matchedRate;
+    try {
+      const settings = await getOrCreateShippingSettings();
+
+      if (!settings.enabledCouriers.length) {
+        return res.status(400).json({ message: 'Metode pengiriman tidak tersedia untuk alamat ini' });
+      }
+
+      const providerRates = await getRates({
+        destinationAreaId: shippingAddress.areaId,
+        items: orderItems,
+        courierCodes: settings.enabledCouriers,
+      });
+
+      if (!providerRates.length) {
+        return res.status(400).json({ message: 'Metode pengiriman tidak tersedia untuk alamat ini' });
+      }
+
+      matchedRate = providerRates.find(
+        (rate) =>
+          rate.courier_code === shippingCourier &&
+          rate.courier_service_code === shippingService
+      );
+
+      if (!matchedRate) {
+        return res.status(400).json({ message: 'Metode pengiriman yang dipilih tidak lagi tersedia' });
+      }
+    } catch (shippingErr) {
+      if (shippingErr.response || shippingErr.request) {
+        console.error('[Shipping Rates]', shippingErr.response?.data ?? shippingErr.message);
+        return res.status(502).json({ message: 'Gagal memverifikasi metode pengiriman' });
+      }
+
+      throw shippingErr;
     }
 
     // Server-side voucher re-validation
@@ -107,7 +305,7 @@ router.post('/', customerAuth, async (req, res) => {
     let voucherDoc = null;
 
     if (voucherCode) {
-      voucherDoc = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
+      voucherDoc = await Voucher.findOne({ code: normalizedVoucherCode, isActive: true });
       if (!voucherDoc) return res.status(400).json({ message: 'Voucher tidak valid' });
 
       const now = new Date();
@@ -120,6 +318,18 @@ router.post('/', customerAuth, async (req, res) => {
         return res.status(400).json({ message: 'Voucher tidak dapat digunakan' });
       }
 
+      if (voucherDoc.perUserLimit > 0) {
+        const userUsage = await Order.countDocuments(
+          buildVoucherUsageFilter({
+            customer: req.customer._id,
+            voucherCode: voucherDoc.code,
+          })
+        );
+        if (userUsage >= voucherDoc.perUserLimit) {
+          return res.status(400).json({ message: 'Kamu sudah menggunakan voucher ini' });
+        }
+      }
+
       appliedVoucherCode = voucherDoc.code;
       let recalcDiscount = voucherDoc.discountType === 'percent'
         ? Math.round(itemsSubtotal * voucherDoc.discountValue / 100)
@@ -128,31 +338,48 @@ router.post('/', customerAuth, async (req, res) => {
         recalcDiscount = Math.min(recalcDiscount, voucherDoc.maxDiscount);
       }
       appliedVoucherDiscount = Math.min(recalcDiscount, itemsSubtotal);
+
+      const reservedVoucher = await Voucher.findOneAndUpdate(
+        voucherDoc.usageLimit > 0
+          ? { _id: voucherDoc._id, usedCount: { $lt: voucherDoc.usageLimit } }
+          : { _id: voucherDoc._id },
+        { $inc: { usedCount: 1 } },
+        { new: true }
+      );
+
+      if (!reservedVoucher) {
+        return res.status(400).json({ message: 'Voucher tidak dapat digunakan' });
+      }
+
+      reservedVoucherId = voucherDoc._id.toString();
     }
 
     const subtotal = orderItems.reduce((s, i) => s + i.subtotal, 0);
-    const total = subtotal - appliedVoucherDiscount + Number(shippingCost);
+    const verifiedShippingCost = Number(matchedRate.price);
+    const verifiedShippingServiceName = `${matchedRate.courier_name} ${matchedRate.courier_service_name}`;
+    const verifiedEstimatedDays = matchedRate.duration ?? '';
+    const total = subtotal - appliedVoucherDiscount + verifiedShippingCost;
 
     const order = new Order({
       customer: req.customer._id,
       customerSnapshot: { name: req.customer.name, email: req.customer.email, phone: req.customer.phone },
       items: orderItems,
       subtotal,
-      shippingCost: Number(shippingCost),
+      shippingCost: verifiedShippingCost,
       total,
       shippingAddress,
       shippingCourier,
       shippingService,
-      shippingServiceName: shippingServiceName ?? '',
-      estimatedDays: estimatedDays ?? '',
+      shippingServiceName: verifiedShippingServiceName,
+      estimatedDays: verifiedEstimatedDays,
       voucherCode: appliedVoucherCode,
       voucherDiscount: appliedVoucherDiscount,
+      voucherReserved: Boolean(appliedVoucherCode),
     });
-    await order.save();
     order.midtransOrderId = order._id.toString();
 
     const snapTransaction = await snap.createTransaction({
-      transaction_details: { order_id: order._id.toString(), gross_amount: total },
+      transaction_details: { order_id: order.midtransOrderId, gross_amount: total },
       customer_details: {
         first_name: req.customer.name,
         email: req.customer.email,
@@ -174,9 +401,9 @@ router.post('/', customerAuth, async (req, res) => {
         }));
         itemDetails.push({
           id: 'SHIPPING',
-          price: Number(shippingCost),
+          price: verifiedShippingCost,
           quantity: 1,
-          name: `Ongkir ${shippingCourier.toUpperCase()} ${shippingService}`,
+          name: `Ongkir ${verifiedShippingServiceName}`.substring(0, 50),
         });
         if (appliedVoucherDiscount > 0) {
           itemDetails.push({
@@ -193,14 +420,21 @@ router.post('/', customerAuth, async (req, res) => {
     order.midtransToken = snapTransaction.token;
     await order.save();
 
-    if (voucherDoc) {
-      await Voucher.findByIdAndUpdate(voucherDoc._id, { $inc: { usedCount: 1 } });
-    }
-
     res.status(201).json({ orderId: order._id, snapToken: snapTransaction.token });
   } catch (err) {
-    console.error('[Create Order]', err.message);
-    res.status(500).json({ message: err.message });
+    if (reservedVoucherId) {
+      try {
+        await Voucher.findOneAndUpdate(
+          { _id: reservedVoucherId, usedCount: { $gt: 0 } },
+          { $inc: { usedCount: -1 } }
+        );
+      } catch (voucherErr) {
+        console.error('[Voucher] Release after create-order failure failed:', voucherErr.message);
+      }
+    }
+
+    console.error('[Create Order]', err);
+    res.status(500).json({ message: 'Gagal membuat pesanan' });
   }
 });
 
@@ -267,7 +501,31 @@ router.put('/:id/status', auth, async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
     if (orderStatus) order.orderStatus = orderStatus;
-    if (paymentStatus) order.paymentStatus = paymentStatus;
+    if (paymentStatus) {
+      order.paymentStatus = paymentStatus;
+
+      if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
+        if (paymentStatus === 'paid') {
+          order.voucherReserved = false;
+          order.voucherConsumed = true;
+        } else if (['failed', 'expired'].includes(paymentStatus)) {
+          const releasedVoucher = await Voucher.findOneAndUpdate(
+            { code: order.voucherCode, usedCount: { $gt: 0 } },
+            { $inc: { usedCount: -1 } }
+          );
+
+          if (!releasedVoucher) {
+            console.error(
+              `[Voucher] Voucher ${order.voucherCode} tidak ditemukan saat release manual order ${order._id}`
+            );
+          }
+
+          order.voucherReserved = false;
+        }
+      } else if (paymentStatus === 'paid' && order.voucherCode && !order.voucherConsumed) {
+        order.voucherConsumed = true;
+      }
+    }
     if (adminNote !== undefined) order.adminNote = adminNote;
     if (biteshipTrackingCode !== undefined) order.biteshipTrackingCode = biteshipTrackingCode;
     await order.save();

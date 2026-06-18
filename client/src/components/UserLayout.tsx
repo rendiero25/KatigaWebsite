@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart } from 'lucide-react'
+import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart, Wallet } from 'lucide-react'
 
 import api from '../services/api'
 
@@ -10,6 +10,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
@@ -28,12 +29,36 @@ interface Props {
   title?: string
 }
 
-const NAV_MAIN = [
-  { label: 'Beranda', icon: LayoutDashboard, href: '/profil' },
-  { label: 'Pesanan Saya', icon: Package, href: '/pesanan' },
-  { label: 'Alamat', icon: MapPin, href: '/profil/alamat' },
-  { label: 'Wishlist', icon: Heart, href: '/profil/wishlist' },
-  { label: 'Pengaturan', icon: Settings, href: '/profil/pengaturan' },
+interface NavItem {
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  href: string
+}
+
+interface NavGroup {
+  label?: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    items: [{ label: 'Beranda', icon: LayoutDashboard, href: '/profil' }],
+  },
+  {
+    label: 'Transaksi',
+    items: [
+      { label: 'Pesanan Saya', icon: Package, href: '/pesanan' },
+      { label: 'Laporan Keuangan', icon: Wallet, href: '/profil/laporan-keuangan' },
+    ],
+  },
+  {
+    label: 'Akun',
+    items: [
+      { label: 'Alamat', icon: MapPin, href: '/profil/alamat' },
+      { label: 'Wishlist', icon: Heart, href: '/profil/wishlist' },
+      { label: 'Pengaturan', icon: Settings, href: '/profil/pengaturan' },
+    ],
+  },
 ]
 
 function initials(name: string) {
@@ -99,28 +124,31 @@ export default function UserLayout({ children, title }: Props) {
           </SidebarHeader>
 
           <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {NAV_MAIN.map((item) => {
-                    const Icon = item.icon
-                    const active = isActive(item.href)
-                    return (
-                      <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                          render={<Link to={item.href} />}
-                          isActive={active}
-                          tooltip={item.label}
-                        >
-                          <Icon />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {NAV_GROUPS.map((group, i) => (
+              <SidebarGroup key={group.label ?? `g${i}`}>
+                {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => {
+                      const Icon = item.icon
+                      const active = isActive(item.href)
+                      return (
+                        <SidebarMenuItem key={item.href}>
+                          <SidebarMenuButton
+                            render={<Link to={item.href} />}
+                            isActive={active}
+                            tooltip={item.label}
+                          >
+                            <Icon />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      )
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
 
             <SidebarGroup className="mt-auto">
               <SidebarGroupContent>

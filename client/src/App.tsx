@@ -33,6 +33,8 @@ import AdminUsers from './pages/admin/Users';
 import AdminReviews from './pages/admin/Reviews';
 import AdminPromotions from './pages/admin/Promotions';
 import AdminPromosiTampilan from './pages/admin/PromosiTampilan';
+import AdminLaporan from './pages/admin/Laporan';
+import AdminShippingSettings from './pages/admin/ShippingSettings';
 import Daftar from './pages/Daftar';
 import Masuk from './pages/Masuk';
 import Keranjang from './pages/Keranjang';
@@ -43,6 +45,7 @@ import Profil from './pages/Profil';
 import PengaturanAkun from './pages/PengaturanAkun'
 import AlamatSaya from './pages/AlamatSaya'
 import WishlistSaya from './pages/WishlistSaya'
+import LaporanKeuangan from './pages/LaporanKeuangan'
 
 function App() {
   return (
@@ -69,6 +72,7 @@ function App() {
         <Route path="/profil/pengaturan" element={<PengaturanAkun />} />
         <Route path="/profil/alamat" element={<AlamatSaya />} />
         <Route path="/profil/wishlist" element={<WishlistSaya />} />
+        <Route path="/profil/laporan-keuangan" element={<LaporanKeuangan />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -85,6 +89,7 @@ function App() {
         <Route path="/admin/footer" element={<AdminFooter />} />
         <Route path="/admin/news" element={<AdminNews />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/shipping" element={<AdminShippingSettings />} />
         <Route path="/admin/messages" element={<AdminMessages />} />
         <Route path="/admin/certification-tech" element={<AdminCertificationTech />} />
         <Route path="/admin/distribution" element={<AdminDistribution />} />
@@ -96,6 +101,7 @@ function App() {
         <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
+        <Route path="/admin/laporan" element={<AdminLaporan />} />
         <Route path="/admin/promosi" element={<AdminPromotions />} />
         <Route path="/admin/promosi/tampilan" element={<AdminPromosiTampilan />} />
       </Routes>

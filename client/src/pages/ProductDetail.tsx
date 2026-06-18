@@ -6,8 +6,9 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+import type { ItemDimensions } from '../types/ecommerce';
 import api from '../services/api';
-import { addToCart } from '../utils/cart';
+import { addToCart, buildCartItemId, normalizeDimensions } from '../utils/cart';
 import { cn } from '../lib/utils';
 import { useWishlist, useProductReviews } from '../hooks/useApi';
 
@@ -32,7 +33,7 @@ interface Variant {
   name: string;
   price: number;
   weightGrams: number;
-  dimensions: { length: number; width: number; height: number };
+  dimensions: ItemDimensions;
 }
 
 interface Product {
@@ -46,6 +47,7 @@ interface Product {
   isFeatured: boolean;
   priceNumeric: number;
   weightGrams: number;
+  dimensions: ItemDimensions;
   variants: Variant[];
   ratingAvg: number;
   reviewCount: number;
@@ -145,15 +147,23 @@ export default function ProductDetail() {
     const discountedPrice = promo
       ? Math.round(basePrice * (1 - promo.discountPercent / 100))
       : basePrice;
+    const weightGrams =
+      selectedVariant !== null && selectedVariant.weightGrams > 0
+        ? selectedVariant.weightGrams
+        : (product.weightGrams ?? 0);
 
     addToCart({
+      cartItemId: buildCartItemId(product._id, selectedVariant?._id),
       productId: product._id,
+      variantId: selectedVariant?._id,
+      variantName: selectedVariant?.name,
       name: selectedVariant
         ? `${product.name} - ${selectedVariant.name}`
         : product.name,
       image: activeImage || product.image || '',
       priceNumeric: discountedPrice,
-      weightGrams: selectedVariant?.weightGrams ?? product.weightGrams ?? 0,
+      weightGrams,
+      dimensions: normalizeDimensions(selectedVariant?.dimensions, product.dimensions),
       quantity: qty,
       originalPrice: promo ? basePrice : undefined,
       discountPercent: promo ? promo.discountPercent : undefined,

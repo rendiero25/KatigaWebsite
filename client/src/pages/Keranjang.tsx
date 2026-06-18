@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { CartItem } from '../types/ecommerce';
+import { useLiveCart } from '../hooks/useApi';
 import { getCart, removeFromCart, updateQty, getSelectedTotal } from '../utils/cart';
 import CartItemCard from '../components/CartItemCard';
 import RelatedProductsCarousel from '../components/RelatedProductsCarousel';
@@ -10,27 +11,35 @@ import Footer from '../components/Footer';
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
+const CHECKOUT_SELECTED_IDS_KEY = 'kk_checkout_selected_ids';
+
 export default function Keranjang() {
   const navigate = useNavigate();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [cart, setCart] = useState<CartItem[]>(() => getCart());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    () => new Set(getCart().map((item) => item.cartItemId))
+  );
+  const {
+    data: liveCart,
+    loading: cartSyncing,
+    error: cartSyncError,
+    refresh: refreshCart,
+    hydrated: cartHydrated,
+    issuesByCartItemId,
+  } = useLiveCart(cart);
 
   useEffect(() => {
     if (!localStorage.getItem('customerToken')) {
       navigate('/masuk?redirect=/keranjang');
       return;
     }
-    const c = getCart();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCart(c);
-    setSelectedIds(new Set(c.map((i) => i.productId)));
     const handler = () => {
       const updated = getCart();
       setCart(updated);
       setSelectedIds((prev) => {
         const next = new Set<string>();
         for (const item of updated) {
-          if (prev.has(item.productId)) next.add(item.productId);
+          if (prev.has(item.cartItemId)) next.add(item.cartItemId);
         }
         return next;
       });
@@ -39,26 +48,34 @@ export default function Keranjang() {
     return () => window.removeEventListener('cartUpdated', handler);
   }, [navigate]);
 
-  const allSelected = cart.length > 0 && cart.every((i) => selectedIds.has(i.productId));
-  const selectedCount = useMemo(
-    () => cart.filter((i) => selectedIds.has(i.productId)).reduce((s, i) => s + i.quantity, 0),
-    [cart, selectedIds],
+  const displayCart = liveCart;
+  const hasSelectedSyncIssue = displayCart.some(
+    (item) => selectedIds.has(item.cartItemId) && Boolean(issuesByCartItemId[item.cartItemId])
   );
-  const selectedTotal = useMemo(() => getSelectedTotal(selectedIds, cart), [cart, selectedIds]);
+  const cartReady = cartHydrated && !hasSelectedSyncIssue;
+  const allSelected = displayCart.length > 0 && displayCart.every((i) => selectedIds.has(i.cartItemId));
+  const selectedCount = useMemo(
+    () => displayCart.filter((i) => selectedIds.has(i.cartItemId)).reduce((s, i) => s + i.quantity, 0),
+    [displayCart, selectedIds],
+  );
+  const selectedTotal = useMemo(
+    () => getSelectedTotal(selectedIds, displayCart),
+    [displayCart, selectedIds]
+  );
 
   const toggleAll = () => {
     if (allSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(cart.map((i) => i.productId)));
+      setSelectedIds(new Set(displayCart.map((i) => i.cartItemId)));
     }
   };
 
-  const toggleItem = (productId: string) => {
+  const toggleItem = (cartItemId: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(productId)) next.delete(productId);
-      else next.add(productId);
+      if (next.has(cartItemId)) next.delete(cartItemId);
+      else next.add(cartItemId);
       return next;
     });
   };
@@ -68,16 +85,29 @@ export default function Keranjang() {
       navigate('/masuk?redirect=/checkout');
       return;
     }
+    sessionStorage.setItem(CHECKOUT_SELECTED_IDS_KEY, JSON.stringify([...selectedIds]));
     navigate('/checkout', { state: { selectedIds: [...selectedIds] } });
   };
 
   const categoryIds = useMemo(
-    () => [...new Set(cart.map((i) => i.categoryId).filter((id): id is string => !!id))],
-    [cart],
+    () => [...new Set(displayCart.map((i) => i.categoryId).filter((id): id is string => !!id))],
+    [displayCart],
   );
-  const productIds = useMemo(() => cart.map((i) => i.productId), [cart]);
+  const productIds = useMemo(() => displayCart.map((i) => i.productId), [displayCart]);
 
-  if (cart.length === 0) {
+  if (!cartHydrated && displayCart.length === 0) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-20">
+          <p className="text-black/60">Menyinkronkan keranjang...</p>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (displayCart.length === 0) {
     return (
       <>
         <Header />
@@ -102,6 +132,22 @@ export default function Keranjang() {
       <main className="min-h-screen bg-white pt-10 pb-0">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 pb-16">
           <h1 className="text-3xl font-bold text-black mb-6">Keranjang Belanja</h1>
+          {cartSyncing && (
+            <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+              Memperbarui harga dan data pengiriman terbaru...
+            </div>
+          )}
+          {cartSyncError && (
+            <div className="mb-4 flex flex-col gap-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+              <span>{cartSyncError}</span>
+              <button
+                onClick={refreshCart}
+                className="text-left font-medium text-red-700 hover:underline"
+              >
+                Coba lagi
+              </button>
+            </div>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Item list */}
@@ -115,19 +161,19 @@ export default function Keranjang() {
                   className="w-4 h-4 accent-primary"
                 />
                 <span className="text-sm font-medium text-black">
-                  Pilih Semua ({cart.length} produk)
+                  Pilih Semua ({displayCart.length} produk)
                 </span>
               </label>
 
               <div className="space-y-3">
-                {cart.map((item) => (
+                {displayCart.map((item) => (
                   <CartItemCard
-                    key={item.productId}
+                    key={item.cartItemId}
                     item={item}
-                    selected={selectedIds.has(item.productId)}
-                    onToggle={() => toggleItem(item.productId)}
-                    onQtyChange={(qty) => updateQty(item.productId, qty)}
-                    onRemove={() => removeFromCart(item.productId)}
+                    selected={selectedIds.has(item.cartItemId)}
+                    onToggle={() => toggleItem(item.cartItemId)}
+                    onQtyChange={(qty) => updateQty(item.cartItemId, qty)}
+                    onRemove={() => removeFromCart(item.cartItemId)}
                   />
                 ))}
               </div>
@@ -147,14 +193,16 @@ export default function Keranjang() {
                 </div>
                 <div className="border-t border-gray-100 pt-4 flex justify-between font-bold text-black mb-6">
                   <span>Subtotal</span>
-                  <span>{fmt(selectedTotal)}</span>
+                  <span>{cartReady ? fmt(selectedTotal) : '—'}</span>
                 </div>
                 <button
                   onClick={handleCheckout}
-                  disabled={selectedIds.size === 0}
+                  disabled={selectedIds.size === 0 || cartSyncing || !cartReady}
                   className="w-full py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0 text-sm"
                 >
-                  {selectedIds.size > 0
+                  {!cartHydrated || cartSyncing
+                    ? 'Sinkronisasi...'
+                    : selectedIds.size > 0
                     ? `Checkout (${selectedIds.size} Produk)`
                     : 'Pilih Produk'}
                 </button>

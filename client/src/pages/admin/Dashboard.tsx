@@ -1,17 +1,29 @@
 import { Link } from 'react-router-dom'
-import { Package, Tags, Star, Image, Newspaper, Mail, PencilLine, ExternalLink } from 'lucide-react'
+import { Package, Tags, Star, Wallet, Newspaper, Mail, PencilLine, ExternalLink } from 'lucide-react'
 import AdminLayout from '../../components/AdminLayout'
 import api from '../../services/api'
-import { useProducts, useCategories } from '../../hooks/useApi'
+import { useProducts, useCategories, useReportsSummary } from '../../hooks/useApi'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
+const fmt = (n: number) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
+
+interface StatCard {
+  label: string
+  value: string | number
+  icon: React.ComponentType<{ className?: string }>
+  description: string
+  path?: string
+}
+
 export default function Dashboard() {
   const { data: products } = useProducts()
   const { data: categories } = useCategories()
+  const { data: reports } = useReportsSummary('30d')
 
-  const stats = [
+  const stats: StatCard[] = [
     {
       label: 'Total Produk',
       value: products?.length ?? 0,
@@ -31,10 +43,11 @@ export default function Dashboard() {
       description: 'Produk unggulan',
     },
     {
-      label: 'Media',
-      value: 0,
-      icon: Image,
-      description: 'File media terupload',
+      label: 'Total Pendapatan',
+      value: fmt(reports?.totalRevenue ?? 0),
+      icon: Wallet,
+      description: '30 hari terakhir',
+      path: '/admin/laporan',
     },
   ]
 
@@ -57,8 +70,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map(stat => {
           const Icon = stat.icon
-          return (
-            <Card key={stat.label}>
+          const content = (
+            <Card className={stat.path ? 'transition-shadow hover:shadow-md' : undefined}>
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   {stat.label}
@@ -70,6 +83,11 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground mt-0.5">{stat.description}</p>
               </CardContent>
             </Card>
+          )
+          return stat.path ? (
+            <Link key={stat.label} to={stat.path}>{content}</Link>
+          ) : (
+            <div key={stat.label}>{content}</div>
           )
         })}
       </div>

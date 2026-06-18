@@ -169,7 +169,7 @@ export default function Header() {
             </button>
 
             {/* Auth — desktop */}
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 ml-2">
               {customer ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="cursor-pointer bg-transparent border-0 p-0 focus:outline-none">

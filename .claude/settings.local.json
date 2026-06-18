@@ -5,7 +5,22 @@
       "Bash(npx tsc *)",
       "PowerShell(git *)",
       "Bash(git -C \"G:\\\\WebsiteDevelopment\\\\KatigaWebsite\" add client/src/pages/ProductDetail.tsx)",
-      "Bash(git -C 'G:\\\\WebsiteDevelopment\\\\KatigaWebsite' commit -m ' *)"
+      "Bash(git -C 'G:\\\\WebsiteDevelopment\\\\KatigaWebsite' commit -m ' *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(node *)",
+      "Bash(npx shadcn@latest add table select chart -y)",
+      "Bash(npm run *)",
+      "Bash(nodemon server.js)",
+      "Bash(curl -s -o /dev/null -w \"backend:%{http_code}\\\\n\" http://localhost:8000/)",
+      "Bash(curl -s -o /dev/null -w \"frontend:%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(curl *)",
+      "Bash(npx vite *)",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Bash(echo \"LINT_EXIT:$?\")",
+      "Bash(./node_modules/.bin/eslint src/hooks/useApi.ts src/pages/LaporanKeuangan.tsx src/pages/Profil.tsx src/components/UserLayout.tsx src/App.tsx)",
+      "Bash(echo \"SCOPED_LINT_EXIT:$?\")",
+      "WebFetch(domain:biteship.com)"
     ]
   }
 }

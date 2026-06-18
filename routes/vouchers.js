@@ -32,6 +32,15 @@ router.post('/validate', customerAuth, async (req, res) => {
       const userUsage = await Order.countDocuments({
         customer: req.customer._id,
         voucherCode: voucher.code,
+        $or: [
+          { voucherReserved: true },
+          { voucherConsumed: true },
+          {
+            voucherReserved: { $exists: false },
+            voucherConsumed: { $exists: false },
+            paymentStatus: 'paid',
+          },
+        ],
       });
       if (userUsage >= voucher.perUserLimit) {
         return res.json({ valid: false, message: 'Kamu sudah menggunakan voucher ini' });

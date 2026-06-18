@@ -32,12 +32,22 @@ export interface CustomerProfile {
   defaultAddress?: ShippingAddress;
 }
 
+export interface ItemDimensions {
+  length: number;
+  width: number;
+  height: number;
+}
+
 export interface CartItem {
+  cartItemId: string;
   productId: string;
+  variantId?: string;
+  variantName?: string;
   name: string;
   image: string;
   priceNumeric: number;
   weightGrams: number;
+  dimensions: ItemDimensions;
   quantity: number;
   originalPrice?: number;
   discountPercent?: number;
@@ -66,12 +76,32 @@ export interface ShippingRate {
   price: number;
 }
 
+export interface ShippingCourierOption {
+  code: string;
+  label: string;
+}
+
+export interface ShippingSettings {
+  enabledCouriers: string[];
+  emptyStateMessage: string;
+  supportedCouriers: ShippingCourierOption[];
+}
+
+export interface ShippingRatesResponse {
+  rates: ShippingRate[];
+  reason: 'ok' | 'provider_empty' | 'filtered_out';
+  message: string;
+}
+
 export interface OrderItem {
   product: string;
+  variantId?: string;
+  variantName?: string;
   name: string;
   image: string;
   priceNumeric: number;
   weightGrams: number;
+  dimensions: ItemDimensions;
   quantity: number;
   subtotal: number;
 }
@@ -105,7 +135,7 @@ export interface Order {
 }
 
 export interface CreateOrderPayload {
-  items: Array<{ productId: string; quantity: number }>;
+  items: Array<{ productId: string; quantity: number; variantId?: string }>;
   shippingAddress: ShippingAddress;
   shippingCourier: string;
   shippingService: string;
@@ -165,4 +195,27 @@ export interface ReviewsResponse {
 export interface CanReviewResponse {
   canReview: boolean;
   alreadyReviewed: boolean;
+}
+
+export type ReportsRange = '7d' | '30d' | 'month' | 'year' | 'all';
+
+export interface ReportsTrendPoint {
+  date: string;
+  revenue: number;
+}
+
+export interface ReportsTopProduct {
+  productId: string;
+  name: string;
+  revenue: number;
+  quantity: number;
+}
+
+export interface ReportsSummary {
+  totalRevenue: number;
+  orderCount: number;
+  trend: ReportsTrendPoint[];
+  paymentStatusCounts: Record<string, number>;
+  orderStatusCounts: Record<string, number>;
+  topProducts: ReportsTopProduct[];
 }

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { CartItem, ShippingAddress, ShippingRate, VoucherValidation } from '../types/ecommerce';
-import { getCart, clearCart } from '../utils/cart';
+import { useLiveCart } from '../hooks/useApi';
+import { getCart, removeManyFromCart } from '../utils/cart';
 import api from '../services/api';
 import AddressSelector from '../components/AddressSelector';
 import ShippingSelector from '../components/ShippingSelector';
@@ -16,6 +17,20 @@ interface LocationState {
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
+const CHECKOUT_SELECTED_IDS_KEY = 'kk_checkout_selected_ids';
+
+const getStoredSelectedIds = (): string[] => {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_SELECTED_IDS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((value): value is string => typeof value === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,6 +40,14 @@ export default function Checkout() {
   const [appliedVoucher, setAppliedVoucher] = useState<VoucherValidation | null>(null);
   const [voucherCode, setVoucherCode] = useState('');
   const [paying, setPaying] = useState(false);
+  const {
+    data: liveCart,
+    loading: cartSyncing,
+    error: cartSyncError,
+    refresh: refreshCart,
+    hydrated: cartHydrated,
+    issuesByCartItemId,
+  } = useLiveCart(cart);
 
   useEffect(() => {
     const token = localStorage.getItem('customerToken');
@@ -32,28 +55,65 @@ export default function Checkout() {
 
     const allCart = getCart();
     const state = location.state as LocationState | null;
-    const selectedIds = state?.selectedIds;
+    const selectedIds = state?.selectedIds?.length ? state.selectedIds : getStoredSelectedIds();
 
-    const filtered = selectedIds?.length
-      ? allCart.filter((c) => selectedIds.includes(c.productId))
-      : allCart;
+    if (!selectedIds.length) {
+      navigate('/keranjang');
+      return;
+    }
 
-    if (!filtered.length) { navigate('/keranjang'); return; }
+    sessionStorage.setItem(CHECKOUT_SELECTED_IDS_KEY, JSON.stringify(selectedIds));
+
+    const filtered = allCart.filter((c) => selectedIds.includes(c.cartItemId));
+
+    if (!filtered.length) {
+      sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
+      navigate('/keranjang');
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCart(filtered);
   }, [navigate, location.state]);
 
-  const subtotal = cart.reduce((s, c) => s + c.priceNumeric * c.quantity, 0);
+  const effectiveCart = liveCart;
+  const hasCartSyncIssues = effectiveCart.some((item) => Boolean(issuesByCartItemId[item.cartItemId]));
+  const cartReady = cartHydrated && !hasCartSyncIssues;
+  const cartPricingKey = effectiveCart
+    .map((item) =>
+      [
+        item.cartItemId,
+        item.quantity,
+        item.priceNumeric,
+        item.weightGrams,
+        item.dimensions.length,
+        item.dimensions.width,
+        item.dimensions.height,
+      ].join(':')
+    )
+    .join('|');
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedRate(null);
+    setAppliedVoucher(null);
+    setVoucherCode('');
+  }, [cartPricingKey]);
+
+  const subtotal = effectiveCart.reduce((s, c) => s + c.priceNumeric * c.quantity, 0);
   const voucherDiscount = appliedVoucher?.discountAmount ?? 0;
   const shippingCost = selectedRate?.price ?? 0;
   const total = subtotal - voucherDiscount + shippingCost;
 
   const handlePay = useCallback(async () => {
-    if (!selectedAddress || !selectedRate) return;
+    if (!selectedAddress || !selectedRate || cartSyncing || !cartReady) return;
     setPaying(true);
     try {
       const result = await api.createOrder({
-        items: cart.map((c) => ({ productId: c.productId, quantity: c.quantity })),
+        items: effectiveCart.map((c) => ({
+          productId: c.productId,
+          quantity: c.quantity,
+          variantId: c.variantId,
+        })),
         shippingAddress: selectedAddress,
         shippingCourier: selectedRate.courier_code,
         shippingService: selectedRate.courier_service_code,
@@ -70,19 +130,32 @@ export default function Checkout() {
         return;
       }
 
-      clearCart();
+      const purchasedCartItemIds = effectiveCart.map((item) => item.cartItemId);
+      const removePurchasedItems = () => removeManyFromCart(purchasedCartItemIds);
+      const clearCheckoutSelection = () => sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
 
       window.snap.pay(result.snapToken, {
-        onSuccess:  () => navigate(`/pesanan/${result.orderId}`),
-        onPending:  () => navigate(`/pesanan/${result.orderId}`),
+        onSuccess:  () => {
+          removePurchasedItems();
+          clearCheckoutSelection();
+          navigate(`/pesanan/${result.orderId}`);
+        },
+        onPending:  () => {
+          removePurchasedItems();
+          clearCheckoutSelection();
+          navigate(`/pesanan/${result.orderId}`);
+        },
         onError:    () => { alert('Pembayaran gagal, silakan coba lagi.'); setPaying(false); },
-        onClose:    () => { navigate(`/pesanan/${result.orderId}`); },
+        onClose:    () => {
+          clearCheckoutSelection();
+          navigate(`/pesanan/${result.orderId}`);
+        },
       });
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Terjadi kesalahan, coba lagi.');
       setPaying(false);
     }
-  }, [cart, selectedAddress, selectedRate, voucherDiscount, voucherCode, navigate]);
+  }, [effectiveCart, selectedAddress, selectedRate, voucherDiscount, voucherCode, navigate, cartSyncing, cartReady]);
 
   return (
     <>
@@ -94,6 +167,30 @@ export default function Checkout() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left — form */}
             <div className="flex-1 space-y-6">
+              {(!cartHydrated || cartSyncing) && (
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                  Memperbarui harga, promo, dan data pengiriman terbaru...
+                </div>
+              )}
+              {cartSyncError && (
+                <div className="flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <p>{cartSyncError}</p>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={refreshCart}
+                      className="font-medium text-red-700 hover:underline"
+                    >
+                      Coba lagi
+                    </button>
+                    <button
+                      onClick={() => navigate('/keranjang')}
+                      className="font-medium text-red-700 hover:underline"
+                    >
+                      Kembali ke keranjang
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Address */}
               <div className="bg-white border border-gray-100 rounded-2xl p-6">
@@ -119,16 +216,30 @@ export default function Checkout() {
               {selectedAddress && (
                 <div className="bg-white border border-gray-100 rounded-2xl p-6">
                   <h2 className="text-base font-bold text-black mb-4">Pilih Pengiriman</h2>
-                  <ShippingSelector
-                    address={selectedAddress}
-                    cart={cart}
-                    onSelect={setSelectedRate}
-                  />
+                  {!cartHydrated || cartSyncing ? (
+                    <p className="text-sm text-black/60">Menyiapkan data pengiriman terbaru...</p>
+                  ) : cartSyncError ? (
+                    <p className="text-sm text-red-600">
+                      Sinkronkan keranjang dulu sebelum memilih pengiriman.
+                    </p>
+                  ) : (
+                    <ShippingSelector
+                      address={selectedAddress}
+                      cart={effectiveCart}
+                      onSelect={(rate) => {
+                        setSelectedRate(rate);
+                        if (!rate) {
+                          setAppliedVoucher(null);
+                          setVoucherCode('');
+                        }
+                      }}
+                    />
+                  )}
                 </div>
               )}
 
               {/* Voucher */}
-              {selectedRate && (
+              {selectedRate && cartReady && (
                 <div className="bg-white border border-gray-100 rounded-2xl p-6">
                   <h2 className="text-base font-bold text-black mb-4">Kode Voucher</h2>
                   <VoucherInput
@@ -147,10 +258,12 @@ export default function Checkout() {
 
                 {/* Items */}
                 <div className="space-y-2 mb-4">
-                  {cart.map((c) => (
-                    <div key={c.productId} className="flex justify-between text-sm text-black/70">
+                  {effectiveCart.map((c) => (
+                    <div key={c.cartItemId} className="flex justify-between text-sm text-black/70">
                       <span className="truncate max-w-[160px]">{c.name} ×{c.quantity}</span>
-                      <span className="shrink-0 tabular-nums">{fmt(c.priceNumeric * c.quantity)}</span>
+                      <span className="shrink-0 tabular-nums">
+                        {cartReady ? fmt(c.priceNumeric * c.quantity) : '—'}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -158,9 +271,9 @@ export default function Checkout() {
                 <div className="border-t border-gray-100 pt-3 space-y-2 text-sm text-black/70">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span className="tabular-nums">{fmt(subtotal)}</span>
+                    <span className="tabular-nums">{cartReady ? fmt(subtotal) : '—'}</span>
                   </div>
-                  {voucherDiscount > 0 && (
+                  {cartReady && voucherDiscount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Diskon voucher</span>
                       <span className="tabular-nums">− {fmt(voucherDiscount)}</span>
@@ -168,26 +281,32 @@ export default function Checkout() {
                   )}
                   <div className="flex justify-between">
                     <span>Ongkir</span>
-                    <span className="tabular-nums">{selectedRate ? fmt(selectedRate.price) : '—'}</span>
+                    <span className="tabular-nums">
+                      {cartReady && selectedRate ? fmt(selectedRate.price) : '—'}
+                    </span>
                   </div>
                 </div>
 
                 <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between font-bold text-black mb-6">
                   <span>Total</span>
-                  <span className="tabular-nums">{fmt(total)}</span>
+                  <span className="tabular-nums">{cartReady ? fmt(total) : '—'}</span>
                 </div>
 
                 <button
                   onClick={handlePay}
-                  disabled={!selectedAddress || !selectedRate || paying}
+                  disabled={!selectedAddress || !selectedRate || paying || cartSyncing || !cartReady}
                   className="w-full py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 text-sm"
                 >
-                  {paying ? 'Memproses...' : 'Bayar Sekarang'}
+                  {!cartHydrated || cartSyncing ? 'Sinkronisasi...' : paying ? 'Memproses...' : 'Bayar Sekarang'}
                 </button>
 
-                {(!selectedAddress || !selectedRate) && (
+                {(!selectedAddress || !selectedRate || !cartReady) && (
                   <p className="text-center text-xs text-black/40 mt-3">
-                    {!selectedAddress ? 'Pilih alamat pengiriman terlebih dahulu' : 'Pilih metode pengiriman terlebih dahulu'}
+                    {!selectedAddress
+                      ? 'Pilih alamat pengiriman terlebih dahulu'
+                      : !cartReady
+                        ? 'Sinkronkan keranjang dulu sebelum lanjut bayar'
+                        : 'Pilih metode pengiriman terlebih dahulu'}
                   </p>
                 )}
               </div>
