@@ -30,6 +30,10 @@ router.post('/rates', customerAuth, async (req, res) => {
     return res.status(400).json({ message: 'destinationAreaId dan items wajib diisi' });
   }
 
+  if (!process.env.BITESHIP_ORIGIN_AREA_ID) {
+    return res.status(500).json({ message: 'BITESHIP_ORIGIN_AREA_ID tidak dikonfigurasi di server' });
+  }
+
   try {
     const settings = await getOrCreateShippingSettings();
 
@@ -58,10 +62,13 @@ router.post('/rates', customerAuth, async (req, res) => {
     });
   } catch (err) {
     if (err.response || err.request) {
-      console.error('[Shipping Rates]', err.response?.data ?? err.message);
-      return res.status(502).json({ message: REQUEST_ERROR_MESSAGE });
+      const biteshipError = err.response?.data;
+      console.error('[Shipping Rates] Biteship error:', JSON.stringify(biteshipError ?? err.message));
+      const detail = biteshipError?.error ?? biteshipError?.message ?? REQUEST_ERROR_MESSAGE;
+      return res.status(502).json({ message: detail });
     }
 
+    console.error('[Shipping Rates] Internal error:', err.message);
     return res.status(500).json({ message: err.message });
   }
 });

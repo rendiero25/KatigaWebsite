@@ -46,6 +46,7 @@ import PengaturanAkun from './pages/PengaturanAkun'
 import AlamatSaya from './pages/AlamatSaya'
 import WishlistSaya from './pages/WishlistSaya'
 import LaporanKeuangan from './pages/LaporanKeuangan'
+import UlasanSaya from './pages/UlasanSaya'
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
         <Route path="/profil/alamat" element={<AlamatSaya />} />
         <Route path="/profil/wishlist" element={<WishlistSaya />} />
         <Route path="/profil/laporan-keuangan" element={<LaporanKeuangan />} />
+        <Route path="/profil/ulasan" element={<UlasanSaya />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

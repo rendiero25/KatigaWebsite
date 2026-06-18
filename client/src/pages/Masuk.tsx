@@ -23,7 +23,7 @@ export default function Masuk() {
         localStorage.setItem('customerToken', data.token);
         localStorage.setItem('customerName', data.customer.name);
         localStorage.setItem('customerAvatar', data.customer.avatar || '');
-        navigate('/produk');
+        navigate(redirect);
       } else {
         setError(data.message || 'Login dengan Google gagal');
       }

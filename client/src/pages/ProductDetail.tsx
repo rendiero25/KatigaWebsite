@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Share2, Heart } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
@@ -74,6 +74,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const { wishlistIds, add, remove } = useWishlist();
   const { reviews, meta, loading: reviewsLoading, loadingMore, loadMore } = useProductReviews(id ?? '');
@@ -172,6 +173,42 @@ export default function ProductDetail() {
     setTimeout(() => setAdding(false), 600);
   };
 
+  const inWishlist = wishlistIds.has(product._id);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const sharePayload = {
+      title: product.name,
+      text: `Lihat ${product.name} di Katiga`,
+      url,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(sharePayload);
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      window.prompt('Salin tautan produk:', url);
+    }
+  };
+
+  const handleLoveClick = () => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate(`/masuk?redirect=/produk/${id}`);
+      return;
+    }
+    handleToggleWishlist(product._id, inWishlist);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -216,6 +253,7 @@ export default function ProductDetail() {
                     inWishlist={wishlistIds.has(product._id)}
                     onToggle={handleToggleWishlist}
                     size="md"
+                    redirectTo={`/produk/${product._id}`}
                   />
                 )}
                 {product.isFeatured && (
@@ -385,6 +423,32 @@ export default function ProductDetail() {
                       </>
                     )}
                   </Button>
+
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleShare}
+                      className="flex-1 h-11 rounded-xl border-gray-200 text-gray-700 font-medium hover:bg-gray-50"
+                    >
+                      <Share2 className="mr-2 size-4" />
+                      {shareCopied ? 'Tersalin!' : 'Bagikan'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleLoveClick}
+                      className={cn(
+                        'flex-1 h-11 rounded-xl font-medium hover:bg-gray-50',
+                        inWishlist
+                          ? 'border-red-200 text-red-500 hover:bg-red-50'
+                          : 'border-gray-200 text-gray-700'
+                      )}
+                    >
+                      <Heart className={cn('mr-2 size-4', inWishlist && 'fill-red-500')} />
+                      {inWishlist ? 'Disukai' : 'Suka'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

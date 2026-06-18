@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import api from '../services/api';
-import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions } from '../types/ecommerce';
+import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse } from '../types/ecommerce';
 import { getCartCount, clearCart, normalizeDimensions, syncCartItems } from '../utils/cart';
 
 interface CartProductPromotion {
@@ -596,6 +596,23 @@ export function useProductReviews(productId: string) {
   }, [productId, page, meta]);
 
   return { reviews, meta, loading, loadingMore, loadMore };
+}
+
+export function useMyReviews(page: number) {
+  const [data, setData] = useState<MyReviewsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    api.getMyReviews(page)
+      .then(setData)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [page]);
+
+  return { data, loading, error };
 }
 
 export function usePromotions() {

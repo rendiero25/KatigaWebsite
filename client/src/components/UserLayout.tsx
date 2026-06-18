@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart, Wallet } from 'lucide-react'
+import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart, Wallet, Star } from 'lucide-react'
 
 import api from '../services/api'
 
@@ -48,6 +48,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Transaksi',
     items: [
       { label: 'Pesanan Saya', icon: Package, href: '/pesanan' },
+      { label: 'Ulasan Saya', icon: Star, href: '/profil/ulasan' },
       { label: 'Laporan Keuangan', icon: Wallet, href: '/profil/laporan-keuangan' },
     ],
   },

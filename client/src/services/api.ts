@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse } from '../types/ecommerce';
 
 interface ShippingRateRequestItem {
   name: string;
@@ -493,6 +493,15 @@ export const api = {
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) return { canReview: false, alreadyReviewed: false };
+    return res.json();
+  },
+
+  getMyReviews: async (page = 1): Promise<MyReviewsResponse> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/reviews/my?page=${page}&limit=10`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat ulasan');
     return res.json();
   },
 

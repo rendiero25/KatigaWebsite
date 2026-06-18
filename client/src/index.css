@@ -60,6 +60,16 @@ body {
   line-height: 1.6;
 }
 
+@layer base {
+  a,
+  button:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
 /* Custom Utilities */
 .gradient-text {
   background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%);

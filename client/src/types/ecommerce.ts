@@ -197,6 +197,21 @@ export interface CanReviewResponse {
   alreadyReviewed: boolean;
 }
 
+export interface MyReview {
+  _id: string;
+  product: { _id: string; name: string; image: string };
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface MyReviewsResponse {
+  reviews: MyReview[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
 export type ReportsRange = '7d' | '30d' | 'month' | 'year' | 'all';
 
 export interface ReportsTrendPoint {

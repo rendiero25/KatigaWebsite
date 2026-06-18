@@ -41,6 +41,30 @@ router.get('/can-review', customerAuth, async (req, res) => {
   }
 });
 
+// GET /api/reviews/my?page=1&limit=10
+router.get('/my', customerAuth, async (req, res) => {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(20, parseInt(req.query.limit) || 10);
+    const skip  = (page - 1) * limit;
+
+    const query = { customer: req.customer._id };
+
+    const [reviews, total] = await Promise.all([
+      Review.find(query)
+        .populate('product', 'name image')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Review.countDocuments(query),
+    ]);
+
+    res.json({ reviews, total, page, pages: Math.ceil(total / limit) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // GET /api/reviews/product/:productId?page=1&limit=10
 router.get('/product/:productId', async (req, res) => {
   try {

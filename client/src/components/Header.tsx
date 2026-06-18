@@ -86,6 +86,8 @@ export default function Header() {
   const isNewsPage = location.pathname === "/berita";
   const isContactPage = location.pathname === "/kontak";
   const isProductDetailPage = location.pathname.startsWith("/produk/");
+  const isCartPage = location.pathname === "/keranjang";
+  const isCheckoutPage = location.pathname === "/checkout";
 
   return (
     <header
@@ -100,7 +102,9 @@ export default function Header() {
               isProductPage ||
               isNewsPage ||
               isContactPage ||
-              isProductDetailPage
+              isProductDetailPage ||
+              isCartPage ||
+              isCheckoutPage
                 ? "bg-white/80 backdrop-blur-md"
                 : "bg-[#F9F7F2]"
             }`

@@ -181,17 +181,17 @@ export default function Keranjang() {
 
             {/* Summary */}
             <div className="lg:w-72 shrink-0">
-              <div className="bg-white border border-gray-100 rounded-2xl p-6 sticky top-24">
-                <h2 className="text-base font-bold text-black mb-4">Ringkasan</h2>
-                <div className="flex justify-between text-sm text-black/70 mb-1">
+              <div className="bg-black border border-white/10 rounded-2xl p-6 sticky top-24 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+                <h2 className="text-base font-bold text-white mb-4">Ringkasan</h2>
+                <div className="flex justify-between text-sm text-white/70 mb-1">
                   <span>Produk dipilih</span>
                   <span>{selectedCount} item</span>
                 </div>
-                <div className="flex justify-between text-sm text-black/60 mb-4">
+                <div className="flex justify-between text-sm text-white/50 mb-4">
                   <span>Ongkir</span>
                   <span>Dihitung saat checkout</span>
                 </div>
-                <div className="border-t border-gray-100 pt-4 flex justify-between font-bold text-black mb-6">
+                <div className="border-t border-white/10 pt-4 flex justify-between font-bold text-white mb-6">
                   <span>Subtotal</span>
                   <span>{cartReady ? fmt(selectedTotal) : '—'}</span>
                 </div>
@@ -208,7 +208,7 @@ export default function Keranjang() {
                 </button>
                 <Link
                   to="/produk"
-                  className="block text-center text-sm text-black/60 mt-4 hover:text-black"
+                  className="block text-center text-sm text-white/50 mt-4 hover:text-white transition-colors"
                 >
                   Lanjut Belanja
                 </Link>

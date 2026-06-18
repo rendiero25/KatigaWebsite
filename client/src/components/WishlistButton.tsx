@@ -6,9 +6,10 @@ interface Props {
   inWishlist: boolean
   onToggle: (productId: string, inWishlist: boolean) => void
   size?: 'sm' | 'md'
+  redirectTo?: string
 }
 
-export default function WishlistButton({ productId, inWishlist, onToggle, size = 'sm' }: Props) {
+export default function WishlistButton({ productId, inWishlist, onToggle, size = 'sm', redirectTo }: Props) {
   const navigate = useNavigate()
   const iconSize = size === 'sm' ? 14 : 16
 
@@ -16,7 +17,7 @@ export default function WishlistButton({ productId, inWishlist, onToggle, size =
     e.preventDefault()
     e.stopPropagation()
     if (!localStorage.getItem('customerToken')) {
-      navigate('/masuk')
+      navigate(redirectTo ? `/masuk?redirect=${encodeURIComponent(redirectTo)}` : '/masuk')
       return
     }
     onToggle(productId, inWishlist)

@@ -255,6 +255,7 @@ export default function Products() {
                           productId={product._id}
                           inWishlist={wishlistIds.has(product._id)}
                           onToggle={handleToggleWishlist}
+                          redirectTo={`/produk/${product._id}`}
                         />
                       </div>
                       <div>

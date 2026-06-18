@@ -104,6 +104,14 @@ export default function Checkout() {
   const shippingCost = selectedRate?.price ?? 0;
   const total = subtotal - voucherDiscount + shippingCost;
 
+  const handleRateSelect = useCallback((rate: ShippingRate | null) => {
+    setSelectedRate(rate);
+    if (!rate) {
+      setAppliedVoucher(null);
+      setVoucherCode('');
+    }
+  }, []);
+
   const handlePay = useCallback(async () => {
     if (!selectedAddress || !selectedRate || cartSyncing || !cartReady) return;
     setPaying(true);
@@ -226,13 +234,7 @@ export default function Checkout() {
                     <ShippingSelector
                       address={selectedAddress}
                       cart={effectiveCart}
-                      onSelect={(rate) => {
-                        setSelectedRate(rate);
-                        if (!rate) {
-                          setAppliedVoucher(null);
-                          setVoucherCode('');
-                        }
-                      }}
+                      onSelect={handleRateSelect}
                     />
                   )}
                 </div>
@@ -253,13 +255,13 @@ export default function Checkout() {
 
             {/* Right — summary */}
             <div className="lg:w-80 shrink-0">
-              <div className="bg-white border border-gray-100 rounded-2xl p-6 sticky top-24">
-                <h2 className="text-base font-bold text-black mb-4">Ringkasan Pesanan</h2>
+              <div className="bg-black border border-white/10 rounded-2xl p-6 sticky top-24 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+                <h2 className="text-base font-bold text-white mb-4">Ringkasan Pesanan</h2>
 
                 {/* Items */}
                 <div className="space-y-2 mb-4">
                   {effectiveCart.map((c) => (
-                    <div key={c.cartItemId} className="flex justify-between text-sm text-black/70">
+                    <div key={c.cartItemId} className="flex justify-between text-sm text-white/70">
                       <span className="truncate max-w-[160px]">{c.name} ×{c.quantity}</span>
                       <span className="shrink-0 tabular-nums">
                         {cartReady ? fmt(c.priceNumeric * c.quantity) : '—'}
@@ -268,13 +270,13 @@ export default function Checkout() {
                   ))}
                 </div>
 
-                <div className="border-t border-gray-100 pt-3 space-y-2 text-sm text-black/70">
+                <div className="border-t border-white/10 pt-3 space-y-2 text-sm text-white/70">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="tabular-nums">{cartReady ? fmt(subtotal) : '—'}</span>
                   </div>
                   {cartReady && voucherDiscount > 0 && (
-                    <div className="flex justify-between text-green-600">
+                    <div className="flex justify-between text-green-400">
                       <span>Diskon voucher</span>
                       <span className="tabular-nums">− {fmt(voucherDiscount)}</span>
                     </div>
@@ -287,7 +289,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-100 mt-3 pt-3 flex justify-between font-bold text-black mb-6">
+                <div className="border-t border-white/10 mt-3 pt-3 flex justify-between font-bold text-white mb-6">
                   <span>Total</span>
                   <span className="tabular-nums">{cartReady ? fmt(total) : '—'}</span>
                 </div>
@@ -301,7 +303,7 @@ export default function Checkout() {
                 </button>
 
                 {(!selectedAddress || !selectedRate || !cartReady) && (
-                  <p className="text-center text-xs text-black/40 mt-3">
+                  <p className="text-center text-xs text-white/40 mt-3">
                     {!selectedAddress
                       ? 'Pilih alamat pengiriman terlebih dahulu'
                       : !cartReady
