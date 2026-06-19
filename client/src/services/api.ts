@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport } from '../types/ecommerce';
 
 interface ShippingRateRequestItem {
   name: string;
@@ -384,6 +384,33 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error('Gagal memuat laporan');
+    return res.json();
+  },
+
+  getProductsReport: async (range: ReportsRange): Promise<ProductsReport> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/reports/products?range=${range}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat laporan produk');
+    return res.json();
+  },
+
+  getCustomersReport: async (range: ReportsRange): Promise<CustomersReport> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/reports/customers?range=${range}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat laporan pelanggan');
+    return res.json();
+  },
+
+  getPromotionsReport: async (range: ReportsRange): Promise<PromotionsReport> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/reports/promotions?range=${range}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat laporan promosi');
     return res.json();
   },
 
