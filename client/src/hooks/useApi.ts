@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import api from '../services/api';
-import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse } from '../types/ecommerce';
+import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport } from '../types/ecommerce';
 import { getCartCount, clearCart, normalizeDimensions, syncCartItems } from '../utils/cart';
 
 interface CartProductPromotion {
@@ -493,6 +493,57 @@ export function useReportsSummary(range: ReportsRange) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     api.getReportsSummary(range)
+      .then(setData)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [range]);
+
+  return { data, loading, error };
+}
+
+export function useProductsReport(range: ReportsRange) {
+  const [data, setData] = useState<ProductsReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    api.getProductsReport(range)
+      .then(setData)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [range]);
+
+  return { data, loading, error };
+}
+
+export function useCustomersReport(range: ReportsRange) {
+  const [data, setData] = useState<CustomersReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    api.getCustomersReport(range)
+      .then(setData)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [range]);
+
+  return { data, loading, error };
+}
+
+export function usePromotionsReport(range: ReportsRange) {
+  const [data, setData] = useState<PromotionsReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    api.getPromotionsReport(range)
       .then(setData)
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
