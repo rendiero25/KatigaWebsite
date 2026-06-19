@@ -248,4 +248,74 @@ router.get('/products', auth, async (req, res) => {
   }
 });
 
+// ─── GET /api/reports/customers — admin: customer insights report ───
+router.get('/customers', auth, async (req, res) => {
+  try {
+    const { range = '30d' } = req.query;
+    const dateFilter = getDateFilter(range);
+
+    const totalRegistered = await Customer.countDocuments();
+    const newCustomers = await Customer.countDocuments(
+      dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {}
+    );
+    const suspendedCount = await Customer.countDocuments({ suspended: true });
+
+    const topSpenders = await Order.aggregate([
+      { $match: { paymentStatus: 'paid', ...dateFilter } },
+      { $group: { _id: '$customer', total: { $sum: '$total' }, orderCount: { $sum: 1 } } },
+      { $sort: { total: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: Customer.collection.name,
+          localField: '_id',
+          foreignField: '_id',
+          as: 'c',
+        },
+      },
+      { $unwind: '$c' },
+      {
+        $project: {
+          customerId: '$_id',
+          name: '$c.name',
+          email: '$c.email',
+          total: 1,
+          orderCount: 1,
+        },
+      },
+    ]);
+
+    let newBuyers = null;
+    let returningBuyers = null;
+    const rangeStart = dateFilter.createdAt?.$gte;
+    if (rangeStart) {
+      const inRangeCustomerIds = await Order.distinct('customer', { paymentStatus: 'paid', ...dateFilter });
+      const returningIds = await Order.distinct('customer', {
+        paymentStatus: 'paid',
+        customer: { $in: inRangeCustomerIds },
+        createdAt: { $lt: rangeStart },
+      });
+      returningBuyers = returningIds.length;
+      newBuyers = inRangeCustomerIds.length - returningIds.length;
+    }
+
+    res.json({
+      totalRegistered,
+      newCustomers,
+      suspendedCount,
+      topSpenders: topSpenders.map((s) => ({
+        customerId: s.customerId?.toString() ?? '',
+        name: s.name,
+        email: s.email,
+        total: s.total,
+        orderCount: s.orderCount,
+      })),
+      newBuyers,
+      returningBuyers,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
