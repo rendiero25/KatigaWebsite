@@ -254,11 +254,11 @@ router.get('/customers', auth, async (req, res) => {
     const { range = '30d' } = req.query;
     const dateFilter = getDateFilter(range);
 
-    const totalRegistered = await Customer.countDocuments();
-    const newCustomers = await Customer.countDocuments(
-      dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {}
-    );
-    const suspendedCount = await Customer.countDocuments({ suspended: true });
+    const [totalRegistered, newCustomers, suspendedCount] = await Promise.all([
+      Customer.countDocuments(),
+      Customer.countDocuments(dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {}),
+      Customer.countDocuments({ suspended: true }),
+    ]);
 
     const topSpenders = await Order.aggregate([
       { $match: { paymentStatus: 'paid', ...dateFilter } },
@@ -289,6 +289,7 @@ router.get('/customers', auth, async (req, res) => {
     let returningBuyers = null;
     const rangeStart = dateFilter.createdAt?.$gte;
     if (rangeStart) {
+      // Order.distinct returns one BSON doc — fine at current scale, but has a 16MB/~650k-ObjectId ceiling
       const inRangeCustomerIds = await Order.distinct('customer', { paymentStatus: 'paid', ...dateFilter });
       const returningIds = await Order.distinct('customer', {
         paymentStatus: 'paid',
