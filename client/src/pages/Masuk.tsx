@@ -32,7 +32,7 @@ export default function Masuk() {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, redirect]);
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;

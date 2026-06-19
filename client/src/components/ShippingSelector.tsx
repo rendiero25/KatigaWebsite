@@ -23,16 +23,6 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   const [emptyMessage, setEmptyMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const latestRequestIdRef = useRef(0);
-  const addressRequestKey = [
-    address.recipientName,
-    address.phone,
-    address.street,
-    address.city,
-    address.province,
-    address.postalCode,
-    address.areaId,
-    address.areaName,
-  ].join('|');
 
   const fetchRates = useCallback(async () => {
     const requestId = latestRequestIdRef.current + 1;
@@ -89,7 +79,7 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
         setLoading(false);
       }
     }
-  }, [address.areaId, addressRequestKey, cart, onSelect]);
+  }, [address.areaId, cart, onSelect]);
 
   useEffect(() => {
     return () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import { useShippingSettings } from '../../hooks/useApi';
 
@@ -6,12 +6,13 @@ export default function AdminShippingSettings() {
   const { data, loading, saving, error, refresh, save } = useShippingSettings();
   const [enabledCouriers, setEnabledCouriers] = useState<string[]>([]);
   const [emptyStateMessage, setEmptyStateMessage] = useState('');
+  const [syncedData, setSyncedData] = useState(data);
 
-  useEffect(() => {
-    if (!data) return;
+  if (data && data !== syncedData) {
+    setSyncedData(data);
     setEnabledCouriers(data.enabledCouriers);
     setEmptyStateMessage(data.emptyStateMessage);
-  }, [data]);
+  }
 
   const hasInitialLoadError = Boolean(error && !data);
 
