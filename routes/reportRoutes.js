@@ -5,6 +5,8 @@ const Order = require('../models/Order');
 const Customer = require('../models/Customer');
 const Product = require('../models/Product');
 const ProductCategory = require('../models/ProductCategory');
+const Voucher = require('../models/Voucher');
+const Promotion = require('../models/Promotion');
 
 function getDateFilter(range) {
   const now = new Date();
@@ -313,6 +315,87 @@ router.get('/customers', auth, async (req, res) => {
       })),
       newBuyers,
       returningBuyers,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── GET /api/reports/promotions — admin: promotion & voucher report ───
+router.get('/promotions', auth, async (req, res) => {
+  try {
+    const { range = '30d' } = req.query;
+    const dateFilter = getDateFilter(range);
+    const now = new Date();
+
+    const vouchers = await Voucher.find().sort({ createdAt: -1 });
+    const voucherStatus = (v) => {
+      if (!v.isActive) return 'nonaktif';
+      if (now < v.startDate) return 'terjadwal';
+      if (now > v.endDate) return 'berakhir';
+      return 'aktif';
+    };
+
+    const voucherPerformance = await Order.aggregate([
+      { $match: { paymentStatus: 'paid', voucherCode: { $ne: '' }, ...dateFilter } },
+      {
+        $group: {
+          _id: '$voucherCode',
+          orderCount: { $sum: 1 },
+          totalDiscount: { $sum: '$voucherDiscount' },
+          totalRevenue: { $sum: '$total' },
+        },
+      },
+      { $sort: { totalDiscount: -1 } },
+    ]);
+    const totalVoucherDiscount = voucherPerformance.reduce((sum, v) => sum + v.totalDiscount, 0);
+
+    const promotions = await Promotion.find().sort({ startDate: -1 });
+    const promotionsWithCoverage = await Promise.all(
+      promotions.map(async (p) => {
+        const status = !p.isVisible
+          ? 'nonaktif'
+          : now < p.startDate
+          ? 'terjadwal'
+          : now > p.endDate
+          ? 'berakhir'
+          : 'aktif';
+        const productCount =
+          p.type === 'products'
+            ? p.productIds.length
+            : await Product.countDocuments({ category: p.categoryId });
+        return {
+          id: p._id.toString(),
+          name: p.name,
+          type: p.type,
+          discountPercent: p.discountPercent,
+          startDate: p.startDate,
+          endDate: p.endDate,
+          status,
+          productCount,
+        };
+      })
+    );
+
+    res.json({
+      vouchers: vouchers.map((v) => ({
+        id: v._id.toString(),
+        code: v.code,
+        name: v.name,
+        discountType: v.discountType,
+        discountValue: v.discountValue,
+        usedCount: v.usedCount,
+        usageLimit: v.usageLimit,
+        status: voucherStatus(v),
+      })),
+      voucherPerformance: voucherPerformance.map((v) => ({
+        code: v._id,
+        orderCount: v.orderCount,
+        totalDiscount: v.totalDiscount,
+        totalRevenue: v.totalRevenue,
+      })),
+      totalVoucherDiscount,
+      promotions: promotionsWithCoverage,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
