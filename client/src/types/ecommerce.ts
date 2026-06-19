@@ -233,4 +233,86 @@ export interface ReportsSummary {
   paymentStatusCounts: Record<string, number>;
   orderStatusCounts: Record<string, number>;
   topProducts: ReportsTopProduct[];
+  paymentTypeCounts: Record<string, number>;
+  courierCounts: Record<string, number>;
+  newCustomersCount: number;
+}
+
+export interface ProductRatingInfo {
+  productId: string;
+  name: string;
+  image: string;
+  ratingAvg: number;
+  reviewCount: number;
+}
+
+export interface CategoryPerformance {
+  categoryId: string | null;
+  name: string;
+  revenue: number;
+  quantity: number;
+}
+
+export interface ProductsReport {
+  topByRevenue: ReportsTopProduct[];
+  topByQuantity: ReportsTopProduct[];
+  unsoldProducts: ProductRatingInfo[];
+  unsoldCount: number;
+  topRated: ProductRatingInfo[];
+  categoryPerformance: CategoryPerformance[];
+}
+
+export interface TopSpender {
+  customerId: string;
+  name: string;
+  email: string;
+  total: number;
+  orderCount: number;
+}
+
+export interface CustomersReport {
+  totalRegistered: number;
+  newCustomers: number;
+  suspendedCount: number;
+  topSpenders: TopSpender[];
+  newBuyers: number | null;
+  returningBuyers: number | null;
+}
+
+export type VoucherStatus = 'aktif' | 'nonaktif' | 'terjadwal' | 'berakhir';
+
+export interface VoucherReportRow {
+  id: string;
+  code: string;
+  name: string;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  usedCount: number;
+  usageLimit: number;
+  status: VoucherStatus;
+}
+
+export interface VoucherPerformanceRow {
+  code: string;
+  orderCount: number;
+  totalDiscount: number;
+  totalRevenue: number;
+}
+
+export interface PromotionReportRow {
+  id: string;
+  name: string;
+  type: 'products' | 'category';
+  discountPercent: number;
+  startDate: string;
+  endDate: string;
+  status: VoucherStatus;
+  productCount: number;
+}
+
+export interface PromotionsReport {
+  vouchers: VoucherReportRow[];
+  voucherPerformance: VoucherPerformanceRow[];
+  totalVoucherDiscount: number;
+  promotions: PromotionReportRow[];
 }
