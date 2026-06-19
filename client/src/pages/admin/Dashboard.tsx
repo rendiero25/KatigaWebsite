@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Package, Tags, Star, Wallet, Newspaper, Mail, PencilLine, ExternalLink } from 'lucide-react'
+import { Package, Tags, Star, Wallet, Newspaper, Mail, PencilLine, ExternalLink, Calculator, UserPlus } from 'lucide-react'
 import AdminLayout from '../../components/AdminLayout'
 import api from '../../services/api'
 import { useProducts, useCategories, useReportsSummary } from '../../hooks/useApi'
@@ -46,6 +46,20 @@ export default function Dashboard() {
       label: 'Total Pendapatan',
       value: fmt(reports?.totalRevenue ?? 0),
       icon: Wallet,
+      description: '30 hari terakhir',
+      path: '/admin/laporan',
+    },
+    {
+      label: 'Rata-rata Nilai Order',
+      value: fmt(reports?.orderCount ? reports.totalRevenue / reports.orderCount : 0),
+      icon: Calculator,
+      description: '30 hari terakhir',
+      path: '/admin/laporan',
+    },
+    {
+      label: 'Pelanggan Baru',
+      value: reports?.newCustomersCount ?? 0,
+      icon: UserPlus,
       description: '30 hari terakhir',
       path: '/admin/laporan',
     },
