@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Order = require('../models/Order');
+const Customer = require('../models/Customer');
 
 function getDateFilter(range) {
   const now = new Date();
@@ -78,9 +79,21 @@ router.get('/summary', auth, async (req, res) => {
             { $sort: { revenue: -1 } },
             { $limit: 5 },
           ],
+          paymentTypeCounts: [
+            { $match: { paymentStatus: 'paid', ...dateFilter } },
+            { $group: { _id: '$midtransPaymentType', count: { $sum: 1 } } },
+          ],
+          courierCounts: [
+            { $match: { paymentStatus: 'paid', ...dateFilter } },
+            { $group: { _id: '$shippingServiceName', count: { $sum: 1 } } },
+          ],
         },
       },
     ]);
+
+    const newCustomersCount = await Customer.countDocuments(
+      dateFilter.createdAt ? { createdAt: dateFilter.createdAt } : {}
+    );
 
     res.json({
       totalRevenue: result.revenue[0]?.total ?? 0,
@@ -94,6 +107,9 @@ router.get('/summary', auth, async (req, res) => {
         revenue: p.revenue,
         quantity: p.quantity,
       })),
+      paymentTypeCounts: toCountRecord(result.paymentTypeCounts),
+      courierCounts: toCountRecord(result.courierCounts),
+      newCustomersCount,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
