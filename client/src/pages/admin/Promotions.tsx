@@ -77,7 +77,10 @@ export default function AdminPromotions() {
     }
   };
 
-  useEffect(() => { fetchPromotions(); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPromotions();
+  }, []);
 
   useEffect(() => {
     if (!showSheet) return;

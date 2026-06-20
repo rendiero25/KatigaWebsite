@@ -48,7 +48,10 @@ export default function AdminOrders() {
     } finally { setLoading(false); }
   }, [filters, token]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrders();
+  }, [fetchOrders]);
 
   const setFilter = (key: string, value: string) =>
     setFilters((f) => ({ ...f, [key]: value, page: 1 }));

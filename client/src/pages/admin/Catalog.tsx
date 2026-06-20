@@ -40,6 +40,7 @@ export default function AdminCatalog() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCatalog();
   }, [fetchCatalog]);
 

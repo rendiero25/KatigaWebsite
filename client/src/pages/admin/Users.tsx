@@ -81,6 +81,7 @@ export default function AdminUsers() {
     }
   }, [search, page, token])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchCustomers() }, [fetchCustomers])
 
   const openEdit = (c: Customer) => {

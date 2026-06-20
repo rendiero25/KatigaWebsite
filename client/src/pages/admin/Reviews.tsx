@@ -55,6 +55,7 @@ export default function AdminReviews() {
     }
   }, [token, search, filterRating, filterVisible]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchReviews(1); setPage(1); }, [fetchReviews]);
 
   const toggleVisibility = async (id: string) => {

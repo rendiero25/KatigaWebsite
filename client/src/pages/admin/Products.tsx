@@ -91,6 +91,7 @@ export default function AdminProducts() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false));
   }, [fetchProducts, fetchCategories]);
 
