@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse } from '../types/ecommerce';
 
 interface ShippingRateRequestItem {
   name: string;
@@ -27,6 +27,13 @@ const getBaseUrl = () => {
 };
 
 export const API_BASE_URL = getBaseUrl();
+
+export class UnauthorizedError extends Error {
+  constructor(message = 'Sesi berakhir, silakan login kembali') {
+    super(message);
+    this.name = 'UnauthorizedError';
+  }
+}
 
 export const api = {
   // Site Settings
@@ -308,6 +315,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/shipping-settings`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.status === 401) throw new UnauthorizedError();
     if (!res.ok) throw new Error('Gagal memuat pengaturan pengiriman');
     return res.json();
   },
@@ -325,6 +333,7 @@ export const api = {
       },
       body: JSON.stringify(data),
     });
+    if (res.status === 401) throw new UnauthorizedError();
     if (!res.ok) {
       const error = await res.json().catch(() => null);
       throw new Error(error?.message || 'Gagal menyimpan pengaturan pengiriman');
@@ -675,6 +684,54 @@ export const api = {
     });
     if (!res.ok) throw new Error('Failed to validate voucher');
     return res.json();
+  },
+
+  // Notifications
+  getNotifications: async (role: NotificationRole, page = 1): Promise<NotificationsResponse> => {
+    const token = localStorage.getItem(role === 'admin' ? 'adminToken' : 'customerToken');
+    const base = role === 'admin' ? 'admin' : 'me';
+    const res = await fetch(`${API_BASE_URL}/notifications/${base}?page=${page}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat notifikasi');
+    return res.json();
+  },
+
+  getNotificationUnreadCount: async (role: NotificationRole): Promise<{ count: number }> => {
+    const token = localStorage.getItem(role === 'admin' ? 'adminToken' : 'customerToken');
+    const base = role === 'admin' ? 'admin' : 'me';
+    const res = await fetch(`${API_BASE_URL}/notifications/${base}/unread-count`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat jumlah notifikasi');
+    return res.json();
+  },
+
+  markNotificationRead: async (role: NotificationRole, id: string): Promise<AppNotification> => {
+    const token = localStorage.getItem(role === 'admin' ? 'adminToken' : 'customerToken');
+    const base = role === 'admin' ? 'admin' : 'me';
+    const res = await fetch(`${API_BASE_URL}/notifications/${base}/${id}/read`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal menandai notifikasi');
+    return res.json();
+  },
+
+  markAllNotificationsRead: async (role: NotificationRole): Promise<void> => {
+    const token = localStorage.getItem(role === 'admin' ? 'adminToken' : 'customerToken');
+    const base = role === 'admin' ? 'admin' : 'me';
+    const res = await fetch(`${API_BASE_URL}/notifications/${base}/read-all`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal menandai semua notifikasi');
+  },
+
+  getNotificationStreamUrl: (role: NotificationRole): string => {
+    const token = localStorage.getItem(role === 'admin' ? 'adminToken' : 'customerToken');
+    const base = role === 'admin' ? 'admin' : 'me';
+    return `${API_BASE_URL}/notifications/${base}/stream?token=${encodeURIComponent(token || '')}`;
   },
 };
 

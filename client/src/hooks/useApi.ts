@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import api from '../services/api';
-import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport } from '../types/ecommerce';
+import { useNavigate } from 'react-router-dom';
+import api, { UnauthorizedError } from '../services/api';
+import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification } from '../types/ecommerce';
 import { getCartCount, clearCart, normalizeDimensions, syncCartItems } from '../utils/cart';
 
 interface CartProductPromotion {
@@ -249,6 +250,7 @@ export function useLiveCart(sourceCart: CartItem[]) {
 
   useEffect(() => {
     latestRequestIdRef.current += 1;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setData(sourceCart);
     if (!sourceCart.length) {
       setHydrated(true);
@@ -260,6 +262,7 @@ export function useLiveCart(sourceCart: CartItem[]) {
   }, [sourceCart]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
@@ -621,6 +624,7 @@ export function useProductReviews(productId: string) {
 
   useEffect(() => {
     if (!productId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     api.getProductReviews(productId, 1)
       .then((data) => {
@@ -708,7 +712,10 @@ export function useCustomerAddresses() {
     }
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refresh();
+  }, [refresh]);
 
   const addAddress = async (data: Omit<SavedAddress, '_id'>): Promise<SavedAddress> => {
     const result = await api.addCustomerAddress(data);
@@ -735,7 +742,14 @@ export function useCustomerAddresses() {
   return { addresses, loading, addAddress, updateAddress, deleteAddress, setDefault, refresh };
 }
 
+function handleAdminUnauthorized(navigate: ReturnType<typeof useNavigate>): void {
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('adminEmail');
+  navigate('/admin/login');
+}
+
 export function useShippingSettings() {
+  const navigate = useNavigate();
   const [data, setData] = useState<ShippingSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -748,14 +762,19 @@ export function useShippingSettings() {
       const result = await api.getShippingSettings();
       setData(result);
     } catch (err) {
+      if (err instanceof UnauthorizedError) {
+        handleAdminUnauthorized(navigate);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Gagal memuat pengaturan pengiriman');
       setData(null);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
@@ -770,14 +789,18 @@ export function useShippingSettings() {
       setData(result);
       return result;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Gagal menyimpan pengaturan pengiriman';
-      setError(message);
+      if (err instanceof UnauthorizedError) {
+        handleAdminUnauthorized(navigate);
+      } else {
+        const message =
+          err instanceof Error ? err.message : 'Gagal menyimpan pengaturan pengiriman';
+        setError(message);
+      }
       throw err;
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [navigate]);
 
   return { data, loading, saving, error, refresh, save };
 }
@@ -811,4 +834,63 @@ export function useVoucher() {
   };
 
   return { voucher, applying, error, apply, clear };
+}
+
+export function useNotifications(role: NotificationRole) {
+  const token = localStorage.getItem(role === 'admin' ? 'adminToken' : 'customerToken');
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const resync = useCallback(() => {
+    if (!token) return;
+    Promise.all([api.getNotifications(role), api.getNotificationUnreadCount(role)])
+      .then(([list, unread]) => {
+        setNotifications(list.notifications);
+        setUnreadCount(unread.count);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [role, token]);
+
+  useEffect(() => {
+    if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const es = new EventSource(api.getNotificationStreamUrl(role));
+    es.onopen = resync;
+    es.onerror = () => setLoading(false);
+    es.onmessage = (event) => {
+      try {
+        const doc: AppNotification = JSON.parse(event.data);
+        setNotifications((prev) => [doc, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      } catch {
+        // ignore malformed payloads
+      }
+    };
+
+    return () => es.close();
+  }, [role, token, resync]);
+
+  const markAsRead = useCallback((id: string) => {
+    const target = notifications.find((n) => n._id === id);
+    if (target && !target.isRead) {
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+    setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));
+    api.markNotificationRead(role, id).catch(() => {});
+  }, [role, notifications]);
+
+  const markAllAsRead = useCallback(() => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+    api.markAllNotificationsRead(role).catch(() => {});
+  }, [role]);
+
+  return { notifications, unreadCount, loading, markAsRead, markAllAsRead };
 }
