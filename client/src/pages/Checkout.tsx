@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { CartItem, ShippingAddress, ShippingRate, VoucherValidation } from '../types/ecommerce';
 import { useLiveCart } from '../hooks/useApi';
-import { getCart, removeManyFromCart } from '../utils/cart';
+import { getCart, removeManyFromCart, normalizeCartItem } from '../utils/cart';
 import api from '../services/api';
 import AddressSelector from '../components/AddressSelector';
 import ShippingSelector from '../components/ShippingSelector';
@@ -12,12 +12,14 @@ import Footer from '../components/Footer';
 
 interface LocationState {
   selectedIds?: string[];
+  buyNowItem?: CartItem;
 }
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
 const CHECKOUT_SELECTED_IDS_KEY = 'kk_checkout_selected_ids';
+const BUY_NOW_ITEM_KEY = 'kk_buy_now_item';
 
 const getStoredSelectedIds = (): string[] => {
   try {
@@ -28,6 +30,15 @@ const getStoredSelectedIds = (): string[] => {
       : [];
   } catch {
     return [];
+  }
+};
+
+const getStoredBuyNowItem = (): CartItem | null => {
+  try {
+    const raw = sessionStorage.getItem(BUY_NOW_ITEM_KEY);
+    return raw ? normalizeCartItem(JSON.parse(raw)) : null;
+  } catch {
+    return null;
   }
 };
 
@@ -53,8 +64,20 @@ export default function Checkout() {
     const token = localStorage.getItem('customerToken');
     if (!token) { navigate('/masuk?redirect=/checkout'); return; }
 
-    const allCart = getCart();
     const state = location.state as LocationState | null;
+    const buyNowItem = state ? state.buyNowItem : getStoredBuyNowItem();
+
+    if (buyNowItem) {
+      sessionStorage.setItem(BUY_NOW_ITEM_KEY, JSON.stringify(buyNowItem));
+      sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCart([buyNowItem]);
+      return;
+    }
+
+    sessionStorage.removeItem(BUY_NOW_ITEM_KEY);
+
+    const allCart = getCart();
     const selectedIds = state?.selectedIds?.length ? state.selectedIds : getStoredSelectedIds();
 
     if (!selectedIds.length) {
@@ -71,7 +94,6 @@ export default function Checkout() {
       navigate('/keranjang');
       return;
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCart(filtered);
   }, [navigate, location.state]);
 
@@ -140,7 +162,10 @@ export default function Checkout() {
 
       const purchasedCartItemIds = effectiveCart.map((item) => item.cartItemId);
       const removePurchasedItems = () => removeManyFromCart(purchasedCartItemIds);
-      const clearCheckoutSelection = () => sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
+      const clearCheckoutSelection = () => {
+        sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
+        sessionStorage.removeItem(BUY_NOW_ITEM_KEY);
+      };
 
       window.snap.pay(result.snapToken, {
         onSuccess:  () => {
@@ -202,7 +227,6 @@ export default function Checkout() {
 
               {/* Address */}
               <div className="bg-white border border-gray-100 rounded-2xl p-6">
-                <h2 className="text-base font-bold text-black mb-4">Alamat Pengiriman</h2>
                 <AddressSelector
                   selected={selectedAddress}
                   onSelect={(addr) => {

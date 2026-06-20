@@ -40,7 +40,7 @@ export function normalizeDimensions(
   };
 }
 
-function normalizeCartItem(raw: unknown): CartItem | null {
+export function normalizeCartItem(raw: unknown): CartItem | null {
   if (!isRecord(raw)) {
     return null;
   }

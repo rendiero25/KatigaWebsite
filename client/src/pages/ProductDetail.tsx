@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, ShoppingCart, Share2, Heart } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Share2, Heart, Zap } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-import type { ItemDimensions } from '../types/ecommerce';
+import type { ItemDimensions, CartItem } from '../types/ecommerce';
 import api from '../services/api';
 import { addToCart, buildCartItemId, normalizeDimensions } from '../utils/cart';
 import { cn } from '../lib/utils';
@@ -63,6 +63,7 @@ interface FeaturedProduct {
 }
 
 const formatRp = (n: number): string => `Rp ${n.toLocaleString('id-ID')}`;
+const BUY_NOW_ITEM_KEY = 'kk_buy_now_item';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -171,6 +172,46 @@ export default function ProductDetail() {
       categoryId: product.category?._id ?? undefined,
     });
     setTimeout(() => setAdding(false), 600);
+  };
+
+  const handleBuyNow = () => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate(`/masuk?redirect=/produk/${id}`);
+      return;
+    }
+
+    const promo = product.activePromotion;
+    const basePrice = selectedVariant !== null && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product.priceNumeric ?? 0);
+    const discountedPrice = promo
+      ? Math.round(basePrice * (1 - promo.discountPercent / 100))
+      : basePrice;
+    const weightGrams =
+      selectedVariant !== null && selectedVariant.weightGrams > 0
+        ? selectedVariant.weightGrams
+        : (product.weightGrams ?? 0);
+
+    const buyNowItem: CartItem = {
+      cartItemId: buildCartItemId(product._id, selectedVariant?._id),
+      productId: product._id,
+      variantId: selectedVariant?._id,
+      variantName: selectedVariant?.name,
+      name: selectedVariant
+        ? `${product.name} - ${selectedVariant.name}`
+        : product.name,
+      image: activeImage || product.image || '',
+      priceNumeric: discountedPrice,
+      weightGrams,
+      dimensions: normalizeDimensions(selectedVariant?.dimensions, product.dimensions),
+      quantity: qty,
+      originalPrice: promo ? basePrice : undefined,
+      discountPercent: promo ? promo.discountPercent : undefined,
+      categoryId: product.category?._id ?? undefined,
+    };
+
+    sessionStorage.setItem(BUY_NOW_ITEM_KEY, JSON.stringify(buyNowItem));
+    navigate('/checkout', { state: { buyNowItem } });
   };
 
   const inWishlist = wishlistIds.has(product._id);
@@ -406,23 +447,34 @@ export default function ProductDetail() {
                     </p>
                   </div>
 
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={adding}
-                    className="w-full h-12 rounded-xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    {adding ? (
-                      <>
-                        <Spinner className="text-white mr-2" />
-                        Menambahkan...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="mr-2" />
-                        Tambah ke Keranjang
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleAddToCart}
+                      disabled={adding}
+                      variant="outline"
+                      className="flex-1 h-12 rounded-xl border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
+                    >
+                      {adding ? (
+                        <>
+                          <Spinner className="mr-2" />
+                          Menambahkan...
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="mr-2" />
+                          Tambah ke Keranjang
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={handleBuyNow}
+                      className="flex-1 h-12 rounded-xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      <Zap className="mr-2" />
+                      Beli Langsung
+                    </Button>
+                  </div>
 
                   <div className="flex gap-3">
                     <Button
