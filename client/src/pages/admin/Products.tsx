@@ -19,6 +19,12 @@ interface ProductVariant {
   dimensionHeight: string;
 }
 
+const categoryId = (category: Product['category']): string =>
+  typeof category === 'string' ? category : category?._id ?? '';
+
+const categoryName = (category: Product['category']): string =>
+  typeof category === 'string' ? '' : category?.name ?? '';
+
 interface Product {
   _id: string;
   name: string;
@@ -179,7 +185,7 @@ export default function AdminProducts() {
     setFormData({
       name: product.name,
       description: product.description || "",
-      category: product.category?._id || product.category || "",
+      category: categoryId(product.category),
       price: product.price || "",
       weightGrams: String(product.weightGrams || ""),
       dimensionLength: String(product.dimensions?.length || ""),
@@ -268,7 +274,7 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{product.category?.name || "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{categoryName(product.category) || "—"}</td>
                   <td className="px-6 py-4 text-sm text-gray-700 font-medium">{product.price || "—"}</td>
                   <td className="px-6 py-4">
                     {product.variants?.length ? (

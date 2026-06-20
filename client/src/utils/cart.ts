@@ -20,8 +20,8 @@ export function buildCartItemId(productId: string, variantId?: string): string {
 }
 
 export function normalizeDimensions(
-  dimensions?: Partial<ItemDimensions> | null,
-  fallbackDimensions?: Partial<ItemDimensions> | null
+  dimensions?: Partial<Record<keyof ItemDimensions, unknown>> | null,
+  fallbackDimensions?: Partial<Record<keyof ItemDimensions, unknown>> | null
 ): ItemDimensions {
   const resolveDimension = (value: unknown, fallbackValue: unknown): number => {
     const parsed = Number(value);

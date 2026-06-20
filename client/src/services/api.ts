@@ -209,7 +209,7 @@ export const api = {
     return res.json();
   },
 
-  customerGoogleAuth: async (credential: string): Promise<{ token: string; customer: { _id: string; name: string; email: string; phone: string }; isNew: boolean; message?: string }> => {
+  customerGoogleAuth: async (credential: string): Promise<{ token: string; customer: { _id: string; name: string; email: string; phone: string; avatar: string }; isNew: boolean; message?: string }> => {
     const res = await fetch(`${API_BASE_URL}/customers/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

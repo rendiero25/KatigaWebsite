@@ -104,10 +104,12 @@ Each CMS section follows this consistent pattern:
 ### Type checking
 
 ```bash
-cd client && npx tsc --noEmit
+cd client && npx tsc -b
 ```
 
 Strict mode is on (`"strict": true` in `tsconfig.app.json`). All type errors must be resolved — do not suppress them with `@ts-ignore` or `@ts-expect-error` unless there is a genuine upstream library bug, in which case leave a comment explaining why.
+
+Must use `-b` (build mode), not `--noEmit`. `client/tsconfig.json` is solution-style (`"files": []` + `references`, no `include`), so plain `tsc --noEmit` type-checks nothing and always exits 0 — it will not catch real errors. `tsc -b` is also what `vercel-build` runs, so it's the only command that matches what actually ships.
 
 ### Linting
 
@@ -122,7 +124,7 @@ There is **no test suite** in this project. Do not add test files unless explici
 ### Full verification before a commit
 
 ```bash
-cd client && npx tsc --noEmit && npm run lint
+cd client && npx tsc -b && npm run lint
 ```
 
 ## TypeScript Conventions
