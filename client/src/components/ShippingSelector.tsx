@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ShippingAddress, ShippingRate, CartItem } from '../types/ecommerce';
 import api from '../services/api';
+import { getCourierLogoUrl } from '../utils/courierLogos';
 
 interface Props {
   address: ShippingAddress;
@@ -88,10 +89,12 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelected(null);
   }, [address]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRates();
   }, [fetchRates]);
 
@@ -149,38 +152,48 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      {rates.map((rate, i) => (
-        <label
-          key={`${rate.courier_code}-${rate.courier_service_code}-${i}`}
-          className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition ${
-            selected?.courier_code === rate.courier_code &&
-            selected?.courier_service_code === rate.courier_service_code
-              ? 'border-primary bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <input
-              type="radio"
-              name="shippingRate"
-              checked={
-                selected?.courier_code === rate.courier_code &&
-                selected?.courier_service_code === rate.courier_service_code
-              }
-              onChange={() => handleSelect(rate)}
-              className="accent-primary"
-            />
-            <div>
-              <p className="font-medium text-sm text-black">
-                {rate.courier_name} — {rate.courier_service_name}
-              </p>
-              <p className="text-xs text-black/60">{rate.duration}</p>
+    <div className="space-y-2 max-h-[372px] overflow-y-auto pr-1">
+      {rates.map((rate, i) => {
+        const logo = getCourierLogoUrl(rate.courier_code);
+        return (
+          <label
+            key={`${rate.courier_code}-${rate.courier_service_code}-${i}`}
+            className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition ${
+              selected?.courier_code === rate.courier_code &&
+              selected?.courier_service_code === rate.courier_service_code
+                ? 'border-primary bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <input
+                type="radio"
+                name="shippingRate"
+                checked={
+                  selected?.courier_code === rate.courier_code &&
+                  selected?.courier_service_code === rate.courier_service_code
+                }
+                onChange={() => handleSelect(rate)}
+                className="accent-primary shrink-0"
+              />
+              {logo && (
+                <img
+                  src={logo}
+                  alt={rate.courier_name}
+                  className="h-7 w-7 object-contain shrink-0"
+                />
+              )}
+              <div className="min-w-0">
+                <p className="font-medium text-sm text-black truncate">
+                  {rate.courier_name} — {rate.courier_service_name}
+                </p>
+                <p className="text-xs text-black/60">{rate.duration}</p>
+              </div>
             </div>
-          </div>
-          <span className="text-sm font-bold text-black shrink-0">{fmt(rate.price)}</span>
-        </label>
-      ))}
+            <span className="text-sm font-bold text-black shrink-0">{fmt(rate.price)}</span>
+          </label>
+        );
+      })}
     </div>
   );
 }

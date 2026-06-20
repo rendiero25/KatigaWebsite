@@ -115,6 +115,19 @@ export default function AddressSelector({ selected, onSelect }: Props) {
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-bold text-black">Alamat Pengiriman</h2>
+        {!showForm && (
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="shrink-0 text-sm font-semibold text-primary hover:underline"
+          >
+            + Tambah Alamat Baru
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div className="space-y-2">
           {[1, 2].map((i) => (
@@ -160,15 +173,6 @@ export default function AddressSelector({ selected, onSelect }: Props) {
             );
           })}
         </div>
-      )}
-
-      {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-black/60 hover:border-primary hover:text-primary transition"
-        >
-          + Tambah Alamat Baru
-        </button>
       )}
 
       {showForm && (

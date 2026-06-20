@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import { useShippingSettings } from '../../hooks/useApi';
+import { getCourierLogoUrl } from '../../utils/courierLogos';
 
 export default function AdminShippingSettings() {
   const { data, loading, saving, error, refresh, save } = useShippingSettings();
@@ -37,7 +38,7 @@ export default function AdminShippingSettings() {
 
   return (
     <AdminLayout title="Pengaturan Pengiriman">
-      <div className="max-w-3xl">
+      <div className="w-full">
         <form onSubmit={handleSubmit} className="space-y-6">
           {hasInitialLoadError ? (
             <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
@@ -77,9 +78,10 @@ export default function AdminShippingSettings() {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {couriers.map((courier) => {
                       const checked = enabledCouriers.includes(courier.code);
+                      const logo = getCourierLogoUrl(courier.code);
                       return (
                         <label
                           key={courier.code}
@@ -89,17 +91,26 @@ export default function AdminShippingSettings() {
                               : 'border-gray-200 bg-white hover:border-gray-300'
                           }`}
                         >
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {courier.label}
-                            </p>
-                            <p className="text-xs text-gray-500">{courier.code}</p>
+                          <div className="flex items-center gap-3 min-w-0">
+                            {logo && (
+                              <img
+                                src={logo}
+                                alt={courier.label}
+                                className="h-8 w-8 object-contain shrink-0"
+                              />
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {courier.label}
+                              </p>
+                              <p className="text-xs text-gray-500">{courier.code}</p>
+                            </div>
                           </div>
                           <input
                             type="checkbox"
                             checked={checked}
                             onChange={() => toggleCourier(courier.code)}
-                            className="h-4 w-4 accent-indigo-600"
+                            className="h-4 w-4 accent-indigo-600 shrink-0"
                           />
                         </label>
                       );
