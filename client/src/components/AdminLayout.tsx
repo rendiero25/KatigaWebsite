@@ -20,6 +20,7 @@ import {
   Tag,
   BarChart3,
   Truck,
+  Bell,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -48,6 +49,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { useNotifications } from '../hooks/useApi'
+import NotificationBell from './NotificationBell'
 
 interface Props {
   children: ReactNode
@@ -73,7 +76,10 @@ interface MenuGroup {
 
 const menuGroups: MenuGroup[] = [
   {
-    items: [{ path: '/admin', icon: LayoutDashboard, label: 'Dashboard' }],
+    items: [
+      { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+      { path: '/admin/notifikasi', icon: Bell, label: 'Notifikasi' },
+    ],
   },
   {
     label: 'Halaman Website',
@@ -169,6 +175,7 @@ export default function AdminLayout({ children, title }: Props) {
   const location = useLocation()
   const navigate = useNavigate()
   const adminEmail = localStorage.getItem('adminEmail') || 'Admin'
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('admin')
 
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -259,6 +266,11 @@ export default function AdminLayout({ children, title }: Props) {
         >
           <Icon />
           <span>{item.label}</span>
+          {item.path === '/admin/notifikasi' && unreadCount > 0 && (
+            <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
         </SidebarMenuButton>
       </SidebarMenuItem>
     )
@@ -320,12 +332,19 @@ export default function AdminLayout({ children, title }: Props) {
             <Separator orientation="vertical" className="mr-1 h-4" />
             <h1 className="text-base font-semibold text-foreground">{title}</h1>
             <div className="ml-auto flex items-center gap-4">
+              <NotificationBell
+                role="admin"
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkRead={markAsRead}
+                onMarkAllRead={markAllAsRead}
+              />
               <Link
                 to="/"
                 target="_blank"
                 className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Lihat Website
+                Ke Web Katiga
                 <ExternalLink className="size-3.5" />
               </Link>
               <span className="text-sm text-muted-foreground hidden sm:block">{adminEmail}</span>

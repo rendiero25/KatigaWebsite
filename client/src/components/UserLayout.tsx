@@ -1,8 +1,10 @@
 import { type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart, Wallet, Star } from 'lucide-react'
+import { LayoutDashboard, Package, Settings, LogOut, ShoppingBag, MapPin, Heart, Wallet, Star, Bell } from 'lucide-react'
 
 import api from '../services/api'
+import { useNotifications } from '../hooks/useApi'
+import NotificationBell from './NotificationBell'
 
 import {
   Sidebar,
@@ -42,7 +44,10 @@ interface NavGroup {
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    items: [{ label: 'Beranda', icon: LayoutDashboard, href: '/profil' }],
+    items: [
+      { label: 'Beranda', icon: LayoutDashboard, href: '/profil' },
+      { label: 'Notifikasi', icon: Bell, href: '/notifikasi' },
+    ],
   },
   {
     label: 'Transaksi',
@@ -76,6 +81,7 @@ export default function UserLayout({ children, title }: Props) {
   const navigate = useNavigate()
   const [customerName, setCustomerName] = useState(() => localStorage.getItem('customerName') || '')
   const [customerAvatar, setCustomerAvatar] = useState(() => localStorage.getItem('customerAvatar') || '')
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('customer')
 
   useEffect(() => {
     if (!localStorage.getItem('customerToken')) {
@@ -142,6 +148,11 @@ export default function UserLayout({ children, title }: Props) {
                           >
                             <Icon />
                             <span>{item.label}</span>
+                            {item.href === '/notifikasi' && unreadCount > 0 && (
+                              <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                              </span>
+                            )}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       )
@@ -207,6 +218,15 @@ export default function UserLayout({ children, title }: Props) {
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-1 h-4" />
             {title && <h1 className="text-base font-semibold text-foreground">{title}</h1>}
+            <div className="ml-auto">
+              <NotificationBell
+                role="customer"
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkRead={markAsRead}
+                onMarkAllRead={markAllAsRead}
+              />
+            </div>
           </header>
           <main className="flex flex-1 flex-col p-6 min-h-0 w-full bg-gray-50" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
             {children}

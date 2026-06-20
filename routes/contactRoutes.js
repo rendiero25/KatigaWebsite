@@ -3,6 +3,7 @@ const router = express.Router();
 const ContactInfo = require('../models/ContactInfo');
 const ContactSubmission = require('../models/ContactSubmission');
 const auth = require('../middleware/auth');
+const { notifyAdmin } = require('../utils/notify');
 
 // @route   GET /api/contact/info
 // @desc    Get contact info
@@ -56,6 +57,19 @@ router.post('/submit', async (req, res) => {
       message
     });
     await submission.save();
+
+    try {
+      await notifyAdmin({
+        type: 'contact_new',
+        title: 'Pesan kontak baru',
+        message: `${name} mengirim pesan: ${subject || message}`.slice(0, 140),
+        link: '/admin/messages',
+        relatedId: submission._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] contact_new failed:', notifyErr.message);
+    }
+
     res.status(201).json({ message: 'Message sent successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

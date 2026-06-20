@@ -6,6 +6,7 @@ const Order        = require('../models/Order');
 const customerAuth = require('../middleware/customerAuth');
 const upload       = require('../middleware/upload');
 const recalc       = require('../services/recalcProductStats');
+const { notifyAdmin } = require('../utils/notify');
 
 // GET /api/reviews/can-review?productId=&orderId=
 router.get('/can-review', customerAuth, async (req, res) => {
@@ -158,6 +159,19 @@ router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
     await recalc(new mongoose.Types.ObjectId(productId));
 
     const populated = await review.populate('customer', 'name avatar');
+
+    try {
+      await notifyAdmin({
+        type: 'review_new',
+        title: 'Ulasan baru',
+        message: `${req.customer.name} memberi rating ${ratingNum} untuk produk`,
+        link: '/admin/reviews',
+        relatedId: review._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] review_new failed:', notifyErr.message);
+    }
+
     res.status(201).json(populated);
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ message: 'Kamu sudah mengulas produk ini untuk pesanan ini' });

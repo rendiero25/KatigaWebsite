@@ -47,6 +47,8 @@ import AlamatSaya from './pages/AlamatSaya'
 import WishlistSaya from './pages/WishlistSaya'
 import LaporanKeuangan from './pages/LaporanKeuangan'
 import UlasanSaya from './pages/UlasanSaya'
+import Notifikasi from './pages/Notifikasi'
+import AdminNotifikasi from './pages/admin/Notifikasi'
 
 function App() {
   return (
@@ -75,6 +77,7 @@ function App() {
         <Route path="/profil/wishlist" element={<WishlistSaya />} />
         <Route path="/profil/laporan-keuangan" element={<LaporanKeuangan />} />
         <Route path="/profil/ulasan" element={<UlasanSaya />} />
+        <Route path="/notifikasi" element={<Notifikasi />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -106,6 +109,7 @@ function App() {
         <Route path="/admin/laporan" element={<AdminLaporan />} />
         <Route path="/admin/promosi" element={<AdminPromotions />} />
         <Route path="/admin/promosi/tampilan" element={<AdminPromosiTampilan />} />
+        <Route path="/admin/notifikasi" element={<AdminNotifikasi />} />
       </Routes>
     </BrowserRouter>
   );

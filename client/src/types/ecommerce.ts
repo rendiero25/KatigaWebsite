@@ -316,3 +316,27 @@ export interface PromotionsReport {
   totalVoucherDiscount: number;
   promotions: PromotionReportRow[];
 }
+
+export type NotificationRole = 'admin' | 'customer';
+
+export interface AppNotification {
+  _id: string;
+  recipientType: NotificationRole;
+  recipientId: string | null;
+  type:
+    | 'order_new' | 'payment_paid' | 'payment_failed' | 'review_new' | 'contact_new' | 'promo_expiring'
+    | 'payment_confirmed' | 'promo_new';
+  title: string;
+  message: string;
+  link: string;
+  relatedId: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  notifications: AppNotification[];
+  total: number;
+  page: number;
+  pages: number;
+}

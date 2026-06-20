@@ -3,6 +3,7 @@ const router = express.Router();
 const Promotion = require('../models/Promotion');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { broadcastToAllCustomers } = require('../utils/notify');
 
 // GET /api/promotions — all promotions sorted by displayOrder
 router.get('/', async (req, res) => {
@@ -59,6 +60,19 @@ router.post('/', auth, upload.single('bannerImage'), async (req, res) => {
       displayOrder: Number(displayOrder) || 0,
     });
     await promo.save();
+
+    try {
+      await broadcastToAllCustomers({
+        type: 'promo_new',
+        title: 'Promo baru',
+        message: `Promosi "${promo.name}" — diskon ${promo.discountPercent}%`,
+        link: '/produk',
+        relatedId: promo._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] promo_new failed:', notifyErr.message);
+    }
+
     res.status(201).json(promo);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { FiMenu, FiX, FiUser, FiPackage, FiLogOut } from "react-icons/fi";
 import { FaShoppingCart } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useSiteSettings, useCartCount } from "../hooks/useApi";
+import { useSiteSettings, useCartCount, useNotifications } from "../hooks/useApi";
 import { clearCart } from "../utils/cart";
 import api from "../services/api";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import NotificationBell from "./NotificationBell";
 
 interface Customer {
   name: string;
@@ -22,6 +23,7 @@ interface Customer {
 export default function Header() {
   const { data: settings } = useSiteSettings();
   const cartCount = useCartCount();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('customer');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -153,6 +155,17 @@ export default function Header() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
+            {/* Notifications */}
+            {customer && (
+              <NotificationBell
+                role="customer"
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkRead={markAsRead}
+                onMarkAllRead={markAllAsRead}
+              />
+            )}
+
             {/* Cart */}
             <button
               onClick={() => {

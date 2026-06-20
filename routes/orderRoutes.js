@@ -13,6 +13,7 @@ const {
 } = require('../services/biteshipService');
 const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
+const { notifyAdmin, notifyCustomer } = require('../utils/notify');
 
 const snap = new midtransClient.Snap({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
@@ -128,6 +129,7 @@ const webhookHandler = async (req, res) => {
     else if (transaction_status === 'expire') newPaymentStatus = 'expired';
     else if (transaction_status === 'refund') newPaymentStatus = 'refunded';
 
+    const previousPaymentStatus = order.paymentStatus;
     const wasPending = order.paymentStatus !== 'paid';
     order.paymentStatus = newPaymentStatus;
 
@@ -171,6 +173,46 @@ const webhookHandler = async (req, res) => {
     }
 
     await order.save();
+
+    try {
+      if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
+        await notifyAdmin({
+          type: 'payment_paid',
+          title: 'Pembayaran diterima',
+          message: `Pesanan ${order.midtransOrderId} telah dibayar`,
+          link: `/admin/orders/${order._id}`,
+          relatedId: order._id,
+        });
+        await notifyCustomer({
+          customerId: order.customer,
+          type: 'payment_confirmed',
+          title: 'Pembayaran dikonfirmasi',
+          message: 'Pembayaran untuk pesanan kamu telah dikonfirmasi',
+          link: `/pesanan/${order._id}`,
+          relatedId: order._id,
+        });
+      } else if (['failed', 'expired'].includes(newPaymentStatus) && previousPaymentStatus !== newPaymentStatus) {
+        const expired = newPaymentStatus === 'expired';
+        await notifyAdmin({
+          type: 'payment_failed',
+          title: 'Pembayaran gagal',
+          message: `Pembayaran pesanan ${order.midtransOrderId} ${expired ? 'kedaluwarsa' : 'gagal'}`,
+          link: `/admin/orders/${order._id}`,
+          relatedId: order._id,
+        });
+        await notifyCustomer({
+          customerId: order.customer,
+          type: 'payment_failed',
+          title: 'Pembayaran gagal',
+          message: `Pembayaran untuk pesanan kamu ${expired ? 'kedaluwarsa' : 'gagal'}`,
+          link: `/pesanan/${order._id}`,
+          relatedId: order._id,
+        });
+      }
+    } catch (notifyErr) {
+      console.error('[Notify] webhook notify failed:', notifyErr.message);
+    }
+
     res.status(200).json({ message: 'OK' });
   } catch (err) {
     console.error('[Webhook] Error:', err.message);
@@ -420,6 +462,18 @@ router.post('/', customerAuth, async (req, res) => {
     order.midtransToken = snapTransaction.token;
     await order.save();
 
+    try {
+      await notifyAdmin({
+        type: 'order_new',
+        title: 'Pesanan baru',
+        message: `Pesanan baru dari ${req.customer.name} senilai Rp${total.toLocaleString('id-ID')}`,
+        link: `/admin/orders/${order._id}`,
+        relatedId: order._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] order_new failed:', notifyErr.message);
+    }
+
     res.status(201).json({ orderId: order._id, snapToken: snapTransaction.token });
   } catch (err) {
     if (reservedVoucherId) {
@@ -500,6 +554,7 @@ router.put('/:id/status', auth, async (req, res) => {
     const { orderStatus, paymentStatus, adminNote, biteshipTrackingCode } = req.body;
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    const previousPaymentStatus = order.paymentStatus;
     if (orderStatus) order.orderStatus = orderStatus;
     if (paymentStatus) {
       order.paymentStatus = paymentStatus;
@@ -529,6 +584,33 @@ router.put('/:id/status', auth, async (req, res) => {
     if (adminNote !== undefined) order.adminNote = adminNote;
     if (biteshipTrackingCode !== undefined) order.biteshipTrackingCode = biteshipTrackingCode;
     await order.save();
+
+    if (paymentStatus && paymentStatus !== previousPaymentStatus) {
+      try {
+        if (paymentStatus === 'paid') {
+          await notifyCustomer({
+            customerId: order.customer,
+            type: 'payment_confirmed',
+            title: 'Pembayaran dikonfirmasi',
+            message: 'Pembayaran untuk pesanan kamu telah dikonfirmasi',
+            link: `/pesanan/${order._id}`,
+            relatedId: order._id,
+          });
+        } else if (['failed', 'expired'].includes(paymentStatus)) {
+          await notifyCustomer({
+            customerId: order.customer,
+            type: 'payment_failed',
+            title: 'Pembayaran gagal',
+            message: `Pembayaran untuk pesanan kamu ${paymentStatus === 'expired' ? 'kedaluwarsa' : 'gagal'}`,
+            link: `/pesanan/${order._id}`,
+            relatedId: order._id,
+          });
+        }
+      } catch (notifyErr) {
+        console.error('[Notify] manual status update notify failed:', notifyErr.message);
+      }
+    }
+
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
