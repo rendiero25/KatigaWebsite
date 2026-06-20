@@ -12,7 +12,7 @@ KumaKuma Website — full-stack company profile + CMS for **katiga.id**. The bac
 ```bash
 npm run dev
 ```
-This runs `nodemon server.js` (port 5000) and `cd client && npx vite` (port 5173) concurrently.
+This runs `nodemon server.js` (port 8000 — see `.env`'s `PORT`, also enforced by the `predev` script's `kill-port 8000`) and `cd client && npx vite` (port 5173) concurrently.
 
 > **Run these before every commit** — lint and type-check must both pass.
 
@@ -49,14 +49,14 @@ Create `.env` at the project root:
 ```
 MONGODB_URI=mongodb+srv://...
 JWT_SECRET=...
-PORT=5000
+PORT=8000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
 ```
 
 Create `client/.env` for the frontend:
 ```
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:8000
 ```
 
 ## Architecture
