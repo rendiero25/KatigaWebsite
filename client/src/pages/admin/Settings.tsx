@@ -5,6 +5,7 @@ import api, { API_BASE_URL } from "../../services/api";
 const API_URL = API_BASE_URL;
 
 export default function AdminSettings() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [settings, setSettings] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({

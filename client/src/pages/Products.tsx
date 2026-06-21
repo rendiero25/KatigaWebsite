@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { ChevronDownIcon } from "lucide-react";
 import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { useProducts, useCategories } from "../hooks/useApi";
+import { useProducts, useCategories, useWishlist } from "../hooks/useApi";
 import api from "../services/api";
+import WishlistButton from "../components/WishlistButton";
+import StarRating from '../components/StarRating';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -25,11 +27,22 @@ const sortLabels: Record<"default" | "az" | "za", string> = {
 };
 
 export default function Products() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [settings, setSettings] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"default" | "az" | "za">("default");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { wishlistIds, add, remove } = useWishlist();
+
+  const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
+    if (currentlyInWishlist) {
+      remove(productId);
+    } else {
+      add(productId);
+    }
+  };
 
   const { data: categories } = useCategories();
 
@@ -44,12 +57,13 @@ export default function Products() {
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [activeCategory, searchQuery, sortBy]);
 
   const filteredProducts = (Array.isArray(productskumakuma) ? productskumakuma : [])
-    .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a: any, b: any) => {
+    .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase())) // eslint-disable-line @typescript-eslint/no-explicit-any
+    .sort((a: any, b: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
       if (sortBy === "az") return a.name.localeCompare(b.name);
       if (sortBy === "za") return b.name.localeCompare(a.name);
       return 0;
@@ -228,7 +242,7 @@ export default function Products() {
                 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
               >
-                {pagedProducts.map((product: any) => (
+                {pagedProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                   <motion.div key={product._id} variants={fadeInUp}>
                     <Link to={`/produk/${product._id}`} className="group block">
                       <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4">
@@ -237,14 +251,39 @@ export default function Products() {
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                         />
+                        <WishlistButton
+                          productId={product._id}
+                          inWishlist={wishlistIds.has(product._id)}
+                          onToggle={handleToggleWishlist}
+                          redirectTo={`/produk/${product._id}`}
+                        />
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-gray-900 mb-1">
                           {product.name}
                         </h3>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <StarRating value={product.ratingAvg ?? 0} size="sm" />
+                          {product.reviewCount > 0 && (
+                            <span className="text-xs text-gray-400">({product.reviewCount})</span>
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500 line-clamp-2 mb-2">
                           {product.description}
                         </p>
+                        {product.priceNumeric > 0 && product.activePromotion && (
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <span className="text-sm font-bold text-red-600">
+                              {`Rp ${Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}`}
+                            </span>
+                            <span className="text-xs text-gray-400 line-through">
+                              {`Rp ${product.priceNumeric.toLocaleString('id-ID')}`}
+                            </span>
+                            <span className="px-1.5 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded-full">
+                              -{product.activePromotion.discountPercent}%
+                            </span>
+                          </div>
+                        )}
                         <button className="cursor-pointer text-sm font-semibold text-indigo-600 hover:text-indigo-700">
                           Lihat Detail
                         </button>

@@ -5,7 +5,6 @@ import { API_BASE_URL } from "../../services/api";
 const API_URL = API_BASE_URL;
 
 export default function AdminFooter() {
-  const [footer, setFooter] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     consultationTitle: "",
@@ -19,7 +18,6 @@ export default function AdminFooter() {
     fetch(`${API_URL}/footer`)
       .then((res) => res.json())
       .then((data) => {
-        setFooter(data);
         setFormData({
           consultationTitle: data.consultationTitle || "",
           consultationText: data.consultationText || "",

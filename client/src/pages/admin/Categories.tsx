@@ -30,7 +30,10 @@ export default function AdminCategories() {
     setCategories(await res.json());
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

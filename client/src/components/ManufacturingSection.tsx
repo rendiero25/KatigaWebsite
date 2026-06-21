@@ -56,7 +56,7 @@ export default function ManufacturingSection() {
 
         {/* Features Icons */}
         <div className="grid sm:grid-cols-3 gap-12 max-w-4xl mx-auto">
-          {features.map((feature: any, index: number) => (
+          {features.map((feature: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
             <div key={index} className="text-center group">
               <div className="w-20 mx-auto mb-6 flex flex-wrap items-end justify-center">
                 {feature.icon ? (

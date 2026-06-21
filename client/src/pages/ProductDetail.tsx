@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ChevronDown, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Minus, Plus, ShoppingCart, Share2, Heart, Zap } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+import type { ItemDimensions, CartItem } from '../types/ecommerce';
 import api from '../services/api';
-import { addToCart } from '../utils/cart';
+import { addToCart, buildCartItemId, normalizeDimensions } from '../utils/cart';
 import { cn } from '../lib/utils';
+import { useWishlist, useProductReviews } from '../hooks/useApi';
 
 import Header from '../components/Header';
+import WishlistButton from '../components/WishlistButton';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
+import StarRating from '../components/StarRating';
+import ReviewCard from '../components/ReviewCard';
 import { Spinner } from '../components/ui/spinner';
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from '../components/ui/collapsible';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -33,7 +33,7 @@ interface Variant {
   name: string;
   price: number;
   weightGrams: number;
-  dimensions: { length: number; width: number; height: number };
+  dimensions: ItemDimensions;
 }
 
 interface Product {
@@ -47,7 +47,11 @@ interface Product {
   isFeatured: boolean;
   priceNumeric: number;
   weightGrams: number;
+  dimensions: ItemDimensions;
   variants: Variant[];
+  ratingAvg: number;
+  reviewCount: number;
+  activePromotion: { _id: string; name: string; discountPercent: number } | null;
 }
 
 interface FeaturedProduct {
@@ -59,16 +63,30 @@ interface FeaturedProduct {
 }
 
 const formatRp = (n: number): string => `Rp ${n.toLocaleString('id-ID')}`;
+const BUY_NOW_ITEM_KEY = 'kk_buy_now_item';
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState('');
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
-  const [descOpen, setDescOpen] = useState(true);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const { wishlistIds, add, remove } = useWishlist();
+  const { reviews, meta, loading: reviewsLoading, loadingMore, loadMore } = useProductReviews(id ?? '');
+
+  const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
+    if (currentlyInWishlist) {
+      remove(productId);
+    } else {
+      add(productId);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -78,6 +96,7 @@ export default function ProductDetail() {
         setProduct(data);
         if (data.images.length > 0) setActiveImage(data.images[0]);
         else if (data.image) setActiveImage(data.image);
+        if (data.variants?.length > 0) setSelectedVariant(data.variants[0]);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -117,18 +136,118 @@ export default function ProductDetail() {
   const hasPrice = effectivePrice > 0;
 
   const handleAddToCart = () => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate(`/masuk?redirect=/produk/${id}`);
+      return;
+    }
     setAdding(true);
+
+    const promo = product.activePromotion;
+    const basePrice = selectedVariant !== null && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product.priceNumeric ?? 0);
+    const discountedPrice = promo
+      ? Math.round(basePrice * (1 - promo.discountPercent / 100))
+      : basePrice;
+    const weightGrams =
+      selectedVariant !== null && selectedVariant.weightGrams > 0
+        ? selectedVariant.weightGrams
+        : (product.weightGrams ?? 0);
+
     addToCart({
+      cartItemId: buildCartItemId(product._id, selectedVariant?._id),
       productId: product._id,
+      variantId: selectedVariant?._id,
+      variantName: selectedVariant?.name,
       name: selectedVariant
         ? `${product.name} - ${selectedVariant.name}`
         : product.name,
       image: activeImage || product.image || '',
-      priceNumeric: effectivePrice,
-      weightGrams: selectedVariant?.weightGrams ?? product.weightGrams ?? 0,
+      priceNumeric: discountedPrice,
+      weightGrams,
+      dimensions: normalizeDimensions(selectedVariant?.dimensions, product.dimensions),
       quantity: qty,
+      originalPrice: promo ? basePrice : undefined,
+      discountPercent: promo ? promo.discountPercent : undefined,
+      categoryId: product.category?._id ?? undefined,
     });
     setTimeout(() => setAdding(false), 600);
+  };
+
+  const handleBuyNow = () => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate(`/masuk?redirect=/produk/${id}`);
+      return;
+    }
+
+    const promo = product.activePromotion;
+    const basePrice = selectedVariant !== null && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product.priceNumeric ?? 0);
+    const discountedPrice = promo
+      ? Math.round(basePrice * (1 - promo.discountPercent / 100))
+      : basePrice;
+    const weightGrams =
+      selectedVariant !== null && selectedVariant.weightGrams > 0
+        ? selectedVariant.weightGrams
+        : (product.weightGrams ?? 0);
+
+    const buyNowItem: CartItem = {
+      cartItemId: buildCartItemId(product._id, selectedVariant?._id),
+      productId: product._id,
+      variantId: selectedVariant?._id,
+      variantName: selectedVariant?.name,
+      name: selectedVariant
+        ? `${product.name} - ${selectedVariant.name}`
+        : product.name,
+      image: activeImage || product.image || '',
+      priceNumeric: discountedPrice,
+      weightGrams,
+      dimensions: normalizeDimensions(selectedVariant?.dimensions, product.dimensions),
+      quantity: qty,
+      originalPrice: promo ? basePrice : undefined,
+      discountPercent: promo ? promo.discountPercent : undefined,
+      categoryId: product.category?._id ?? undefined,
+    };
+
+    sessionStorage.setItem(BUY_NOW_ITEM_KEY, JSON.stringify(buyNowItem));
+    navigate('/checkout', { state: { buyNowItem } });
+  };
+
+  const inWishlist = wishlistIds.has(product._id);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const sharePayload = {
+      title: product.name,
+      text: `Lihat ${product.name} di Katiga`,
+      url,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(sharePayload);
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      window.prompt('Salin tautan produk:', url);
+    }
+  };
+
+  const handleLoveClick = () => {
+    if (!localStorage.getItem('customerToken')) {
+      navigate(`/masuk?redirect=/produk/${id}`);
+      return;
+    }
+    handleToggleWishlist(product._id, inWishlist);
   };
 
   return (
@@ -152,10 +271,10 @@ export default function ProductDetail() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="flex flex-col md:grid md:grid-cols-2 gap-12">
+          <div className="flex flex-col md:flex-row gap-12">
             {/* Image Gallery */}
-            <div className="flex flex-col gap-4">
-              <div className="bg-gray-50 rounded-2xl overflow-hidden relative aspect-square md:aspect-auto md:h-[500px]">
+            <div className="flex flex-col gap-4 md:w-1/2 md:shrink-0 md:sticky md:top-24 md:self-start">
+              <div className="bg-gray-50 rounded-2xl overflow-hidden relative aspect-square">
                 <img
                   src={
                     activeImage
@@ -169,6 +288,15 @@ export default function ProductDetail() {
                       'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
                   }}
                 />
+                {product && (
+                  <WishlistButton
+                    productId={product._id}
+                    inWishlist={wishlistIds.has(product._id)}
+                    onToggle={handleToggleWishlist}
+                    size="md"
+                    redirectTo={`/produk/${product._id}`}
+                  />
+                )}
                 {product.isFeatured && (
                   <span className="absolute top-4 left-4 px-3 py-1 bg-pink-500 text-white font-medium rounded-full text-sm">
                     Featured
@@ -208,7 +336,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Product Info */}
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-5 md:flex-1">
               <span className="text-primary font-medium bg-primary/10 px-3 py-1 rounded-full text-sm w-fit">
                 {product.category?.name || 'Kategori Umum'}
               </span>
@@ -216,6 +344,13 @@ export default function ProductDetail() {
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
                 {product.name}
               </h1>
+
+              <div className="flex items-center gap-2">
+                <StarRating value={product.ratingAvg} size="sm" />
+                <span className="text-sm text-gray-400">
+                  {product.reviewCount > 0 ? `${product.reviewCount} ulasan` : 'Belum ada ulasan'}
+                </span>
+              </div>
 
               {variants.length > 0 && (
                 <div>
@@ -235,37 +370,49 @@ export default function ProductDetail() {
                         )}
                       >
                         {v.name}
-                        {v.price > 0 && (
-                          <span className="ml-1 text-xs opacity-70">
-                            · {formatRp(v.price)}
-                          </span>
-                        )}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              <p className="text-2xl font-bold text-gray-900">
-                {hasPrice ? formatRp(effectivePrice) : 'Hubungi untuk harga'}
-              </p>
-
-              <Collapsible open={descOpen} onOpenChange={setDescOpen}>
-                <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left text-sm font-semibold text-gray-900 hover:bg-gray-50 transition cursor-pointer">
-                  Deskripsi Produk
-                  <ChevronDown
-                    className={cn(
-                      'size-4 text-gray-500 transition-transform duration-200',
-                      descOpen && 'rotate-180'
-                    )}
-                  />
-                </CollapsibleTrigger>
-                <CollapsibleContent className="data-[closed]:hidden">
-                  <div className="px-4 pt-3 pb-2 text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                    {product.description || 'Tidak ada deskripsi.'}
+              {hasPrice ? (
+                product.activePromotion ? (
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-bold text-red-600">
+                        {formatRp(Math.round(effectivePrice * (1 - product.activePromotion.discountPercent / 100)))}
+                      </span>
+                      <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">
+                        -{product.activePromotion.discountPercent}%
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-400 line-through">{formatRp(effectivePrice)}</span>
+                    <span className="text-xs text-primary mt-0.5">{product.activePromotion.name}</span>
                   </div>
-                </CollapsibleContent>
-              </Collapsible>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">{formatRp(effectivePrice)}</p>
+                )
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">Hubungi untuk harga</p>
+              )}
+
+              <div>
+                <p
+                  className={cn(
+                    'text-sm text-gray-600 leading-relaxed whitespace-pre-line',
+                    !descExpanded && 'line-clamp-[10]'
+                  )}
+                >
+                  {product.description || 'Tidak ada deskripsi.'}
+                </p>
+                <button
+                  onClick={() => setDescExpanded((v) => !v)}
+                  className="mt-2 text-sm font-semibold text-primary hover:underline"
+                >
+                  {descExpanded ? 'Lihat lebih sedikit' : 'Lihat lebih lanjut'}
+                </button>
+              </div>
 
               {hasPrice && (
                 <div className="flex flex-col gap-4">
@@ -300,23 +447,60 @@ export default function ProductDetail() {
                     </p>
                   </div>
 
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={adding}
-                    className="w-full h-12 rounded-xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    {adding ? (
-                      <>
-                        <Spinner className="text-white mr-2" />
-                        Menambahkan...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="mr-2" />
-                        Tambah ke Keranjang
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleAddToCart}
+                      disabled={adding}
+                      variant="outline"
+                      className="flex-1 h-12 rounded-xl border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
+                    >
+                      {adding ? (
+                        <>
+                          <Spinner className="mr-2" />
+                          Menambahkan...
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="mr-2" />
+                          Tambah ke Keranjang
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={handleBuyNow}
+                      className="flex-1 h-12 rounded-xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all duration-300"
+                    >
+                      <Zap className="mr-2" />
+                      Beli Langsung
+                    </Button>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleShare}
+                      className="flex-1 h-11 rounded-xl border-gray-200 text-gray-700 font-medium hover:bg-gray-50"
+                    >
+                      <Share2 className="mr-2 size-4" />
+                      {shareCopied ? 'Tersalin!' : 'Bagikan'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleLoveClick}
+                      className={cn(
+                        'flex-1 h-11 rounded-xl font-medium hover:bg-gray-50',
+                        inWishlist
+                          ? 'border-red-200 text-red-500 hover:bg-red-50'
+                          : 'border-gray-200 text-gray-700'
+                      )}
+                    >
+                      <Heart className={cn('mr-2 size-4', inWishlist && 'fill-red-500')} />
+                      {inWishlist ? 'Disukai' : 'Suka'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -329,15 +513,67 @@ export default function ProductDetail() {
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
               Ulasan Pembeli
             </h2>
-            <p className="text-sm text-gray-400 mb-10">0 ulasan</p>
-            <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className="size-8 fill-gray-200 text-gray-200" />
-                ))}
+            <p className="text-sm text-gray-400 mb-8">{product.reviewCount} ulasan</p>
+
+            {reviewsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-pulse h-6 w-40 bg-gray-200 rounded" />
               </div>
-              <p className="text-gray-400 text-sm">Belum ada ulasan untuk produk ini.</p>
-            </div>
+            ) : meta && meta.total > 0 ? (
+              <>
+                {/* Summary */}
+                <div className="flex flex-col sm:flex-row gap-8 mb-10 p-6 bg-white rounded-2xl">
+                  <div className="flex flex-col items-center justify-center shrink-0">
+                    <p className="text-5xl font-bold text-gray-900">{meta.ratingAvg.toFixed(1)}</p>
+                    <StarRating value={meta.ratingAvg} size="md" />
+                    <p className="text-sm text-gray-400 mt-1">{meta.total} ulasan</p>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {([5, 4, 3, 2, 1] as const).map((star) => {
+                      const count = meta.ratingDistribution[star] ?? 0;
+                      const pct   = meta.total > 0 ? Math.round((count / meta.total) * 100) : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-3">
+                          <span className="text-xs text-gray-500 w-6 text-right">{star}★</span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-amber-400 h-2 rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400 w-6">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Review list */}
+                <div className="bg-white rounded-2xl px-6">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review._id} review={review} />
+                  ))}
+                </div>
+
+                {/* Load more */}
+                {meta.page < meta.pages && (
+                  <div className="flex justify-center mt-6">
+                    <button
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-8 py-2.5 rounded-full border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                    >
+                      {loadingMore ? 'Memuat...' : 'Muat lebih banyak'}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
+                <StarRating value={0} size="lg" />
+                <p className="text-gray-400 text-sm">Belum ada ulasan untuk produk ini.</p>
+              </div>
+            )}
           </div>
         </section>
 

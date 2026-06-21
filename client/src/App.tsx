@@ -29,12 +29,26 @@ import AdminProductPageContent from './pages/admin/ProductPageContent';
 import AdminContactPageContent from './pages/admin/ContactPageContent';
 import AdminOrders from './pages/admin/Orders';
 import AdminOrderDetail from './pages/admin/OrderDetail';
+import AdminUsers from './pages/admin/Users';
+import AdminReviews from './pages/admin/Reviews';
+import AdminPromotions from './pages/admin/Promotions';
+import AdminPromosiTampilan from './pages/admin/PromosiTampilan';
+import AdminLaporan from './pages/admin/Laporan';
+import AdminShippingSettings from './pages/admin/ShippingSettings';
 import Daftar from './pages/Daftar';
 import Masuk from './pages/Masuk';
 import Keranjang from './pages/Keranjang';
 import Checkout from './pages/Checkout';
 import Pesanan from './pages/Pesanan';
 import PesananDetail from './pages/PesananDetail';
+import Profil from './pages/Profil';
+import PengaturanAkun from './pages/PengaturanAkun'
+import AlamatSaya from './pages/AlamatSaya'
+import WishlistSaya from './pages/WishlistSaya'
+import LaporanKeuangan from './pages/LaporanKeuangan'
+import UlasanSaya from './pages/UlasanSaya'
+import Notifikasi from './pages/Notifikasi'
+import AdminNotifikasi from './pages/admin/Notifikasi'
 
 function App() {
   return (
@@ -57,6 +71,13 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/pesanan" element={<Pesanan />} />
         <Route path="/pesanan/:id" element={<PesananDetail />} />
+        <Route path="/profil" element={<Profil />} />
+        <Route path="/profil/pengaturan" element={<PengaturanAkun />} />
+        <Route path="/profil/alamat" element={<AlamatSaya />} />
+        <Route path="/profil/wishlist" element={<WishlistSaya />} />
+        <Route path="/profil/laporan-keuangan" element={<LaporanKeuangan />} />
+        <Route path="/profil/ulasan" element={<UlasanSaya />} />
+        <Route path="/notifikasi" element={<Notifikasi />} />
 
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -73,6 +94,7 @@ function App() {
         <Route path="/admin/footer" element={<AdminFooter />} />
         <Route path="/admin/news" element={<AdminNews />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/shipping" element={<AdminShippingSettings />} />
         <Route path="/admin/messages" element={<AdminMessages />} />
         <Route path="/admin/certification-tech" element={<AdminCertificationTech />} />
         <Route path="/admin/distribution" element={<AdminDistribution />} />
@@ -82,6 +104,12 @@ function App() {
         <Route path="/admin/contact-page-content" element={<AdminContactPageContent />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/reviews" element={<AdminReviews />} />
+        <Route path="/admin/laporan" element={<AdminLaporan />} />
+        <Route path="/admin/promosi" element={<AdminPromotions />} />
+        <Route path="/admin/promosi/tampilan" element={<AdminPromosiTampilan />} />
+        <Route path="/admin/notifikasi" element={<AdminNotifikasi />} />
       </Routes>
     </BrowserRouter>
   );

@@ -5,7 +5,6 @@ import { API_BASE_URL } from "../../services/api";
 const API_URL = API_BASE_URL;
 
 export default function AdminContact() {
-  const [contactInfo, setContactInfo] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     phone: "",
@@ -20,7 +19,6 @@ export default function AdminContact() {
     fetch(`${API_URL}/contact/info`)
       .then((res) => res.json())
       .then((data) => {
-        setContactInfo(data);
         setFormData({
           phone: data.phone || "",
           whatsapp: data.whatsapp || "",

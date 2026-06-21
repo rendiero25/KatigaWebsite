@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import { api, API_BASE_URL } from "../../services/api";
 import { FaSave, FaSpinner } from "react-icons/fa";
@@ -14,11 +14,7 @@ export default function ProductPageContent() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const data = await api.getProductPageSettings();
       if (data) {
@@ -36,7 +32,12 @@ export default function ProductPageContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

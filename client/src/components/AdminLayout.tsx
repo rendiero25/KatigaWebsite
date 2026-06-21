@@ -1,267 +1,360 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
-  FaHome,
-  FaImage,
-  FaUsers,
-  FaStar,
-  FaBox,
-  FaTags,
-  FaInfoCircle,
-  FaCertificate,
-  FaBook,
-  FaPhone,
-  FaNewspaper,
-  FaCog,
-  FaEnvelope,
-  FaSignOutAlt,
-  FaBars,
-  FaShoppingCart,
-} from "react-icons/fa";
+  LayoutDashboard,
+  Home,
+  Info,
+  Package,
+  BookOpen,
+  Newspaper,
+  Phone,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Layers,
+  ShoppingCart,
+  ExternalLink,
+  Users as UsersIcon,
+  MessageSquare,
+  Tag,
+  BarChart3,
+  Truck,
+  Bell,
+} from 'lucide-react'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import { Separator } from '@/components/ui/separator'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
+import { useNotifications } from '../hooks/useApi'
+import NotificationBell from './NotificationBell'
 
-interface AdminLayoutProps {
-  children: ReactNode;
-  title: string;
+interface Props {
+  children: ReactNode
+  title: string
 }
 
-const menuItems = [
-  { path: "/admin", icon: FaHome, label: "Dashboard" },
-  {
-    path: "/admin/home",
-    icon: FaHome,
-    label: "Home",
-    children: [
-      { path: "/admin/hero", label: "Hero Section" },
-      { path: "/admin/partners", label: "Partners" },
-      { path: "/admin/advantages", label: "Keunggulan" },
-      { path: "/admin/manufacturing", label: "Manufacturing" },
-    ],
-  },
-  {
-    path: "/admin/about",
-    icon: FaInfoCircle,
-    label: "Tentang Kami",
-    children: [
-      { path: "/admin/about", label: "General Info" },
-      { path: "/admin/certification-tech", label: "Technology" },
-      { path: "/admin/distribution", label: "Distribution" },
-    ],
-  },
-  {
-    path: "/admin/products-group",
-    icon: FaBox,
-    label: "Produk",
-    children: [
-      { path: "/admin/categories", label: "Kategori" },
-      { path: "/admin/products", label: "Produk" },
-      { path: "/admin/product-page-content", label: "Konten Hal. Produk" },
-    ],
-  },
-  { path: "/admin/catalog", icon: FaBook, label: "E-Catalog" },
-  { path: "/admin/news", icon: FaNewspaper, label: "Berita" },
-  {
-    path: "/admin/contact-group",
-    icon: FaPhone,
-    label: "Kontak",
-    children: [
-      { path: "/admin/contact", label: "Info Kontak" },
-      { path: "/admin/contact-page-content", label: "Konten Hal. Kontak" },
-    ],
-  },
-  { path: "/admin/footer", icon: FaInfoCircle, label: "Footer" },
-  { path: "/admin/orders", icon: FaShoppingCart, label: "Pesanan" },
-  { path: "/admin/settings", icon: FaCog, label: "Pengaturan" },
-];
+interface ChildMenuItem {
+  path: string
+  label: string
+}
 
-export default function AdminLayout({ children, title }: AdminLayoutProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [adminEmail] = useState(
-    () => localStorage.getItem("adminEmail") || "Admin",
-  );
+interface MenuItem {
+  path: string
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  children?: ChildMenuItem[]
+}
 
-  // State to track expanded menus
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(["About Us"]);
+interface MenuGroup {
+  label?: string
+  items: MenuItem[]
+}
 
-  const toggleMenu = (label: string) => {
-    if (expandedMenus.includes(label)) {
-      setExpandedMenus(expandedMenus.filter((item) => item !== label));
-    } else {
-      setExpandedMenus([...expandedMenus, label]);
-    }
-  };
+const menuGroups: MenuGroup[] = [
+  {
+    items: [
+      { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+      { path: '/admin/notifikasi', icon: Bell, label: 'Notifikasi' },
+    ],
+  },
+  {
+    label: 'Halaman Website',
+    items: [
+      {
+        path: '/admin/home',
+        icon: Home,
+        label: 'Home',
+        children: [
+          { path: '/admin/hero', label: 'Hero Section' },
+          { path: '/admin/partners', label: 'Partners' },
+          { path: '/admin/advantages', label: 'Keunggulan' },
+          { path: '/admin/manufacturing', label: 'Manufacturing' },
+        ],
+      },
+      {
+        path: '/admin/about',
+        icon: Info,
+        label: 'Tentang Kami',
+        children: [
+          { path: '/admin/about', label: 'General Info' },
+          { path: '/admin/certification-tech', label: 'Technology' },
+          { path: '/admin/distribution', label: 'Distribution' },
+        ],
+      },
+      {
+        path: '/admin/contact-group',
+        icon: Phone,
+        label: 'Kontak',
+        children: [
+          { path: '/admin/contact', label: 'Info Kontak' },
+          { path: '/admin/contact-page-content', label: 'Konten Hal. Kontak' },
+        ],
+      },
+      { path: '/admin/footer', icon: Layers, label: 'Footer' },
+    ],
+  },
+  {
+    label: 'Produk & Katalog',
+    items: [
+      {
+        path: '/admin/products-group',
+        icon: Package,
+        label: 'Produk',
+        children: [
+          { path: '/admin/categories', label: 'Kategori' },
+          { path: '/admin/products', label: 'Produk' },
+          { path: '/admin/product-page-content', label: 'Konten Hal. Produk' },
+        ],
+      },
+      { path: '/admin/catalog', icon: BookOpen, label: 'E-Catalog' },
+    ],
+  },
+  {
+    label: 'Konten',
+    items: [{ path: '/admin/news', icon: Newspaper, label: 'Berita' }],
+  },
+  {
+    label: 'Transaksi',
+    items: [
+      { path: '/admin/orders',  icon: ShoppingCart,  label: 'Pesanan' },
+      { path: '/admin/users',   icon: UsersIcon,     label: 'Users'   },
+      { path: '/admin/reviews', icon: MessageSquare, label: 'Ulasan'  },
+      { path: '/admin/laporan', icon: BarChart3,     label: 'Laporan' },
+    ],
+  },
+  {
+    label: 'Promosi',
+    items: [
+      {
+        path: '/admin/promosi-group',
+        icon: Tag,
+        label: 'Promosi',
+        children: [
+          { path: '/admin/promosi', label: 'Kelola Promosi' },
+          { path: '/admin/promosi/tampilan', label: 'Tampilan Promosi' },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Sistem',
+    items: [
+      { path: '/admin/settings', icon: Settings, label: 'Pengaturan' },
+      { path: '/admin/shipping', icon: Truck, label: 'Pengiriman' },
+    ],
+  },
+]
+
+const allMenuItems = menuGroups.flatMap(group => group.items)
+
+export default function AdminLayout({ children, title }: Props) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const adminEmail = localStorage.getItem('adminEmail') || 'Admin'
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('admin')
+
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+    allMenuItems.forEach(item => {
+      if (item.children?.some(child => location.pathname === child.path)) {
+        initial[item.label] = true
+      }
+    })
+    return initial
+  })
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-
-    if (!token) {
-      navigate("/admin/login");
+    if (!localStorage.getItem('adminToken')) {
+      navigate('/admin/login')
     }
-  }, [navigate]);
+  }, [navigate])
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    localStorage.removeItem("adminEmail");
-    navigate("/admin/login");
-  };
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminEmail')
+    navigate('/admin/login')
+  }
+
+  const toggleMenu = (label: string) => {
+    setExpandedMenus(prev => ({ ...prev, [label]: !prev[label] }))
+  }
+
+  const menuClassName =
+    'gap-2 [&_[data-sidebar=menu-button]]:cursor-pointer [&_[data-sidebar=menu-sub-button]]:cursor-pointer'
+
+  const renderMenuItem = (item: MenuItem) => {
+    const Icon = item.icon
+    const isActive =
+      location.pathname === item.path ||
+      (item.children?.some(child => location.pathname === child.path) ?? false)
+    const isExpanded = expandedMenus[item.label] ?? false
+
+    if (item.children) {
+      return (
+        <SidebarMenuItem key={item.label}>
+          <Collapsible
+            open={isExpanded}
+            onOpenChange={() => toggleMenu(item.label)}
+            className="w-full"
+          >
+            <SidebarMenuButton
+              render={<CollapsibleTrigger className="w-full text-left" />}
+              isActive={isActive}
+              tooltip={item.label}
+            >
+              <Icon />
+              <span>{item.label}</span>
+              <ChevronRight
+                className={cn(
+                  'ml-auto size-4 transition-transform duration-200',
+                  isExpanded && 'rotate-90',
+                )}
+              />
+            </SidebarMenuButton>
+            <CollapsibleContent>
+              <SidebarMenuSub className="gap-1.5 py-1">
+                {item.children.map(child => {
+                  const isChildActive = location.pathname === child.path
+                  return (
+                    <SidebarMenuSubItem key={child.path}>
+                      <SidebarMenuSubButton
+                        render={<Link to={child.path} />}
+                        isActive={isChildActive}
+                      >
+                        <span>{child.label}</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  )
+                })}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarMenuItem>
+      )
+    }
+
+    return (
+      <SidebarMenuItem key={item.path}>
+        <SidebarMenuButton
+          render={<Link to={item.path} />}
+          tooltip={item.label}
+          isActive={isActive}
+        >
+          <Icon />
+          <span>{item.label}</span>
+          {item.path === '/admin/notifikasi' && unreadCount > 0 && (
+            <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <TooltipProvider>
+      <SidebarProvider>
+        <Sidebar collapsible="icon">
+          <SidebarHeader>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg" className="pointer-events-none select-none">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-red-500 via-yellow-400 to-green-500 text-white text-xs font-bold shrink-0">
+                    KK
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold text-sidebar-foreground">KumaKuma</span>
+                    <span className="truncate text-xs text-sidebar-foreground/50">Admin Panel</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
 
-      {/* Sidebar */}
-      <aside
-        className={`
-        fixed top-0 left-0 z-50 w-64 h-full bg-gray-900 text-white transform transition-transform duration-200 
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0
-      `}
-      >
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-500 via-yellow-500 to-green-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-sm font-bold">KK</span>
-            </div>
-            <div>
-              <p className="font-semibold">KumaKuma</p>
-              <p className="text-xs text-gray-400">Admin Panel</p>
-            </div>
-          </div>
-        </div>
+          <SidebarContent>
+            {menuGroups.map(group => (
+              <SidebarGroup key={group.label ?? 'dashboard'}>
+                {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+                <SidebarGroupContent>
+                  <SidebarMenu className={menuClassName}>
+                    {group.items.map(renderMenuItem)}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            ))}
+          </SidebarContent>
 
-        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-180px)]">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              location.pathname === item.path ||
-              (item.children &&
-                item.children.some(
-                  (child) => location.pathname === child.path,
-                ));
-            const isExpanded = expandedMenus.includes(item.label);
+          <SidebarFooter>
+            <SidebarMenu className="[&_[data-sidebar=menu-button]]:cursor-pointer">
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Logout"
+                  onClick={handleLogout}
+                >
+                  <LogOut />
+                  <span>Logout</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
 
-            if (item.children) {
-              return (
-                <div key={item.label}>
-                  <button
-                    onClick={() => toggleMenu(item.label)}
-                    className={`
-                              cursor-pointer w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition
-                              ${
-                                isActive
-                                  ? "bg-indigo-900 text-white"
-                                  : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                              }
-                            `}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5" />
-                      <span className="text-sm">{item.label}</span>
-                    </div>
-                    <span
-                      className={`text-xs transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                    >
-                      ▼
-                    </span>
-                  </button>
+          <SidebarRail />
+        </Sidebar>
 
-                  {isExpanded && (
-                    <div className="ml-8 mt-1 space-y-1 border-l border-gray-700 pl-2">
-                      {item.children.map((child) => {
-                        const isChildActive = location.pathname === child.path;
-                        return (
-                          <Link
-                            key={child.path}
-                            to={child.path}
-                            onClick={() => setSidebarOpen(false)}
-                            className={`
-                                              block px-4 py-2 rounded-lg text-sm transition
-                                              ${
-                                                isChildActive
-                                                  ? "bg-indigo-600 text-white"
-                                                  : "text-gray-400 hover:text-white"
-                                              }
-                                            `}
-                          >
-                            {child.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            }
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`
-                  flex items-center gap-3 px-4 py-2.5 rounded-lg transition
-                  ${
-                    isActive
-                      ? "bg-indigo-600 text-white"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                  }
-                `}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-sm">{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-2.5 text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition"
-          >
-            <FaSignOutAlt className="w-5 h-5" />
-            <span className="text-sm">Logout</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="lg:ml-64">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between px-4 h-16">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                <FaBars className="w-5 h-5" />
-              </button>
-              <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-            </div>
-            <div className="flex items-center gap-4">
+        <SidebarInset>
+          <header className="flex h-14 shrink-0 items-center gap-2 bg-background px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-1 h-4" />
+            <h1 className="text-base font-semibold text-foreground">{title}</h1>
+            <div className="ml-auto flex items-center gap-4">
+              <NotificationBell
+                role="admin"
+                notifications={notifications}
+                unreadCount={unreadCount}
+                onMarkRead={markAsRead}
+                onMarkAllRead={markAllAsRead}
+              />
               <Link
                 to="/"
                 target="_blank"
-                className="text-sm text-gray-600 hover:text-gray-900"
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Lihat Website →
+                Ke Web Katiga
+                <ExternalLink className="size-3.5" />
               </Link>
-              <div className="text-sm text-gray-600">{adminEmail}</div>
+              <span className="text-sm text-muted-foreground hidden sm:block">{adminEmail}</span>
             </div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="p-6">{children}</main>
-      </div>
-    </div>
-  );
+          </header>
+          <main className="flex flex-1 flex-col p-6 min-h-0 w-full">
+            {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
+  )
 }

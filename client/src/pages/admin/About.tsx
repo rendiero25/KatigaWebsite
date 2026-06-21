@@ -49,9 +49,10 @@ export default function AdminAbout() {
       console.error("Failed to fetch about content", e);
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

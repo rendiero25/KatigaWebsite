@@ -20,6 +20,34 @@
   --color-gray-700: #374151;
   --color-gray-800: #1f2937;
   --color-gray-900: #111827;
+
+  /* shadcn base-nova semantic tokens */
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #111827;
+  --color-primary-foreground: #ffffff;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #4f68af;
+
+  /* Sidebar — dark theme */
+  --color-sidebar: #111827;
+  --color-sidebar-foreground: #9ca3af;
+  --color-sidebar-accent: #3730a3;
+  --color-sidebar-accent-foreground: #e0e7ff;
+  --color-sidebar-border: #374151;
+  --color-sidebar-ring: #4f68af;
+  --color-sidebar-primary: #6366f1;
+  --color-sidebar-primary-foreground: #ffffff;
 }
 
 html {
@@ -30,6 +58,16 @@ body {
   font-family: var(--font-primary);
   color: var(--color-gray-900);
   line-height: 1.6;
+}
+
+@layer base {
+  a,
+  button:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
 }
 
 /* Custom Utilities */
@@ -74,6 +112,16 @@ body {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+/* Utility: hide scrollbar */
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Scrollbar */

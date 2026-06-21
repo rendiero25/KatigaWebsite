@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import type { Order } from '../types/ecommerce';
-import api from '../services/api';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import type { Order, CanReviewResponse } from '../types/ecommerce'
+import api from '../services/api'
+import UserLayout from '../components/UserLayout'
+import ReviewForm from '../components/ReviewForm'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -22,6 +22,10 @@ export default function PesananDetail() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [reviewStatuses, setReviewStatuses] = useState<Record<string, CanReviewResponse>>({});
+  const [reviewFormItem, setReviewFormItem] = useState<{
+    productId: string; orderId: string; productName: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!localStorage.getItem('customerToken')) { navigate('/masuk'); return; }
@@ -30,6 +34,24 @@ export default function PesananDetail() {
       .then((data) => setOrder(data?.message ? null : data))
       .finally(() => setLoading(false));
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (!order || order.orderStatus !== 'delivered') return;
+    const token = localStorage.getItem('customerToken');
+    if (!token) return;
+    const fetchStatuses = async () => {
+      const results: Record<string, CanReviewResponse> = {};
+      await Promise.all(
+        order.items.map(async (item) => {
+          if (!item.product) return;
+          const key = `${order._id}-${item.product}`;
+          results[key] = await api.canReview(item.product, order._id);
+        })
+      );
+      setReviewStatuses(results);
+    };
+    fetchStatuses();
+  }, [order]);
 
   const handleRepay = () => {
     if (!order?.midtransToken) return;
@@ -43,35 +65,29 @@ export default function PesananDetail() {
   };
 
   if (loading) return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] flex items-center justify-center">
+    <UserLayout title="Detail Pesanan">
+      <div className="flex items-center justify-center py-20">
         <div className="animate-pulse text-black/40">Memuat...</div>
-      </main>
-      <Footer />
-    </>
-  );
+      </div>
+    </UserLayout>
+  )
 
   if (!order) return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center">
+    <UserLayout title="Detail Pesanan">
+      <div className="flex flex-col items-center justify-center py-20">
         <p className="text-xl font-bold text-black mb-4">Pesanan tidak ditemukan</p>
         <Link to="/pesanan" className="text-primary hover:underline">← Kembali</Link>
-      </main>
-      <Footer />
-    </>
-  );
+      </div>
+    </UserLayout>
+  )
 
   const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: 'bg-gray-100 text-gray-700' };
   const canRepay = order.paymentStatus === 'pending' && order.orderStatus === 'awaiting_payment' && order.midtransToken;
 
   return (
-    <>
-      <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-10 pb-20">
-        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 max-w-3xl">
-          <Link to="/pesanan" className="text-sm text-black/60 hover:text-black mb-6 block">← Semua Pesanan</Link>
+    <UserLayout title="Detail Pesanan">
+      <div className="w-full">
+        <Link to="/pesanan" className="text-sm text-black/60 hover:text-black mb-6 block">← Semua Pesanan</Link>
 
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -84,16 +100,34 @@ export default function PesananDetail() {
           {/* Items */}
           <div className="bg-white rounded-2xl p-5 mb-4 space-y-3">
             <h2 className="font-bold text-black mb-3">Produk</h2>
-            {order.items.map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <img src={api.getImageUrl(item.image)} alt={item.name} className="w-14 h-14 object-cover rounded-xl shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-black truncate">{item.name}</p>
-                  <p className="text-sm text-black/60">{fmt(item.priceNumeric)} × {item.quantity}</p>
+            {order.items.map((item, i) => {
+              const key    = item.product ? `${order._id}-${item.product}` : null;
+              const status = key ? reviewStatuses[key] : null;
+              return (
+                <div key={i} className="flex items-center gap-3">
+                  <img src={api.getImageUrl(item.image)} alt={item.name} className="w-14 h-14 object-cover rounded-xl shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-black truncate">{item.name}</p>
+                    <p className="text-sm text-black/60">{fmt(item.priceNumeric)} × {item.quantity}</p>
+                    {order.orderStatus === 'delivered' && status?.canReview && (
+                      <button
+                        type="button"
+                        onClick={() => setReviewFormItem({ productId: item.product, orderId: order._id, productName: item.name })}
+                        className="mt-1 text-xs font-medium text-primary hover:underline"
+                      >
+                        Tulis Ulasan
+                      </button>
+                    )}
+                    {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
+                      <span className="mt-1 inline-block text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                        Sudah Diulas
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-black shrink-0">{fmt(item.subtotal)}</p>
                 </div>
-                <p className="font-bold text-black shrink-0">{fmt(item.subtotal)}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Shipping */}
@@ -136,8 +170,22 @@ export default function PesananDetail() {
             </button>
           )}
         </div>
-      </main>
-      <Footer />
-    </>
-  );
+      <ReviewForm
+        open={!!reviewFormItem}
+        onClose={() => setReviewFormItem(null)}
+        onSuccess={() => {
+          if (!order || !reviewFormItem) return;
+          const key = `${reviewFormItem.orderId}-${reviewFormItem.productId}`;
+          setReviewStatuses((prev) => ({
+            ...prev,
+            [key]: { canReview: false, alreadyReviewed: true },
+          }));
+          setReviewFormItem(null);
+        }}
+        productId={reviewFormItem?.productId ?? ''}
+        orderId={reviewFormItem?.orderId ?? ''}
+        productName={reviewFormItem?.productName ?? ''}
+      />
+    </UserLayout>
+  )
 }

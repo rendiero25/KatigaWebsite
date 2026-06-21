@@ -19,12 +19,13 @@ import {
 export default function News() {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState(""); // Default to all news
+  const [category] = useState(""); // Default to all news
   const [sort, setSort] = useState("newest");
   const [isSortOpen, setIsSortOpen] = useState(false);
   
   // Pass params to hook
   const { data: news, pagination, loading } = useNews(page, 12, searchQuery, category, sort);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sectionContent, setSectionContent] = useState<any>(null);
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function News() {
   
   // Reset page when search, category, or sort changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
   }, [searchQuery, category, sort]);
 
@@ -198,7 +200,7 @@ export default function News() {
               }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             >
-              {news.map((item: any) => (
+              {news.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                 <motion.div
                   key={item._id}
                   variants={{

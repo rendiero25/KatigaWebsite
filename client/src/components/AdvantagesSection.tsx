@@ -41,7 +41,7 @@ export default function AdvantagesSection() {
 
           {/* Right Side - Advantages List */}
           <div className="flex-1 space-y-12 lg:pl-45">
-            {advantages?.map((advantage: any, index: number) => (
+            {advantages?.map((advantage: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <div key={advantage._id} className="group">
                 <div className="flex items-baseline gap-6">
                   <span className="text-3xl font-normal text-black/70 group-hover:text-gray-900 transition">

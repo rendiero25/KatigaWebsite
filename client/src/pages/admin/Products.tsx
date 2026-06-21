@@ -19,11 +19,17 @@ interface ProductVariant {
   dimensionHeight: string;
 }
 
+const categoryId = (category: Product['category']): string =>
+  typeof category === 'string' ? category : category?._id ?? '';
+
+const categoryName = (category: Product['category']): string =>
+  typeof category === 'string' ? '' : category?.name ?? '';
+
 interface Product {
   _id: string;
   name: string;
   description?: string;
-  category: any;
+  category: string | { _id: string; name: string };
   price: string;
   weightGrams: number;
   dimensions?: { length: number; width: number; height: number };
@@ -58,6 +64,7 @@ const emptyForm = {
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"list" | "form">("list");
@@ -78,7 +85,7 @@ export default function AdminProducts() {
       const res = await fetch(`${API_URL}/products`);
       const data = await res.json();
       setProducts(data);
-    } catch {}
+    } catch { /* ignore fetch errors */ }
   }, []);
 
   const fetchCategories = useCallback(async () => {
@@ -86,10 +93,11 @@ export default function AdminProducts() {
       const res = await fetch(`${API_URL}/categories`);
       const data = await res.json();
       setCategories(data);
-    } catch {}
+    } catch { /* ignore fetch errors */ }
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false));
   }, [fetchProducts, fetchCategories]);
 
@@ -156,8 +164,8 @@ export default function AdminProducts() {
         const err = await res.json();
         alert(`Gagal: ${err.message || "Unknown error"}`);
       }
-    } catch (error: any) {
-      alert(`Error: ${error.message}`);
+    } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
@@ -177,7 +185,7 @@ export default function AdminProducts() {
     setFormData({
       name: product.name,
       description: product.description || "",
-      category: product.category?._id || product.category || "",
+      category: categoryId(product.category),
       price: product.price || "",
       weightGrams: String(product.weightGrams || ""),
       dimensionLength: String(product.dimensions?.length || ""),
@@ -266,7 +274,7 @@ export default function AdminProducts() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{product.category?.name || "—"}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{categoryName(product.category) || "—"}</td>
                   <td className="px-6 py-4 text-sm text-gray-700 font-medium">{product.price || "—"}</td>
                   <td className="px-6 py-4">
                     {product.variants?.length ? (

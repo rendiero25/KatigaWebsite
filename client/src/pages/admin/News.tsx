@@ -61,7 +61,10 @@ export default function AdminNews() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  }, []);
 
   const handleSectionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
