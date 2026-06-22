@@ -1,58 +1,61 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import AboutUs from './pages/AboutUs';
-import Katalog from './pages/Katalog';
-import ContactPage from './pages/ContactPage';
-import Products from './pages/Products';
-import ProductDetail from './pages/ProductDetail';
-import News from './pages/News';
-import NewsDetail from './pages/NewsDetail';
-import AdminLogin from './pages/admin/Login';
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminProducts from './pages/admin/Products';
-import AdminHero from './pages/admin/Hero';
-import AdminPartners from './pages/admin/Partners';
-import AdminAdvantages from './pages/admin/Advantages';
-import AdminCategories from './pages/admin/Categories';
-import AdminAbout from './pages/admin/About';
-import AdminCertifications from './pages/admin/Certifications';
-import AdminCatalog from './pages/admin/Catalog';
-import AdminContact from './pages/admin/Contact';
-import AdminFooter from './pages/admin/Footer';
-import AdminNews from './pages/admin/News';
-import AdminSettings from './pages/admin/Settings';
-import AdminMessages from './pages/admin/Messages';
-import AdminCertificationTech from './pages/admin/CertificationTech';
-import AdminDistribution from './pages/admin/Distribution';
-import AdminManufacturing from './pages/admin/Manufacturing';
-import AdminProductPageContent from './pages/admin/ProductPageContent';
-import AdminContactPageContent from './pages/admin/ContactPageContent';
-import AdminOrders from './pages/admin/Orders';
-import AdminOrderDetail from './pages/admin/OrderDetail';
-import AdminUsers from './pages/admin/Users';
-import AdminReviews from './pages/admin/Reviews';
-import AdminPromotions from './pages/admin/Promotions';
-import AdminPromosiTampilan from './pages/admin/PromosiTampilan';
-import AdminLaporan from './pages/admin/Laporan';
-import AdminShippingSettings from './pages/admin/ShippingSettings';
-import Daftar from './pages/Daftar';
-import Masuk from './pages/Masuk';
-import Keranjang from './pages/Keranjang';
-import Checkout from './pages/Checkout';
-import Pesanan from './pages/Pesanan';
-import PesananDetail from './pages/PesananDetail';
-import Profil from './pages/Profil';
-import PengaturanAkun from './pages/PengaturanAkun'
-import AlamatSaya from './pages/AlamatSaya'
-import WishlistSaya from './pages/WishlistSaya'
-import LaporanKeuangan from './pages/LaporanKeuangan'
-import UlasanSaya from './pages/UlasanSaya'
-import Notifikasi from './pages/Notifikasi'
-import AdminNotifikasi from './pages/admin/Notifikasi'
+
+const Home = lazy(() => import('./pages/Home'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const Katalog = lazy(() => import('./pages/Katalog'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const News = lazy(() => import('./pages/News'));
+const NewsDetail = lazy(() => import('./pages/NewsDetail'));
+const AdminLogin = lazy(() => import('./pages/admin/Login'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminProducts = lazy(() => import('./pages/admin/Products'));
+const AdminHero = lazy(() => import('./pages/admin/Hero'));
+const AdminPartners = lazy(() => import('./pages/admin/Partners'));
+const AdminAdvantages = lazy(() => import('./pages/admin/Advantages'));
+const AdminCategories = lazy(() => import('./pages/admin/Categories'));
+const AdminAbout = lazy(() => import('./pages/admin/About'));
+const AdminCertifications = lazy(() => import('./pages/admin/Certifications'));
+const AdminCatalog = lazy(() => import('./pages/admin/Catalog'));
+const AdminContact = lazy(() => import('./pages/admin/Contact'));
+const AdminFooter = lazy(() => import('./pages/admin/Footer'));
+const AdminNews = lazy(() => import('./pages/admin/News'));
+const AdminSettings = lazy(() => import('./pages/admin/Settings'));
+const AdminMessages = lazy(() => import('./pages/admin/Messages'));
+const AdminCertificationTech = lazy(() => import('./pages/admin/CertificationTech'));
+const AdminDistribution = lazy(() => import('./pages/admin/Distribution'));
+const AdminManufacturing = lazy(() => import('./pages/admin/Manufacturing'));
+const AdminProductPageContent = lazy(() => import('./pages/admin/ProductPageContent'));
+const AdminContactPageContent = lazy(() => import('./pages/admin/ContactPageContent'));
+const AdminOrders = lazy(() => import('./pages/admin/Orders'));
+const AdminOrderDetail = lazy(() => import('./pages/admin/OrderDetail'));
+const AdminUsers = lazy(() => import('./pages/admin/Users'));
+const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
+const AdminPromotions = lazy(() => import('./pages/admin/Promotions'));
+const AdminPromosiTampilan = lazy(() => import('./pages/admin/PromosiTampilan'));
+const AdminLaporan = lazy(() => import('./pages/admin/Laporan'));
+const AdminShippingSettings = lazy(() => import('./pages/admin/ShippingSettings'));
+const Daftar = lazy(() => import('./pages/Daftar'));
+const Masuk = lazy(() => import('./pages/Masuk'));
+const Keranjang = lazy(() => import('./pages/Keranjang'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Pesanan = lazy(() => import('./pages/Pesanan'));
+const PesananDetail = lazy(() => import('./pages/PesananDetail'));
+const Profil = lazy(() => import('./pages/Profil'));
+const PengaturanAkun = lazy(() => import('./pages/PengaturanAkun'));
+const AlamatSaya = lazy(() => import('./pages/AlamatSaya'));
+const WishlistSaya = lazy(() => import('./pages/WishlistSaya'));
+const LaporanKeuangan = lazy(() => import('./pages/LaporanKeuangan'));
+const UlasanSaya = lazy(() => import('./pages/UlasanSaya'));
+const Notifikasi = lazy(() => import('./pages/Notifikasi'));
+const AdminNotifikasi = lazy(() => import('./pages/admin/Notifikasi'));
 
 function App() {
   return (
     <BrowserRouter>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F9F7F2]"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -111,6 +114,7 @@ function App() {
         <Route path="/admin/promosi/tampilan" element={<AdminPromosiTampilan />} />
         <Route path="/admin/notifikasi" element={<AdminNotifikasi />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
