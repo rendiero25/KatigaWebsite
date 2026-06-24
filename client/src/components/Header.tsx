@@ -178,7 +178,7 @@ export default function Header() {
               className="relative flex items-center justify-center text-gray-800 hover:text-primary transition cursor-pointer"
             >
               <FaShoppingCart className="w-5 h-5" />
-              {customer && cartCount > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {cartCount > 9 ? "9+" : cartCount}
                 </span>
