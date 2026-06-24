@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
@@ -52,7 +53,7 @@ export default function AdminSettings() {
 
     if (res.ok) {
       setSettings(await res.json());
-      alert("Pengaturan berhasil disimpan!");
+      toast.success("Pengaturan berhasil disimpan!");
     }
     setSaving(false);
   };

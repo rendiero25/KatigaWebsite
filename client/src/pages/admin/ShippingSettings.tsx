@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import AdminLayout from '../../components/AdminLayout';
 import { useShippingSettings } from '../../hooks/useApi';
 import { getCourierLogoUrl } from '../../utils/courierLogos';
@@ -28,7 +29,7 @@ export default function AdminShippingSettings() {
     if (!data) return;
     try {
       await save({ enabledCouriers, emptyStateMessage });
-      alert('Pengaturan pengiriman berhasil disimpan');
+      toast.success('Pengaturan pengiriman berhasil disimpan');
     } catch {
       // Error state already handled by hook
     }

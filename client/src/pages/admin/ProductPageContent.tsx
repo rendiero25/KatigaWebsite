@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import { api, API_BASE_URL } from "../../services/api";
 import { FaSave, FaSpinner } from "react-icons/fa";
@@ -71,14 +72,14 @@ export default function ProductPageContent() {
       });
 
       if (res.ok) {
-        alert("Pengaturan berhasil disimpan");
+        toast.success("Pengaturan berhasil disimpan");
         fetchSettings(); // Refresh data to get clean state
       } else {
-        alert("Gagal menyimpan pengaturan");
+        toast.error("Gagal menyimpan pengaturan");
       }
     } catch (error) {
       console.error("Error saving settings:", error);
-      alert("Terjadi kesalahan saat menyimpan");
+      toast.error("Terjadi kesalahan saat menyimpan");
     } finally {
       setSaving(false);
     }

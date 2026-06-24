@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
@@ -90,15 +91,15 @@ export default function AdminManufacturing() {
       if (res.ok) {
         const updated = await res.json();
         setData(updated);
-        alert("Manufacturing section berhasil diperbarui!");
+        toast.success("Manufacturing section berhasil diperbarui!");
         // Clear file inputs if needed, or keep them? Usually keep or reset.
         setIconFiles([null, null, null]);
       } else {
-        alert("Gagal memperbarui.");
+        toast.error("Gagal memperbarui.");
       }
     } catch (error) {
       console.error("Error updating manufacturing:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setSaving(false);
     }

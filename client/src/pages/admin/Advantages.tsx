@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import { API_BASE_URL } from "../../services/api";
 
@@ -74,7 +75,7 @@ export default function AdminAdvantages() {
         },
         body: JSON.stringify(sectionContent),
       });
-      alert("Konten Header berhasil disimpan!");
+      toast.success("Konten Header berhasil disimpan!");
     } catch (error) {
       console.error("Error updating section content:", error);
     }

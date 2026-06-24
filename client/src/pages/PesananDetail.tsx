@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import type { Order, CanReviewResponse } from '../types/ecommerce'
 import api from '../services/api'
@@ -59,7 +60,7 @@ export default function PesananDetail() {
     window.snap.pay(order.midtransToken, {
       onSuccess: () => window.location.reload(),
       onPending: () => window.location.reload(),
-      onError: () => { alert('Pembayaran gagal.'); setPaying(false); },
+      onError: () => { toast.error('Pembayaran gagal.'); setPaying(false); },
       onClose: () => setPaying(false),
     });
   };

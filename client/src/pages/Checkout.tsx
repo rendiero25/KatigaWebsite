@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { CartItem, ShippingAddress, ShippingRate, VoucherValidation } from '../types/ecommerce';
 import { useLiveCart } from '../hooks/useApi';
@@ -155,7 +156,7 @@ export default function Checkout() {
       });
 
       if (!result.snapToken) {
-        alert(result.message ?? 'Gagal membuat pesanan');
+        toast.error(result.message ?? 'Gagal membuat pesanan');
         setPaying(false);
         return;
       }
@@ -178,14 +179,14 @@ export default function Checkout() {
           clearCheckoutSelection();
           navigate(`/pesanan/${result.orderId}`);
         },
-        onError:    () => { alert('Pembayaran gagal, silakan coba lagi.'); setPaying(false); },
+        onError:    () => { toast.error('Pembayaran gagal, silakan coba lagi.'); setPaying(false); },
         onClose:    () => {
           clearCheckoutSelection();
           navigate(`/pesanan/${result.orderId}`);
         },
       });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Terjadi kesalahan, coba lagi.');
+      toast.error(err instanceof Error ? err.message : 'Terjadi kesalahan, coba lagi.');
       setPaying(false);
     }
   }, [effectiveCart, selectedAddress, selectedRate, voucherDiscount, voucherCode, navigate, cartSyncing, cartReady]);

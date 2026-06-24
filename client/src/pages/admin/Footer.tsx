@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import { API_BASE_URL } from "../../services/api";
 
@@ -40,7 +41,7 @@ export default function AdminFooter() {
     });
 
     if (res.ok) {
-      alert("Footer berhasil diperbarui!");
+      toast.success("Footer berhasil diperbarui!");
     }
     setSaving(false);
   };

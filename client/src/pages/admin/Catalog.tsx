@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
@@ -63,13 +64,13 @@ export default function AdminCatalog() {
 
       if (res.ok) {
         setCatalog(await res.json());
-        alert("Catalog berhasil diperbarui!");
+        toast.success("Catalog berhasil diperbarui!");
       } else {
         const err = await res.json().catch(() => ({ message: res.statusText }));
-        alert(`Gagal menyimpan: ${err.message}`);
+        toast.error(`Gagal menyimpan: ${err.message}`);
       }
     } catch (error) {
-      alert(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+      toast.error(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setSaving(false);
     }

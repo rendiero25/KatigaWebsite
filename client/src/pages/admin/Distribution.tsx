@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
@@ -49,7 +50,7 @@ export default function AdminDistribution() {
       if (res.ok) {
         const updated = await res.json();
         setData(updated);
-        alert("Berhasil diperbarui!");
+        toast.success("Berhasil diperbarui!");
       }
     } catch (error) {
       console.error("Error updating:", error);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 import { Button } from "@/components/ui/button";
@@ -162,10 +163,10 @@ export default function AdminProducts() {
         resetForm();
       } else {
         const err = await res.json();
-        alert(`Gagal: ${err.message || "Unknown error"}`);
+        toast.error(`Gagal: ${err.message || "Unknown error"}`);
       }
     } catch (error) {
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }

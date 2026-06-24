@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import { API_BASE_URL } from "../../services/api";
 
@@ -42,7 +43,7 @@ export default function AdminContact() {
     });
 
     if (res.ok) {
-      alert("Informasi kontak berhasil diperbarui!");
+      toast.success("Informasi kontak berhasil diperbarui!");
     }
     setSaving(false);
   };

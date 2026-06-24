@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { motion } from "motion/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -40,11 +41,11 @@ export default function ContactPage() {
 
     try {
       await api.submitContact(formData);
-      alert("Pesan berhasil dikirim!");
+      toast.success("Pesan berhasil dikirim!");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (error) {
       console.error(error);
-      alert("Gagal mengirim pesan.");
+      toast.error("Gagal mengirim pesan.");
     } finally {
       setSubmitting(false);
     }
