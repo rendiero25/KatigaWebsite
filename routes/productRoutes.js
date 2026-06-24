@@ -128,6 +128,15 @@ router.post('/', auth, upload.any(), async (req, res) => {
 
     console.log('Using image paths:', imagePaths);
 
+    let parsedVariants = variants ? JSON.parse(variants) : [];
+    parsedVariants = parsedVariants.map(v => {
+      if (v.image && v.image.startsWith('__new__')) {
+        const idx = parseInt(v.image.replace('__new__', ''), 10);
+        v.image = imagePaths[idx] || '';
+      }
+      return v;
+    });
+
     const product = new Product({
       name,
       description,
@@ -146,7 +155,7 @@ router.post('/', auth, upload.any(), async (req, res) => {
       isFeatured: isFeatured === 'true',
       image: primaryImage,
       images: imagePaths,
-      variants: variants ? JSON.parse(variants) : []
+      variants: parsedVariants
     });
     await product.save();
     console.log('Product saved:', product);
@@ -188,10 +197,8 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
     if (linkTokopedia !== undefined) product.linkTokopedia = linkTokopedia;
     if (linkShopee !== undefined) product.linkShopee = linkShopee;
     if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true';
-    if (variants !== undefined) product.variants = JSON.parse(variants);
 
-    // Handle images
-    // keptImages might be a string (if 1) or array (if multiple) or undefined
+    // Handle images first so newImagePaths is available for variant resolution
     let currentImages = [];
     if (keptImages) {
         if (Array.isArray(keptImages)) {
@@ -201,18 +208,28 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
         }
     }
 
-    // Add new images
     let imageFiles = req.files || [];
     const newImagePaths = imageFiles.map(file => file.path);
-    
+
     const finalImages = [...currentImages, ...newImagePaths];
     product.images = finalImages;
-    
-    // Update primary image (first one)
+
     if (finalImages.length > 0) {
         product.image = finalImages[0];
     } else {
         product.image = '';
+    }
+
+    if (variants !== undefined) {
+      let parsedVariants = JSON.parse(variants);
+      parsedVariants = parsedVariants.map(v => {
+        if (v.image && v.image.startsWith('__new__')) {
+          const idx = parseInt(v.image.replace('__new__', ''), 10);
+          v.image = newImagePaths[idx] || '';
+        }
+        return v;
+      });
+      product.variants = parsedVariants;
     }
 
     await product.save();

@@ -13,6 +13,7 @@ const API_URL = API_BASE_URL;
 
 interface ProductVariant {
   name: string;
+  image: string;
   price: string;
   weightGrams: string;
   dimensionLength: string;
@@ -42,6 +43,7 @@ interface Product {
   images?: string[];
   variants?: {
     name: string;
+    image?: string;
     price: number;
     weightGrams: number;
     dimensions: { length: number; width: number; height: number };
@@ -77,7 +79,10 @@ export default function AdminProducts() {
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [openPickerIdx, setOpenPickerIdx] = useState<number | null>(null);
+  const [pendingVariantUploadIdx, setPendingVariantUploadIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const variantFileInputRef = useRef<HTMLInputElement>(null);
 
   const token = localStorage.getItem("adminToken");
 
@@ -101,6 +106,25 @@ export default function AdminProducts() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     Promise.all([fetchProducts(), fetchCategories()]).finally(() => setLoading(false));
   }, [fetchProducts, fetchCategories]);
+
+  const getVariantImageSrc = (v: ProductVariant): string => {
+    if (!v.image) return '';
+    if (v.image.startsWith('__new__')) {
+      const idx = parseInt(v.image.replace('__new__', ''), 10);
+      return imagePreviews[idx] || '';
+    }
+    return api.getImageUrl(v.image);
+  };
+
+  const addVariantImage = (variantIdx: number, file: File) => {
+    const preview = URL.createObjectURL(file);
+    const futureIndex = imageFiles.length;
+    setImageFiles((prev) => [...prev, file]);
+    setImagePreviews((prev) => [...prev, preview]);
+    setVariants((prev) =>
+      prev.map((v, i) => (i === variantIdx ? { ...v, image: `__new__${futureIndex}` } : v))
+    );
+  };
 
   const addImageFiles = (files: File[]) => {
     const images = files.filter((f) => f.type.startsWith("image/"));
@@ -139,6 +163,7 @@ export default function AdminProducts() {
       JSON.stringify(
         variants.map((v) => ({
           name: v.name,
+          image: v.image || '',
           price: v.price !== "" ? Number(v.price) : formData.price,
           weightGrams: v.weightGrams !== "" ? Number(v.weightGrams) : Number(formData.weightGrams) || 0,
           dimensions: {
@@ -202,6 +227,7 @@ export default function AdminProducts() {
     setVariants(
       (product.variants || []).map((v) => ({
         name: v.name,
+        image: v.image || '',
         price: String(v.price),
         weightGrams: String(v.weightGrams),
         dimensionLength: String(v.dimensions?.length ?? 1),
@@ -220,6 +246,8 @@ export default function AdminProducts() {
     setExistingImages([]);
     setVariants([]);
     setEditingProduct(null);
+    setOpenPickerIdx(null);
+    setPendingVariantUploadIdx(null);
     setView("list");
   };
 
@@ -491,7 +519,7 @@ export default function AdminProducts() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-gray-700">Varian Produk</CardTitle>
                   <Button type="button" variant="outline" size="sm"
-                    onClick={() => setVariants((prev) => [...prev, { name: "", price: "", weightGrams: "", dimensionLength: "", dimensionWidth: "", dimensionHeight: "" }])}
+                    onClick={() => setVariants((prev) => [...prev, { name: "", image: "", price: "", weightGrams: "", dimensionLength: "", dimensionWidth: "", dimensionHeight: "" }])}
                     className="h-7 text-xs border-indigo-200 text-indigo-600 hover:bg-indigo-50">
                     + Tambah
                   </Button>
@@ -544,6 +572,68 @@ export default function AdminProducts() {
                               placeholder={formData.dimensionHeight || "T"} className="h-8 text-sm" />
                           </div>
                         </div>
+
+                        {/* Variant image picker */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-gray-400">Gambar Varian (opsional)</Label>
+                          <div className="flex items-center gap-3">
+                            <div className="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shrink-0 flex items-center justify-center">
+                              {getVariantImageSrc(v) ? (
+                                <img src={getVariantImageSrc(v)} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <button type="button"
+                                onClick={() => setOpenPickerIdx(openPickerIdx === i ? null : i)}
+                                className="text-xs text-indigo-600 hover:text-indigo-700 text-left transition">
+                                Pilih dari foto produk
+                              </button>
+                              <button type="button"
+                                onClick={() => { setPendingVariantUploadIdx(i); variantFileInputRef.current?.click(); }}
+                                className="text-xs text-indigo-600 hover:text-indigo-700 text-left transition">
+                                Upload baru
+                              </button>
+                              {v.image && (
+                                <button type="button"
+                                  onClick={() => setVariant(i, "image", "")}
+                                  className="text-xs text-red-400 hover:text-red-500 text-left transition">
+                                  Hapus
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {openPickerIdx === i && (
+                            <div className="mt-1 p-2 border border-gray-200 rounded-lg bg-white">
+                              {existingImages.length === 0 && imagePreviews.length === 0 ? (
+                                <p className="text-xs text-gray-400 text-center py-3">
+                                  Belum ada gambar produk. Upload gambar terlebih dahulu.
+                                </p>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  {existingImages.map((img, imgIdx) => (
+                                    <button key={`ex-${imgIdx}`} type="button"
+                                      onClick={() => { setVariant(i, "image", img); setOpenPickerIdx(null); }}
+                                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition ${v.image === img ? "border-indigo-500" : "border-transparent hover:border-gray-300"}`}>
+                                      <img src={api.getImageUrl(img)} alt="" className="w-full h-full object-cover" />
+                                    </button>
+                                  ))}
+                                  {imagePreviews.map((src, imgIdx) => (
+                                    <button key={`new-${imgIdx}`} type="button"
+                                      onClick={() => { setVariant(i, "image", `__new__${imgIdx}`); setOpenPickerIdx(null); }}
+                                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition ${v.image === `__new__${imgIdx}` ? "border-indigo-500" : "border-transparent hover:border-gray-300"}`}>
+                                      <img src={src} alt="" className="w-full h-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -553,6 +643,21 @@ export default function AdminProducts() {
 
           </div>
         </form>
+
+        <input
+          ref={variantFileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file && pendingVariantUploadIdx !== null) {
+              addVariantImage(pendingVariantUploadIdx, file);
+              setPendingVariantUploadIdx(null);
+            }
+            e.target.value = '';
+          }}
+        />
       </div>
     </AdminLayout>
   );

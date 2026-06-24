@@ -57,6 +57,7 @@ const productSchema = new mongoose.Schema({
   },
   variants: [{
     name:       { type: String, default: '' },
+    image:      { type: String, default: '' },
     price:      { type: Number, default: 0 },
     weightGrams:{ type: Number, default: 0 },
     dimensions: {

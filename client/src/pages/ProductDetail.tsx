@@ -31,6 +31,7 @@ import {
 interface Variant {
   _id: string;
   name: string;
+  image?: string;
   price: number;
   weightGrams: number;
   dimensions: ItemDimensions;
@@ -94,8 +95,14 @@ export default function ProductDetail() {
       .getProduct(id)
       .then((data: Product) => {
         setProduct(data);
-        if (data.images.length > 0) setActiveImage(data.images[0]);
-        else if (data.image) setActiveImage(data.image);
+        const firstVariant = data.variants?.[0];
+        if (firstVariant?.image) {
+          setActiveImage(firstVariant.image);
+        } else if (data.images.length > 0) {
+          setActiveImage(data.images[0]);
+        } else if (data.image) {
+          setActiveImage(data.image);
+        }
         if (data.variants?.length > 0) setSelectedVariant(data.variants[0]);
       })
       .finally(() => setLoading(false));
@@ -359,9 +366,16 @@ export default function ProductDetail() {
                     {variants.map((v) => (
                       <button
                         key={v._id}
-                        onClick={() =>
-                          setSelectedVariant(selectedVariant?._id === v._id ? null : v)
-                        }
+                        onClick={() => {
+                          const next = selectedVariant?._id === v._id ? null : v;
+                          setSelectedVariant(next);
+                          if (next?.image) {
+                            setActiveImage(next.image);
+                          } else {
+                            if (product.images.length > 0) setActiveImage(product.images[0]);
+                            else if (product.image) setActiveImage(product.image);
+                          }
+                        }}
                         className={cn(
                           'px-4 py-2 rounded-lg border text-sm font-medium transition',
                           selectedVariant?._id === v._id
