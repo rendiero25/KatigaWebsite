@@ -12,9 +12,11 @@ import 'swiper/css';
 import 'swiper/css/autoplay';
 
 export default function AboutUs() {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const [content, setContent] = useState<any>(null);
   const [tech, setTech] = useState<any>(null);
   const [distribution, setDistribution] = useState<any>(null);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -248,7 +250,7 @@ export default function AboutUs() {
                 </div>
               </motion.div>
               <div className="order-2 space-y-8">
-                {tech.section1?.points?.map((pt: any, idx: number) => (
+                {tech.section1?.points?.map((pt: any, idx: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                   <motion.div 
                     key={idx}
                     initial={{ opacity: 0, x: 20 }}

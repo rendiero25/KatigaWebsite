@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useProducts } from "../hooks/useApi";
 import api from "../services/api";
+import StarRating from './StarRating';
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
@@ -16,7 +17,7 @@ export default function ProductsSection() {
 
   // Get featured products or latest 8
   const featuredProducts =
-    products?.filter((p: any) => p.isFeatured) || products?.slice(0, 8) || [];
+    products?.filter((p: any) => p.isFeatured) || products?.slice(0, 8) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   if (loading) {
     return (
@@ -45,7 +46,7 @@ export default function ProductsSection() {
               1280: { slidesPerView: 4, spaceBetween: 40 },
             }}
           >
-            {featuredProducts.map((product: any) => (
+            {featuredProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <SwiperSlide key={product._id} className="w-auto!">
                 <div className="group h-full flex flex-col">
                   {/* Image Card */}
@@ -85,6 +86,25 @@ export default function ProductsSection() {
                     <h3 className="max-w-xs xl:max-w-lg text-2xl font-bold text-black mb-2 leading-tight">
                       {product.name}
                     </h3>
+                    {product.reviewCount > 0 && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <StarRating value={product.ratingAvg ?? 0} size="sm" />
+                        <span className="text-xs text-black/50">({product.reviewCount})</span>
+                      </div>
+                    )}
+                    {product.activePromotion && product.priceNumeric > 0 && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-base font-bold text-red-600">
+                          {`Rp ${Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}`}
+                        </span>
+                        <span className="text-sm text-gray-400 line-through">
+                          {`Rp ${product.priceNumeric.toLocaleString('id-ID')}`}
+                        </span>
+                        <span className="px-2 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded-full">
+                          -{product.activePromotion.discountPercent}%
+                        </span>
+                      </div>
+                    )}
                     <p className="text-lg text-black/80 max-w-xs xl:max-w-lg line-clamp-2 mb-4 leading-relaxed ">
                       {product.description}
                     </p>

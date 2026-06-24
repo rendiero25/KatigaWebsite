@@ -25,7 +25,7 @@ router.post('/', auth, upload.single('icon'), async (req, res) => {
     const certification = new Certification({
       name,
       description,
-      icon: req.file ? `/uploads/${req.file.filename}` : '',
+      icon: req.file ? req.file.path : '',
       order: order || 0
     });
     await certification.save();
@@ -49,7 +49,7 @@ router.put('/:id', auth, upload.single('icon'), async (req, res) => {
     if (name) certification.name = name;
     if (description) certification.description = description;
     if (order !== undefined) certification.order = order;
-    if (req.file) certification.icon = `/uploads/${req.file.filename}`;
+    if (req.file) certification.icon = req.file.path;
 
     await certification.save();
     res.json(certification);

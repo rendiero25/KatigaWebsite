@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
 
 export default function AdminSettings() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [settings, setSettings] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,7 +53,7 @@ export default function AdminSettings() {
 
     if (res.ok) {
       setSettings(await res.json());
-      alert("Pengaturan berhasil disimpan!");
+      toast.success("Pengaturan berhasil disimpan!");
     }
     setSaving(false);
   };
@@ -131,34 +133,6 @@ export default function AdminSettings() {
                 }
                 className="w-full px-4 py-2 border rounded-lg"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tokopedia
-                </label>
-                <input
-                  type="text"
-                  value={formData.tokopediaUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tokopediaUrl: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Shopee
-                </label>
-                <input
-                  type="text"
-                  value={formData.shopeeUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shopeeUrl: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border rounded-lg"
-                />
-              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

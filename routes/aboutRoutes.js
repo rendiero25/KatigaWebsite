@@ -65,17 +65,17 @@ router.put(
 
       // Handle Background Images
       if (req.files["missionBg"] && req.files["missionBg"][0]) {
-        aboutContent.mission.backgroundImage = `/uploads/${req.files["missionBg"][0].filename}`;
+        aboutContent.mission.backgroundImage = req.files["missionBg"][0].path;
         aboutContent.markModified("mission");
       }
       if (req.files["visionBg"] && req.files["visionBg"][0]) {
-        aboutContent.vision.backgroundImage = `/uploads/${req.files["visionBg"][0].filename}`;
+        aboutContent.vision.backgroundImage = req.files["visionBg"][0].path;
         aboutContent.markModified("vision");
       }
 
       if (req.files["images"] && req.files["images"].length > 0) {
         const newImages = req.files["images"].map(
-          (file) => `/uploads/${file.filename}`,
+          (file) => file.path,
         );
         aboutContent.images = [...aboutContent.images, ...newImages].slice(
           0,

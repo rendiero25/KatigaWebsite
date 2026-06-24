@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
 
 export default function AdminDistribution() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,7 +50,7 @@ export default function AdminDistribution() {
       if (res.ok) {
         const updated = await res.json();
         setData(updated);
-        alert("Berhasil diperbarui!");
+        toast.success("Berhasil diperbarui!");
       }
     } catch (error) {
       console.error("Error updating:", error);

@@ -56,7 +56,7 @@ router.put(
         }
       }
       if (req.files["section1Image"] && req.files["section1Image"][0]) {
-        content.section1.image = `/uploads/${req.files["section1Image"][0].filename}`;
+        content.section1.image = req.files["section1Image"][0].path;
       }
 
       // Section 2 (Forest/Fashion)
@@ -70,7 +70,7 @@ router.put(
         }
       }
       if (req.files["section2Image"] && req.files["section2Image"][0]) {
-        content.section2.image = `/uploads/${req.files["section2Image"][0].filename}`;
+        content.section2.image = req.files["section2Image"][0].path;
       }
 
       await content.save();

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 import { FaPlus, FaTrash, FaSave } from "react-icons/fa";
@@ -52,6 +53,7 @@ export default function AdminCertificationTech() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 
@@ -119,10 +121,10 @@ export default function AdminCertificationTech() {
         body: data,
       });
       if (res.ok) {
-        alert("Perubahan berhasil disimpan!");
+        toast.success("Perubahan berhasil disimpan!");
         fetchData();
       } else {
-        alert("Gagal menyimpan perubahan");
+        toast.error("Gagal menyimpan perubahan");
       }
     } catch (e) {
       console.error("Error saving", e);

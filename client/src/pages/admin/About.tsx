@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 import { FaTrash, FaPlus } from "react-icons/fa";
@@ -49,9 +50,10 @@ export default function AdminAbout() {
       console.error("Failed to fetch about content", e);
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 
@@ -104,7 +106,7 @@ export default function AdminAbout() {
 
     if (newImageFiles) {
       if (existingImages.length + newImageFiles.length > 10) {
-        alert("Maksimal 10 gambar diperbolehkan.");
+        toast.warning("Maksimal 10 gambar diperbolehkan.");
         return;
       }
       Array.from(newImageFiles).forEach((file) => data.append("images", file));
@@ -120,7 +122,7 @@ export default function AdminAbout() {
         body: data,
       });
       if (res.ok) {
-        alert("Perubahan berhasil disimpan!");
+        toast.success("Perubahan berhasil disimpan!");
         fetchData();
         setNewImageFiles(null);
         // Reset file input value if possible, or just let page refresh reload data
@@ -129,7 +131,7 @@ export default function AdminAbout() {
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
       } else {
-        alert("Gagal menyimpan perubahan");
+        toast.error("Gagal menyimpan perubahan");
       }
     } catch (e) {
       console.error("Error saving", e);

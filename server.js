@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
 // Connect to MongoDB
@@ -32,7 +33,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // Check if origin is allowed
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+    const isLocalhost = /^https?:\/\/localhost(:\d+)?$/.test(origin);
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app') || (process.env.NODE_ENV !== 'production' && isLocalhost)) {
       return callback(null, true);
     }
 
@@ -42,6 +44,9 @@ app.use(cors({
   },
   credentials: true
 }));
+// Midtrans webhook needs raw body for signature verification — must come before express.json()
+app.post('/api/orders/webhook/midtrans', express.raw({ type: '*/*' }), require('./routes/orderRoutes').webhookHandler);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -65,6 +70,7 @@ const footerRoutes = require('./routes/footerRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const authRoutes = require('./routes/authRoutes');
 const manufacturingRoutes = require('./routes/manufacturingRoutes');
+const shippingSettingsRoutes = require('./routes/shippingSettingsRoutes');
 
 // Use Routes
 app.use('/api/site-settings', siteSettingsRoutes);
@@ -86,6 +92,20 @@ app.use('/api/manufacturing', manufacturingRoutes);
 
 app.use('/api/product-page', require('./routes/productPageRoutes'));
 app.use('/api/contact-page', require('./routes/contactPageRoutes'));
+
+// Ecommerce routes
+app.use('/api/customers/me/addresses', require('./routes/customerAddresses'));
+app.use('/api/vouchers', require('./routes/vouchers'));
+app.use('/api/customers', require('./routes/customerAuthRoutes'));
+app.use('/api/shipping', require('./routes/shippingRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/admin/customers', require('./routes/adminCustomerRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/admin/reviews', require('./routes/adminReviewRoutes'));
+app.use('/api/promotions', require('./routes/promotionRoutes'));
+app.use('/api/reports', require('./routes/reportRoutes'));
+app.use('/api/shipping-settings', shippingSettingsRoutes);
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
@@ -110,10 +130,53 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+// ─── Scheduled check: notify admin when a voucher/promotion is about to expire ───
+async function checkExpiringPromos() {
+  try {
+    const Voucher = require('./models/Voucher');
+    const Promotion = require('./models/Promotion');
+    const Notification = require('./models/Notification');
+    const { notifyAdmin } = require('./utils/notify');
+
+    const now = new Date();
+    const soon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const expiringVouchers = await Voucher.find({ isActive: true, endDate: { $gte: now, $lte: soon } });
+    for (const v of expiringVouchers) {
+      const exists = await Notification.findOne({ type: 'promo_expiring', relatedId: v._id });
+      if (exists) continue;
+      await notifyAdmin({
+        type: 'promo_expiring',
+        title: 'Voucher akan berakhir',
+        message: `Voucher ${v.code} berakhir ${v.endDate.toLocaleDateString('id-ID')}`,
+        link: '/admin/promosi',
+        relatedId: v._id,
+      });
+    }
+
+    const expiringPromos = await Promotion.find({ isVisible: true, endDate: { $gte: now, $lte: soon } });
+    for (const p of expiringPromos) {
+      const exists = await Notification.findOne({ type: 'promo_expiring', relatedId: p._id });
+      if (exists) continue;
+      await notifyAdmin({
+        type: 'promo_expiring',
+        title: 'Promosi akan berakhir',
+        message: `Promosi "${p.name}" berakhir ${p.endDate.toLocaleDateString('id-ID')}`,
+        link: '/admin/promosi',
+        relatedId: p._id,
+      });
+    }
+  } catch (err) {
+    console.error('[Notify] checkExpiringPromos failed:', err.message);
+  }
+}
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
+  mongoose.connection.once('connected', checkExpiringPromos);
+  setInterval(checkExpiringPromos, 60 * 60 * 1000);
 }
 
 module.exports = app;

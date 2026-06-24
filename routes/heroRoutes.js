@@ -27,7 +27,7 @@ router.put('/', auth, upload.single('image'), async (req, res) => {
 
     if (!hero) {
       hero = new HeroSection({
-        image: req.file ? `/uploads/${req.file.filename}` : '',
+        image: req.file ? req.file.path : '',
         title: title || '',
         subtitle: subtitle || '',
         buttonName: buttonName || '',
@@ -38,7 +38,7 @@ router.put('/', auth, upload.single('image'), async (req, res) => {
       if (subtitle) hero.subtitle = subtitle;
       if (buttonName) hero.buttonName = buttonName;
       if (buttonLink) hero.buttonLink = buttonLink;
-      if (req.file) hero.image = `/uploads/${req.file.filename}`;
+      if (req.file) hero.image = req.file.path;
     }
 
     await hero.save();

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
-import api, { API_BASE_URL } from "../../services/api";
+import { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
 
@@ -59,6 +60,7 @@ export default function AdminAdvantages() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 
@@ -73,7 +75,7 @@ export default function AdminAdvantages() {
         },
         body: JSON.stringify(sectionContent),
       });
-      alert("Konten Header berhasil disimpan!");
+      toast.success("Konten Header berhasil disimpan!");
     } catch (error) {
       console.error("Error updating section content:", error);
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import { API_BASE_URL } from "../../services/api";
 
@@ -47,13 +48,13 @@ export default function AdminContactPageContent() {
       });
 
       if (res.ok) {
-        alert("Konten halaman kontak berhasil diperbarui!");
+        toast.success("Konten halaman kontak berhasil diperbarui!");
       } else {
-        alert("Gagal menyimpan perubahan");
+        toast.error("Gagal menyimpan perubahan");
       }
     } catch (error) {
       console.error(error);
-      alert("Terjadi kesalahan");
+      toast.error("Terjadi kesalahan");
     } finally {
       setSaving(false);
     }

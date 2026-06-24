@@ -57,7 +57,7 @@ router.put('/', auth, upload.fields([
 
     if (req.files && req.files['backgroundImage']) {
         console.log('Updating background image:', req.files['backgroundImage'][0].filename);
-        manufacturing.backgroundImage = `/uploads/${req.files['backgroundImage'][0].filename}`;
+        manufacturing.backgroundImage = req.files['backgroundImage'][0].path;
     }
 
     // Handle Features
@@ -82,7 +82,7 @@ router.put('/', auth, upload.fields([
 
         if (req.files && req.files[iconKey]) {
             console.log(`Updating feature ${i} icon:`, req.files[iconKey][0].filename);
-            manufacturing.features[i].icon = `/uploads/${req.files[iconKey][0].filename}`;
+            manufacturing.features[i].icon = req.files[iconKey][0].path;
         }
     }
     

@@ -32,46 +32,38 @@ export default function NewsSection() {
 
         {/* News Grid */}
         <div className="grid md:grid-cols-3 gap-8">
-          {latestNews.map((article: any) => (
+          {latestNews.map((article: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
             <Link 
               key={article._id}
               to={`/berita/${article._id}`}
-              className="group block relative overflow-hidden"
+              className="group block"
             >
               <div className="aspect-[4/3] rounded-sm overflow-hidden mb-4 relative">
-                <img 
-                  src={api.getImageUrl(article.image)}
-                  alt={article.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400';
-                  }}
-                />
-                {/* Date Badge */}
-                <div className="absolute top-0 right-0 bg-primary text-white p-3 text-center min-w-[60px]">
-                    <span className="block text-2xl font-bold leading-none">
-                        {new Date(article.date).getDate()}
-                    </span>
-                    <span className="block text-xs uppercase font-medium">
-                        {new Date(article.date).toLocaleDateString('id-ID', { month: 'short' })}
-                    </span>
-                </div>
+               <img 
+                 src={api.getImageUrl(article.image)}
+                 alt={article.title}
+                 className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                 onError={(e) => {
+                   (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400';
+                 }}
+               />
+               {/* Date Badge */}
+               <div className="absolute top-0 right-0 bg-black text-white p-3 text-center min-w-[60px]">
+                   <span className="block text-2xl font-bold leading-none">
+                       {new Date(article.date).getDate()}
+                   </span>
+                   <span className="block text-xs uppercase font-medium">
+                       {new Date(article.date).toLocaleDateString('id-ID', { month: 'short' })}
+                   </span>
+               </div>
               </div>
 
-              <div className="relative">
-                 <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent flex flex-col justify-end p-6 -mt-20 pointer-events-none">
-                     {/* Overlay Text Style */}
-                     <span className="text-xs text-white/80 uppercase font-bold tracking-wider mb-1">
-                        Apex Textile Kreasindo
-                     </span>
-                     <h3 className="text-white font-bold text-lg leading-tight line-clamp-2">
-                        {article.title}
-                     </h3>
-                     <p className="text-white/60 text-xs mt-2 line-clamp-1">
-                        {article.excerpt}
-                     </p>
-                 </div>
-              </div>
+              <h3 className="text-gray-900 font-bold text-lg leading-tight line-clamp-2 mb-2">
+                {article.title}
+              </h3>
+              <p className="text-gray-600 text-sm line-clamp-2">
+                {article.excerpt}
+              </p>
             </Link>
           ))}
         </div>

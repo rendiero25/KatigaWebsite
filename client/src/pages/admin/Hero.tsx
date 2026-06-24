@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
 
 export default function AdminHero() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [hero, setHero] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,11 +56,11 @@ export default function AdminHero() {
       if (res.ok) {
         const updated = await res.json();
         setHero(updated);
-        alert("Hero section berhasil diperbarui!");
+        toast.success("Hero section berhasil diperbarui!");
       }
     } catch (error) {
       console.error("Error updating hero:", error);
-      alert("Gagal memperbarui hero section");
+      toast.error("Gagal memperbarui hero section");
     } finally {
       setSaving(false);
     }

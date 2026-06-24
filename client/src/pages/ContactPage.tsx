@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { motion } from "motion/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
 
 export default function ContactPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [content, setContent] = useState<any>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [contactInfo, setContactInfo] = useState<any>({});
 
   // Form State
@@ -38,11 +41,11 @@ export default function ContactPage() {
 
     try {
       await api.submitContact(formData);
-      alert("Pesan berhasil dikirim!");
+      toast.success("Pesan berhasil dikirim!");
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (error) {
       console.error(error);
-      alert("Gagal mengirim pesan.");
+      toast.error("Gagal mengirim pesan.");
     } finally {
       setSubmitting(false);
     }

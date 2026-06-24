@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
 
@@ -40,31 +41,39 @@ export default function AdminCatalog() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCatalog();
   }, [fetchCatalog]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    try {
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      if (bgFile) data.append("backgroundImage", bgFile);
+      if (cardFile) data.append("cardImage", cardFile);
+      if (pdfFile) data.append("file", pdfFile);
 
-    const data = new FormData();
-    data.append("title", formData.title);
-    data.append("description", formData.description);
-    if (bgFile) data.append("backgroundImage", bgFile);
-    if (cardFile) data.append("cardImage", cardFile);
-    if (pdfFile) data.append("file", pdfFile);
+      const res = await fetch(`${API_URL}/catalog`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: data,
+      });
 
-    const res = await fetch(`${API_URL}/catalog`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-      body: data,
-    });
-
-    if (res.ok) {
-      setCatalog(await res.json());
-      alert("Catalog berhasil diperbarui!");
+      if (res.ok) {
+        setCatalog(await res.json());
+        toast.success("Catalog berhasil diperbarui!");
+      } else {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        toast.error(`Gagal menyimpan: ${err.message}`);
+      }
+    } catch (error) {
+      toast.error(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   return (

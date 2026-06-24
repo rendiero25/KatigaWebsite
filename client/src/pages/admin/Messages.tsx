@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "../../components/AdminLayout";
-import api, { API_BASE_URL } from "../../services/api";
+import { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
 
 export default function AdminMessages() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [messages, setMessages] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
 
   const token = localStorage.getItem("adminToken");
@@ -16,12 +17,12 @@ export default function AdminMessages() {
       headers: { Authorization: `Bearer ${token}` },
     });
     setMessages(await res.json());
-    setLoading(false);
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleMarkRead = async (id: string) => {
     await fetch(`${API_URL}/contact/submissions/${id}/read`, {

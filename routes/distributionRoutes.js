@@ -31,12 +31,12 @@ router.put("/", auth, upload.single("mapImage"), async (req, res) => {
       content = new DistributionChannel({
         title: title || "",
         description: description || "",
-        mapImage: req.file ? `/uploads/${req.file.filename}` : "",
+        mapImage: req.file ? req.file.path : "",
       });
     } else {
       if (title) content.title = title;
       if (description) content.description = description;
-      if (req.file) content.mapImage = `/uploads/${req.file.filename}`;
+      if (req.file) content.mapImage = req.file.path;
     }
 
     await content.save();
