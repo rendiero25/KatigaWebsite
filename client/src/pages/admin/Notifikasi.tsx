@@ -30,7 +30,7 @@ export default function Notifikasi() {
           {unreadCount > 0 ? `${unreadCount} notifikasi belum dibaca` : 'Semua notifikasi sudah dibaca'}
         </p>
         {unreadCount > 0 && (
-          <Button variant="outline" size="sm" onClick={markAllAsRead}>
+          <Button variant="secondary" size="sm" onClick={markAllAsRead}>
             Tandai semua dibaca
           </Button>
         )}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
+import { Button } from "@/components/ui/button";
 
 const API_URL = API_BASE_URL;
 
@@ -79,12 +80,9 @@ export default function AdminPartners() {
     <AdminLayout title="Kelola Partners">
       <div className="flex items-center justify-between mb-6">
         <p className="text-gray-600">Total {partners.length} partner</p>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
+        <Button onClick={() => setShowModal(true)}>
           + Tambah Partner
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -107,18 +105,12 @@ export default function AdminPartners() {
             <p className="text-sm font-medium text-gray-900">{partner.name}</p>
             <p className="text-xs text-gray-500">Order: {partner.order}</p>
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-xl flex items-center justify-center gap-2">
-              <button
-                onClick={() => handleEdit(partner)}
-                className="px-3 py-1 bg-white text-gray-900 rounded text-sm"
-              >
+              <Button variant="secondary" size="xs" onClick={() => handleEdit(partner)}>
                 Edit
-              </button>
-              <button
-                onClick={() => handleDelete(partner._id)}
-                className="px-3 py-1 bg-red-500 text-white rounded text-sm"
-              >
+              </Button>
+              <Button variant="destructive" size="xs" onClick={() => handleDelete(partner._id)}>
                 Hapus
-              </button>
+              </Button>
             </div>
           </div>
         ))}
@@ -170,19 +162,17 @@ export default function AdminPartners() {
                 />
               </div>
               <div className="flex gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={resetForm}
-                  className="flex-1 px-4 py-2 border rounded-lg"
+                  className="flex-1"
                 >
                   Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg"
-                >
+                </Button>
+                <Button type="submit" className="flex-1">
                   Simpan
-                </button>
+                </Button>
               </div>
             </form>
           </div>

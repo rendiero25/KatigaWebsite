@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import { Button } from '@/components/ui/button';
 import { API_BASE_URL } from '../../services/api';
 import type { Order } from '../../types/ecommerce';
 
@@ -238,13 +239,13 @@ export default function AdminOrderDetail() {
                 />
               </div>
 
-              <button
+              <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                className="w-full py-2.5 text-sm font-medium rounded-lg transition disabled:opacity-50"
               >
                 {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
-              </button>
+              </Button>
 
               {saveMsg && (
                 <p className={`text-sm text-center ${saveMsg === 'Disimpan.' ? 'text-green-600' : 'text-red-600'}`}>{saveMsg}</p>

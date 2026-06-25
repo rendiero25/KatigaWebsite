@@ -18,7 +18,20 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import PartnersSection from "../components/PartnersSection";
 
-const PRODUCTS_PER_PAGE = 12;
+const PRODUCTS_PER_PAGE = 15;
+
+function formatSold(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}jt terjual`;
+  if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}rb terjual`;
+  return `${n} terjual`;
+}
+
+function formatPriceString(price: string): string {
+  const digits = price.replace(/[^0-9]/g, '');
+  const n = Number(digits);
+  if (digits && !isNaN(n) && n > 0) return `Rp ${n.toLocaleString('id-ID')}`;
+  return price.startsWith('Rp') ? price : `Rp ${price}`;
+}
 
 const sortLabels: Record<"default" | "az" | "za", string> = {
   default: "Urutan Default",
@@ -213,8 +226,8 @@ export default function Products() {
 
             {/* Product Grid */}
             {productsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {[1, 2, 3, 4].map((i) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
+                {[1, 2, 3, 4, 5].map((i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0 }}
@@ -222,9 +235,10 @@ export default function Products() {
                     exit={{ opacity: 0 }}
                     className="animate-pulse"
                   >
-                    <div className="bg-gray-200 aspect-square rounded-xl mb-4"></div>
+                    <div className="bg-gray-200 aspect-square rounded-xl mb-3"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/3 mb-2"></div>
                     <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                   </motion.div>
                 ))}
               </div>
@@ -240,12 +254,12 @@ export default function Products() {
                     },
                   },
                 }}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8"
               >
                 {pagedProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                   <motion.div key={product._id} variants={fadeInUp}>
-                    <Link to={`/produk/${product._id}`} className="group block">
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4">
+                    <Link to={`/produk/${product._id}`} className="group flex flex-col h-full">
+                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
                         <img
                           src={api.getImageUrl(product.image)}
                           alt={product.name}
@@ -258,35 +272,47 @@ export default function Products() {
                           redirectTo={`/produk/${product._id}`}
                         />
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-gray-900 mb-1">
+                      <div className="flex flex-col flex-1 pt-1">
+                        {product.category?.name && (
+                          <span className="text-xs font-medium text-primary/80 mb-1 block">
+                            {product.category.name}
+                          </span>
+                        )}
+                        <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2 leading-tight h-10 overflow-hidden">
                           {product.name}
                         </h3>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <StarRating value={product.ratingAvg ?? 0} size="sm" />
-                          {product.reviewCount > 0 && (
+                        {product.reviewCount > 0 && (
+                          <div className="flex items-center gap-1 mb-2">
+                            <StarRating value={product.ratingAvg ?? 0} size="sm" />
                             <span className="text-xs text-gray-400">({product.reviewCount})</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">
-                          {product.description}
-                        </p>
-                        {product.priceNumeric > 0 && product.activePromotion && (
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <span className="text-sm font-bold text-red-600">
-                              {`Rp ${Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}`}
-                            </span>
-                            <span className="text-xs text-gray-400 line-through">
-                              {`Rp ${product.priceNumeric.toLocaleString('id-ID')}`}
-                            </span>
-                            <span className="px-1.5 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded-full">
-                              -{product.activePromotion.discountPercent}%
-                            </span>
                           </div>
                         )}
-                        <button className="cursor-pointer text-sm font-semibold text-indigo-600 hover:text-indigo-700">
-                          Lihat Detail
-                        </button>
+                        {product.priceNumeric > 0 ? (
+                          product.activePromotion ? (
+                            <div className="mb-1">
+                              <div className="flex flex-wrap items-center gap-1">
+                                <span className="text-base font-bold text-gray-900">
+                                  Rp {Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}
+                                </span>
+                                <span className="px-1 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded">
+                                  -{product.activePromotion.discountPercent}%
+                                </span>
+                              </div>
+                              <span className="text-xs text-gray-400 line-through">
+                                Rp {product.priceNumeric.toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-base font-bold text-gray-900 mb-1">
+                              Rp {product.priceNumeric.toLocaleString('id-ID')}
+                            </p>
+                          )
+                        ) : product.price ? (
+                          <p className="text-base font-bold text-gray-900 mb-1">{formatPriceString(product.price)}</p>
+                        ) : null}
+                        {product.soldCount > 0 && (
+                          <p className="text-xs text-gray-400 mt-0.5">{formatSold(product.soldCount)}</p>
+                        )}
                       </div>
                     </Link>
                   </motion.div>

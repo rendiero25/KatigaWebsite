@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 
@@ -154,13 +155,12 @@ export default function PromosiTampilan() {
             Drag untuk atur urutan. Toggle untuk show/hide di halaman home.
           </p>
         </div>
-        <button
+        <Button
           onClick={handleSaveOrder}
           disabled={saving}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
         >
           {saving ? 'Menyimpan...' : saved ? '✓ Tersimpan' : 'Simpan Urutan'}
-        </button>
+        </Button>
       </div>
 
       {loading ? (

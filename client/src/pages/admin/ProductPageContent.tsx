@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
+import { Button } from "@/components/ui/button";
 import { api, API_BASE_URL } from "../../services/api";
 import { FaSave, FaSpinner } from "react-icons/fa";
 
@@ -157,14 +158,14 @@ export default function ProductPageContent() {
           </div>
 
           <div className="pt-4 border-t flex justify-end">
-            <button
+            <Button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition"
+              className="flex items-center gap-2"
             >
               {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
               <span>Simpan Perubahan</span>
-            </button>
+            </Button>
           </div>
         </form>
       </div>

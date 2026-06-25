@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
+import { Button } from "@/components/ui/button";
 import api, { API_BASE_URL } from "../../services/api";
 import { FaTrash, FaPlus } from "react-icons/fa";
 
@@ -147,7 +148,7 @@ export default function AdminAbout() {
 
   return (
     <AdminLayout title="About Us Content">
-      <div className="bg-white rounded-xl shadow-sm p-6 max-w-4xl">
+      <div className="bg-white rounded-xl shadow-sm p-6 w-full">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Header Section */}
           <div className="space-y-4">
@@ -202,13 +203,15 @@ export default function AdminAbout() {
                       alt=""
                       className="w-full h-full object-cover"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => handleDeleteImage(img)}
-                      className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+                      className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700"
                     >
                       <FaTrash size={12} />
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -294,22 +297,24 @@ export default function AdminAbout() {
                     className="flex-1 px-4 py-2 border rounded-lg"
                     placeholder={`Mission point ${idx + 1}`}
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => removeMissionPoint(idx)}
-                    className="px-3 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
                   >
                     <FaTrash />
-                  </button>
+                  </Button>
                 </div>
               ))}
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={addMissionPoint}
-                className="flex items-center gap-2 text-sm text-indigo-600 font-medium px-2 py-1"
               >
                 <FaPlus /> Add Mission Point
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -363,12 +368,9 @@ export default function AdminAbout() {
           </div>
 
           <div className="flex justify-end pt-4 border-t">
-            <button
-              type="submit"
-              className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-sm"
-            >
+            <Button type="submit">
               Simpan Semua Perubahan
-            </button>
+            </Button>
           </div>
         </form>
       </div>

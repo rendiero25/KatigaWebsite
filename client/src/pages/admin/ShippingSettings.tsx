@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import AdminLayout from '../../components/AdminLayout';
 import { useShippingSettings } from '../../hooks/useApi';
 import { getCourierLogoUrl } from '../../utils/courierLogos';
+import { Button } from '@/components/ui/button';
 
 export default function AdminShippingSettings() {
   const { data, loading, saving, error, refresh, save } = useShippingSettings();
@@ -48,16 +49,16 @@ export default function AdminShippingSettings() {
                 <p className="text-sm text-red-600 mt-1">{error}</p>
               </div>
 
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 onClick={() => {
                   void refresh();
                 }}
                 disabled={loading}
-                className="inline-flex items-center justify-center rounded-lg border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
               >
                 {loading ? 'Memuat ulang...' : 'Coba Lagi'}
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -150,13 +151,13 @@ export default function AdminShippingSettings() {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading || saving || !data}
-            className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full py-3"
           >
             {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
-          </button>
+          </Button>
         </form>
       </div>
     </AdminLayout>

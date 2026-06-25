@@ -40,7 +40,7 @@ export default function AdvantagesSection() {
           </div>
 
           {/* Right Side - Advantages List */}
-          <div className="flex-1 space-y-12 lg:pl-45">
+          <div className="flex-1 space-y-12 lg:pl-20">
             {advantages?.map((advantage: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <div key={advantage._id} className="group">
                 <div className="flex items-baseline gap-6">
@@ -52,7 +52,7 @@ export default function AdvantagesSection() {
                     <h4 className="text-3xl font-bold text-black mb-3">
                       {advantage.title}
                     </h4>
-                    <p className="text-black leading-relaxed text-sm md:text-2xl">
+                    <p className="text-black leading-relaxed text-base md:text-lg lg:text-xl">
                       {advantage.description}
                     </p>
                   </div>

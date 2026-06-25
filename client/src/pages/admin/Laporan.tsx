@@ -35,7 +35,7 @@ export default function Laporan() {
         </Select>
       </div>
 
-      <Tabs defaultValue="penjualan">
+      <Tabs defaultValue="penjualan" className="flex-col">
         <TabsList>
           <TabsTrigger value="penjualan">Penjualan</TabsTrigger>
           <TabsTrigger value="produk">Produk</TabsTrigger>

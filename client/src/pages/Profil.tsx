@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Package, CreditCard, CheckCircle, Clock, User, Phone, Mail, ArrowRight } from 'lucide-react'
+import { Package, User, Phone, Mail } from 'lucide-react'
 import type { CustomerProfile, Order } from '../types/ecommerce'
 import api from '../services/api'
 import UserLayout from '../components/UserLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -45,11 +43,11 @@ export default function Profil() {
     .filter((o) => o.orderStatus === 'delivered')
     .reduce((s, o) => s + o.total, 0)
 
-  const stats: { label: string; value: string; icon: typeof Package; color: string; bg: string; path?: string }[] = [
-    { label: 'Total Pesanan', value: String(orders.length), icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Sedang Berjalan', value: String(activeOrders), icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Selesai', value: String(doneOrders), icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Total Belanja', value: fmt(totalSpent), icon: CreditCard, color: 'text-violet-600', bg: 'bg-violet-50', path: '/profil/laporan-keuangan' },
+  const stats: { label: string; value: string; path?: string }[] = [
+    { label: 'Total Pesanan', value: String(orders.length) },
+    { label: 'Sedang Berjalan', value: String(activeOrders) },
+    { label: 'Selesai', value: String(doneOrders) },
+    { label: 'Total Belanja', value: fmt(totalSpent), path: '/profil/laporan-keuangan' },
   ]
 
   const recent = orders.slice(0, 3)
@@ -58,13 +56,13 @@ export default function Profil() {
     return (
       <UserLayout title="Beranda">
         <div className="space-y-6 w-full">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          <Skeleton className="h-14 w-full rounded-lg" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
           </div>
           <div className="grid lg:grid-cols-5 gap-6">
-            <Skeleton className="lg:col-span-3 h-64 rounded-2xl" />
-            <Skeleton className="lg:col-span-2 h-64 rounded-2xl" />
+            <Skeleton className="lg:col-span-3 h-64 rounded-lg" />
+            <Skeleton className="lg:col-span-2 h-64 rounded-lg" />
           </div>
         </div>
       </UserLayout>
@@ -74,40 +72,22 @@ export default function Profil() {
   return (
     <UserLayout title="Beranda">
       <div className="space-y-6 w-full">
-        {/* Welcome banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] p-6 text-white">
-          <div
-            className="absolute inset-0 opacity-[0.05]"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-              backgroundSize: '24px 24px',
-            }}
-          />
-          <div className="relative">
-            <p className="text-white/60 text-sm mb-1">Selamat datang kembali,</p>
-            <h2 className="text-2xl font-bold">{customer?.name || 'Pelanggan'} 👋</h2>
-            <p className="text-white/50 text-sm mt-2">Kelola pesanan dan akun kamu dari sini.</p>
-          </div>
+        {/* Welcome */}
+        <div className="mb-6">
+          <p className="text-xl font-semibold text-[#1F1F1F]">
+            Selamat datang, {customer?.name || 'Pelanggan'}
+          </p>
+          <p className="text-sm text-[#9A9A9A] mt-1">Kelola pesanan dan akun kamu dari sini.</p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {stats.map((stat) => {
-            const Icon = stat.icon
             const content = (
-              <Card className={`border-0 shadow-sm bg-white rounded-xl ${stat.path ? 'transition-shadow hover:shadow-md' : ''}`}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-gray-500 mb-1 truncate">{stat.label}</p>
-                      <p className={`text-lg font-bold ${stat.color} truncate`}>{stat.value}</p>
-                    </div>
-                    <div className={`w-9 h-9 rounded-lg ${stat.bg} flex items-center justify-center shrink-0 ml-2`}>
-                      <Icon className={`w-4 h-4 ${stat.color}`} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="rounded-lg border border-[#E8E8E5] bg-white p-4">
+                <p className="text-xs text-[#9A9A9A] uppercase tracking-wide mb-1">{stat.label}</p>
+                <p className="text-2xl font-semibold text-[#1F1F1F]">{stat.value}</p>
+              </div>
             )
             return stat.path ? (
               <Link key={stat.label} to={stat.path}>{content}</Link>
@@ -120,31 +100,28 @@ export default function Profil() {
         {/* Bottom row */}
         <div className="grid lg:grid-cols-5 gap-6">
           {/* Recent orders */}
-          <Card className="lg:col-span-3 border-0 shadow-sm bg-white rounded-2xl">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Pesanan Terbaru</CardTitle>
-                <Link to="/pesanan" className="text-xs text-primary hover:underline flex items-center gap-1">
-                  Lihat semua <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
+          <div className="lg:col-span-3 rounded-lg border border-[#E8E8E5] bg-white">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+              <span className="text-[15px] font-semibold text-[#1F1F1F]">Pesanan Terbaru</span>
+              <Link to="/pesanan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A]">
+                Lihat semua
+              </Link>
+            </div>
+            <div className="px-4 pb-4">
               {recent.length === 0 ? (
-                <div className="text-center py-10">
-                  <Package className="w-8 h-8 text-gray-200 mx-auto mb-3" />
-                  <p className="text-sm text-gray-400 mb-3">Belum ada pesanan</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    render={<Link to="/produk" />}
-                    className="rounded-full"
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Package className="size-10 text-[#D0D0CC] mb-3" />
+                  <p className="text-sm font-medium text-[#4A4A4A]">Belum ada pesanan</p>
+                  <p className="text-xs text-[#9A9A9A] mt-1">Yuk mulai belanja produk pilihan kamu</p>
+                  <Link
+                    to="/produk"
+                    className="mt-4 border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
                   >
                     Mulai Belanja
-                  </Button>
+                  </Link>
                 </div>
               ) : (
-                <div className="space-y-1">
+                <div>
                   {recent.map((order) => {
                     const s = STATUS_LABEL[order.orderStatus] ?? {
                       label: order.orderStatus,
@@ -154,45 +131,34 @@ export default function Profil() {
                       <Link
                         key={order._id}
                         to={`/pesanan/${order._id}`}
-                        className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition group"
+                        className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer"
                       >
                         <div className="min-w-0">
-                          <p className="text-[11px] text-gray-400 mb-0.5">
+                          <p className="text-xs text-[#9A9A9A] font-mono">
                             #{order._id.slice(-8).toUpperCase()}
                           </p>
-                          <p className="text-sm font-semibold text-gray-900">{fmt(order.total)}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{order.items.length} item</p>
+                          <p className="text-sm font-semibold text-[#1F1F1F]">{fmt(order.total)}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${s.color}`}>
-                            {s.label}
-                          </span>
-                          <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary transition" />
-                        </div>
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ml-3 ${s.color}`}>
+                          {s.label}
+                        </span>
                       </Link>
                     )
                   })}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Profile summary */}
-          <Card className="lg:col-span-2 border-0 shadow-sm bg-white rounded-2xl">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-gray-900">Profil Saya</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  render={<Link to="/profil/pengaturan" />}
-                  className="h-7 text-xs text-primary hover:text-primary hover:bg-primary/10"
-                >
-                  Edit
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0 space-y-3">
+          <div className="lg:col-span-2 rounded-lg border border-[#E8E8E5] bg-white">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+              <span className="text-[15px] font-semibold text-[#1F1F1F]">Profil Saya</span>
+              <Link to="/profil/pengaturan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A]">
+                Edit
+              </Link>
+            </div>
+            <div className="px-4 pb-4">
               {customer &&
                 [
                   { icon: User, label: customer.name },
@@ -201,16 +167,14 @@ export default function Profil() {
                 ].map((item, i) => {
                   const Icon = item.icon
                   return (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">
-                        <Icon className="w-3.5 h-3.5 text-gray-400" />
-                      </div>
-                      <p className="text-sm text-gray-700 truncate">{item.label}</p>
+                    <div key={i} className="flex items-center gap-2 py-2 border-b border-[#F0F0EC] last:border-0">
+                      <Icon className="size-3.5 text-[#9A9A9A] shrink-0" />
+                      <p className="text-sm text-[#4A4A4A] truncate">{item.label}</p>
                     </div>
                   )
                 })}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </UserLayout>

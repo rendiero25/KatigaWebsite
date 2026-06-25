@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
+import { Button } from "@/components/ui/button";
 
 const API_URL = API_BASE_URL;
 
@@ -87,12 +88,9 @@ export default function AdminCertifications() {
         <p className="text-gray-600">
           Total {certifications.length} sertifikasi
         </p>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
+        <Button onClick={() => setShowModal(true)}>
           + Tambah Sertifikasi
-        </button>
+        </Button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
@@ -111,18 +109,12 @@ export default function AdminCertifications() {
             <h3 className="font-semibold text-gray-900 mb-2">{item.name}</h3>
             <p className="text-gray-600 text-sm">{item.description}</p>
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition flex gap-2">
-              <button
-                onClick={() => handleEdit(item)}
-                className="p-2 bg-indigo-100 text-indigo-600 rounded"
-              >
+              <Button variant="secondary" size="xs" onClick={() => handleEdit(item)}>
                 Edit
-              </button>
-              <button
-                onClick={() => handleDelete(item._id)}
-                className="p-2 bg-red-100 text-red-600 rounded"
-              >
+              </Button>
+              <Button variant="destructive" size="xs" onClick={() => handleDelete(item._id)}>
                 Hapus
-              </button>
+              </Button>
             </div>
           </div>
         ))}
@@ -188,19 +180,17 @@ export default function AdminCertifications() {
                 />
               </div>
               <div className="flex gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={resetForm}
-                  className="flex-1 px-4 py-2 border rounded-lg"
+                  className="flex-1"
                 >
                   Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg"
-                >
+                </Button>
+                <Button type="submit" className="flex-1">
                   Simpan
-                </button>
+                </Button>
               </div>
             </form>
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag } from 'lucide-react';
 import type { CartItem } from '../types/ecommerce';
 import { useLiveCart } from '../hooks/useApi';
 import { getCart, removeFromCart, updateQty, getSelectedTotal } from '../utils/cart';
@@ -99,8 +100,8 @@ export default function Keranjang() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-20">
-          <p className="text-black/60">Menyinkronkan keranjang...</p>
+        <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-20">
+          <p className="text-sm text-[#9A9A9A]">Menyinkronkan keranjang...</p>
         </main>
         <Footer />
       </>
@@ -111,12 +112,13 @@ export default function Keranjang() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-20">
-          <p className="text-2xl font-bold text-black mb-4">Keranjang Kosong</p>
-          <p className="text-black/60 mb-8">Belum ada produk di keranjang kamu.</p>
+        <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-20">
+          <ShoppingBag className="size-12 text-[#D0D0CC] mb-4" />
+          <p className="text-base font-semibold text-[#1F1F1F] mb-1">Keranjang masih kosong</p>
+          <p className="text-sm text-[#9A9A9A] mb-6">Temukan produk yang kamu suka.</p>
           <Link
             to="/produk"
-            className="inline-flex items-center px-8 py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full transition"
+            className="px-6 py-2.5 bg-[#1F1F1F] text-white text-sm font-medium rounded-md hover:bg-[#2F2F2F] transition-colors"
           >
             Lihat Produk
           </Link>
@@ -129,16 +131,17 @@ export default function Keranjang() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-white pt-10 pb-0">
+      <main className="min-h-screen bg-[#F9F7F2] pt-24 pb-0">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 pb-16">
-          <h1 className="text-3xl font-bold text-black mb-6">Keranjang Belanja</h1>
+          <h1 className="text-2xl font-semibold text-[#1F1F1F] mb-6">Keranjang Belanja</h1>
+
           {cartSyncing && (
-            <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <div className="mb-4 rounded-lg border border-[#D4DEFF] bg-[#F0F5FF] px-4 py-3 text-sm text-primary">
               Memperbarui harga dan data pengiriman terbaru...
             </div>
           )}
           {cartSyncError && (
-            <div className="mb-4 flex flex-col gap-2 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-4 flex flex-col gap-2 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
               <span>{cartSyncError}</span>
               <button
                 onClick={refreshCart}
@@ -149,20 +152,18 @@ export default function Keranjang() {
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Item list */}
             <div className="flex-1 min-w-0">
-              {/* Select all */}
-              <label className="flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-3 mb-3 cursor-pointer select-none">
+              <label className="flex items-center gap-3 bg-white border border-[#E8E8E5] rounded-xl px-4 py-3 mb-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="w-4 h-4 accent-primary"
+                  className="w-4 h-4 accent-primary shrink-0"
                 />
-                <span className="text-sm font-medium text-black">
-                  Pilih Semua ({displayCart.length} produk)
-                </span>
+                <span className="text-sm font-medium text-[#1F1F1F]">Pilih Semua</span>
+                <span className="text-sm text-[#9A9A9A] ml-auto">{displayCart.length} produk</span>
               </label>
 
               <div className="space-y-3">
@@ -181,9 +182,10 @@ export default function Keranjang() {
 
             {/* Summary */}
             <div className="lg:w-72 shrink-0">
-              <div className="bg-black border border-white/10 rounded-2xl p-6 sticky top-24 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
-                <h2 className="text-base font-bold text-white mb-4">Ringkasan</h2>
-                <div className="flex justify-between text-sm text-white/70 mb-1">
+              <div className="bg-primary rounded-xl p-6 sticky top-24">
+                <h2 className="text-base font-semibold text-white mb-4">Ringkasan</h2>
+
+                <div className="flex justify-between text-sm text-white/75 mb-1.5">
                   <span>Produk dipilih</span>
                   <span>{selectedCount} item</span>
                 </div>
@@ -191,14 +193,16 @@ export default function Keranjang() {
                   <span>Ongkir</span>
                   <span>Dihitung saat checkout</span>
                 </div>
-                <div className="border-t border-white/10 pt-4 flex justify-between font-bold text-white mb-6">
+
+                <div className="border-t border-white/15 pt-4 flex justify-between font-semibold text-white mb-5">
                   <span>Subtotal</span>
-                  <span>{cartReady ? fmt(selectedTotal) : '—'}</span>
+                  <span className="tabular-nums">{cartReady ? fmt(selectedTotal) : '—'}</span>
                 </div>
+
                 <button
                   onClick={handleCheckout}
                   disabled={selectedIds.size === 0 || cartSyncing || !cartReady}
-                  className="w-full py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0 text-sm"
+                  className="w-full py-3 bg-white text-primary font-semibold rounded-md text-sm hover:bg-[#F7F9FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {!cartHydrated || cartSyncing
                     ? 'Sinkronisasi...'
@@ -206,9 +210,10 @@ export default function Keranjang() {
                     ? `Checkout (${selectedIds.size} Produk)`
                     : 'Pilih Produk'}
                 </button>
+
                 <Link
                   to="/produk"
-                  className="block text-center text-sm text-white/50 mt-4 hover:text-white transition-colors"
+                  className="block text-center text-sm text-white/60 mt-4 hover:text-white transition-colors"
                 >
                   Lanjut Belanja
                 </Link>
@@ -217,7 +222,6 @@ export default function Keranjang() {
           </div>
         </div>
 
-        {/* Related products carousel — above footer */}
         {categoryIds.length > 0 && (
           <RelatedProductsCarousel
             categoryIds={categoryIds}
