@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { Button } from '@/components/ui/button';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -79,13 +80,13 @@ export default function AdminLogin() {
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 font-semibold rounded-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Memproses...' : 'Masuk'}
-            </button>
+            </Button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">

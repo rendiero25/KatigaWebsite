@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
+import { Button } from '@/components/ui/button';
 
 interface Promotion {
   _id: string;
@@ -182,12 +183,9 @@ export default function AdminPromotions() {
     <AdminLayout title="Kelola Promosi">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900">Daftar Promosi</h2>
-        <button
-          onClick={openCreate}
-          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition"
-        >
+        <Button onClick={openCreate}>
           + Tambah Promosi
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -232,8 +230,8 @@ export default function AdminPromotions() {
                     )}
                   </td>
                   <td className="px-4 py-3 flex gap-2">
-                    <button onClick={() => openEdit(promo)} className="text-indigo-600 hover:underline text-xs">Edit</button>
-                    <button onClick={() => handleDelete(promo._id)} className="text-red-500 hover:underline text-xs">Hapus</button>
+                    <Button variant="secondary" size="xs" onClick={() => openEdit(promo)}>Edit</Button>
+                    <Button variant="destructive" size="xs" onClick={() => handleDelete(promo._id)}>Hapus</Button>
                   </td>
                 </tr>
               ))}
@@ -248,7 +246,7 @@ export default function AdminPromotions() {
           <div className="relative ml-auto w-full max-w-2xl bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
               <h3 className="text-lg font-bold">{editing ? 'Edit Promosi' : 'Tambah Promosi'}</h3>
-              <button onClick={() => setShowSheet(false)} className="text-gray-500 hover:text-gray-900 text-2xl leading-none">&times;</button>
+              <Button variant="ghost" size="icon-sm" onClick={() => setShowSheet(false)}>&times;</Button>
             </div>
 
             <div className="p-6 space-y-5 flex-1">
@@ -272,9 +270,9 @@ export default function AdminPromotions() {
                   <img src={bannerPreview} alt="banner preview" className="w-full h-40 object-cover rounded-lg mb-2" />
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-sm text-indigo-600 hover:underline">
+                <Button variant="secondary" type="button" onClick={() => fileInputRef.current?.click()}>
                   {bannerPreview ? 'Ganti gambar' : 'Upload banner'}
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -404,16 +402,12 @@ export default function AdminPromotions() {
             </div>
 
             <div className="p-6 border-t border-gray-200 flex gap-3 justify-end sticky bottom-0 bg-white">
-              <button onClick={() => setShowSheet(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+              <Button variant="secondary" onClick={() => setShowSheet(false)}>
                 Batal
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
                 {saving ? 'Menyimpan...' : 'Simpan'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
+import { Button } from "@/components/ui/button";
 import api, { API_BASE_URL } from "../../services/api";
 import { FaPlus, FaTrash, FaSave } from "react-icons/fa";
 
@@ -140,7 +141,7 @@ export default function AdminCertificationTech() {
 
   return (
     <AdminLayout title="Certification & Technology">
-      <div className="bg-white rounded-xl shadow-sm p-6 max-w-4xl">
+      <div className="bg-white rounded-xl shadow-sm p-6 w-full">
         <h1 className="text-2xl font-bold mb-6 text-gray-800">
           Edit Page Content
         </h1>
@@ -220,13 +221,14 @@ export default function AdminCertificationTech() {
                 <label className="block text-sm font-medium text-gray-600">
                   Certificate Points
                 </label>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={addSec1Point}
-                  className="text-sm text-blue-600 flex items-center gap-1"
                 >
                   <FaPlus /> Add Point
-                </button>
+                </Button>
               </div>
               {formData.sec1Points.map((point, idx) => (
                 <div
@@ -253,13 +255,14 @@ export default function AdminCertificationTech() {
                       rows={2}
                     />
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="xs"
                     onClick={() => removeSec1Point(idx)}
-                    className="text-red-500 p-2 hover:bg-red-100 rounded"
                   >
                     <FaTrash />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
@@ -336,13 +339,14 @@ export default function AdminCertificationTech() {
                 <label className="block text-sm font-medium text-gray-600">
                   Feature Points
                 </label>
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={addSec2Point}
-                  className="text-sm text-blue-600 flex items-center gap-1"
                 >
                   <FaPlus /> Add Point
-                </button>
+                </Button>
               </div>
               {formData.sec2Points.map((point, idx) => (
                 <div key={idx} className="flex gap-2">
@@ -356,25 +360,26 @@ export default function AdminCertificationTech() {
                     className="flex-1 border rounded px-3 py-2"
                     placeholder="Feature description..."
                   />
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="xs"
                     onClick={() => removeSec2Point(idx)}
-                    className="text-red-500 p-2 hover:bg-red-100 rounded"
                   >
                     <FaTrash />
-                  </button>
+                  </Button>
                 </div>
               ))}
             </div>
           </section>
 
           <div className="pt-6 border-t flex justify-end">
-            <button
+            <Button
               type="submit"
-              className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 font-medium shadow-lg"
+              className="flex items-center gap-2"
             >
               <FaSave /> Simpan Perubahan
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -16,8 +16,8 @@ export default function ProductsSection() {
   const [nextEl, setNextEl] = useState<HTMLElement | null>(null);
 
   // Get featured products or latest 8
-  const featuredProducts =
-    products?.filter((p: any) => p.isFeatured) || products?.slice(0, 8) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const filtered = products?.filter((p: any) => p.isFeatured) ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
+  const featuredProducts = filtered.length > 0 ? filtered : (products?.slice(0, 8) ?? []);
 
   if (loading) {
     return (
@@ -47,10 +47,10 @@ export default function ProductsSection() {
             }}
           >
             {featuredProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-              <SwiperSlide key={product._id} className="w-auto!">
+              <SwiperSlide key={product._id}>
                 <div className="group h-full flex flex-col">
                   {/* Image Card */}
-                  <div className="w-[400px] h-[300px] xl:w-[600px] xl:h-[550px] rounded-2xl bg-gray-100 mb-6 relative overflow-hidden">
+                  <div className="w-full aspect-[4/3] lg:aspect-[3/4] rounded-2xl bg-gray-100 mb-6 relative overflow-hidden">
                     <img
                       src={api.getImageUrl(product.image)}
                       alt={product.name}
@@ -82,7 +82,7 @@ export default function ProductsSection() {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 flex flex-col items-start px-10">
+                  <div className="flex-1 flex flex-col items-start px-4 sm:px-6 lg:px-8">
                     <h3 className="max-w-xs xl:max-w-lg text-2xl font-bold text-black mb-2 leading-tight">
                       {product.name}
                     </h3>

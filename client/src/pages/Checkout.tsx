@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
 import type { CartItem, ShippingAddress, ShippingRate, VoucherValidation } from '../types/ecommerce';
 import { useLiveCart } from '../hooks/useApi';
 import { getCart, removeManyFromCart, normalizeCartItem } from '../utils/cart';
@@ -42,6 +43,26 @@ const getStoredBuyNowItem = (): CartItem | null => {
     return null;
   }
 };
+
+interface StepBadgeProps {
+  number: number;
+  done: boolean;
+}
+
+function StepBadge({ number, done }: StepBadgeProps) {
+  if (done) {
+    return (
+      <span className="w-6 h-6 rounded-full flex items-center justify-center bg-primary shrink-0">
+        <CheckCircle2 className="size-4 text-white" />
+      </span>
+    );
+  }
+  return (
+    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-[#E8E8E5] text-[#9A9A9A]">
+      {number}
+    </span>
+  );
+}
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -194,20 +215,20 @@ export default function Checkout() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-white pt-10 pb-20">
+      <main className="min-h-screen bg-[#F9F7F2] pt-24 pb-20">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-          <h1 className="text-3xl font-bold text-black mb-8">Checkout</h1>
+          <h1 className="text-2xl font-semibold text-[#1F1F1F] mb-8">Checkout</h1>
 
-          <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Left — form */}
-            <div className="flex-1 space-y-6">
+            <div className="flex-1 space-y-4">
               {(!cartHydrated || cartSyncing) && (
-                <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                <div className="rounded-lg border border-[#D4DEFF] bg-[#F0F5FF] px-4 py-3 text-sm text-primary">
                   Memperbarui harga, promo, dan data pengiriman terbaru...
                 </div>
               )}
               {cartSyncError && (
-                <div className="flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="flex flex-col gap-2 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
                   <p>{cartSyncError}</p>
                   <div className="flex flex-wrap gap-3">
                     <button
@@ -226,8 +247,12 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Address */}
-              <div className="bg-white border border-gray-100 rounded-2xl p-6">
+              {/* Step 1: Address */}
+              <div className="bg-white border border-[#E8E8E5] rounded-xl p-6">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <StepBadge number={1} done={!!selectedAddress} />
+                  <h2 className="text-sm font-semibold text-[#1F1F1F] uppercase tracking-wide">Alamat Pengiriman</h2>
+                </div>
                 <AddressSelector
                   selected={selectedAddress}
                   onSelect={(addr) => {
@@ -238,19 +263,22 @@ export default function Checkout() {
                   }}
                 />
                 {selectedAddress && (
-                  <div className="mt-3 p-3 bg-green-50 rounded-xl text-sm text-green-800">
+                  <div className="mt-3 p-3 bg-[#F0F5FF] border border-[#D4DEFF] rounded-lg text-sm text-primary">
                     <p className="font-semibold">{selectedAddress.recipientName} · {selectedAddress.phone}</p>
-                    <p className="text-xs text-green-700 mt-0.5">{selectedAddress.street}, {selectedAddress.areaName}</p>
+                    <p className="text-xs text-primary/70 mt-0.5">{selectedAddress.street}, {selectedAddress.areaName}</p>
                   </div>
                 )}
               </div>
 
-              {/* Shipping */}
+              {/* Step 2: Shipping */}
               {selectedAddress && (
-                <div className="bg-white border border-gray-100 rounded-2xl p-6">
-                  <h2 className="text-base font-bold text-black mb-4">Pilih Pengiriman</h2>
+                <div className="bg-white border border-[#E8E8E5] rounded-xl p-6">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <StepBadge number={2} done={!!selectedRate} />
+                    <h2 className="text-sm font-semibold text-[#1F1F1F] uppercase tracking-wide">Metode Pengiriman</h2>
+                  </div>
                   {!cartHydrated || cartSyncing ? (
-                    <p className="text-sm text-black/60">Menyiapkan data pengiriman terbaru...</p>
+                    <p className="text-sm text-[#9A9A9A]">Menyiapkan data pengiriman terbaru...</p>
                   ) : cartSyncError ? (
                     <p className="text-sm text-red-600">
                       Sinkronkan keranjang dulu sebelum memilih pengiriman.
@@ -265,10 +293,14 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Voucher */}
+              {/* Step 3: Voucher */}
               {selectedRate && cartReady && (
-                <div className="bg-white border border-gray-100 rounded-2xl p-6">
-                  <h2 className="text-base font-bold text-black mb-4">Kode Voucher</h2>
+                <div className="bg-white border border-[#E8E8E5] rounded-xl p-6">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <StepBadge number={3} done={!!appliedVoucher} />
+                    <h2 className="text-sm font-semibold text-[#1F1F1F] uppercase tracking-wide">Kode Voucher</h2>
+                    <span className="text-xs text-[#9A9A9A] ml-1">(opsional)</span>
+                  </div>
                   <VoucherInput
                     subtotal={subtotal}
                     onApply={(v, code) => { setAppliedVoucher(v); setVoucherCode(code); }}
@@ -280,10 +312,9 @@ export default function Checkout() {
 
             {/* Right — summary */}
             <div className="lg:w-80 shrink-0">
-              <div className="bg-black border border-white/10 rounded-2xl p-6 sticky top-24 shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
-                <h2 className="text-base font-bold text-white mb-4">Ringkasan Pesanan</h2>
+              <div className="bg-primary rounded-xl p-6 sticky top-24">
+                <h2 className="text-base font-semibold text-white mb-4">Ringkasan Pesanan</h2>
 
-                {/* Items */}
                 <div className="space-y-2 mb-4">
                   {effectiveCart.map((c) => (
                     <div key={c.cartItemId} className="flex justify-between text-sm text-white/70">
@@ -295,13 +326,13 @@ export default function Checkout() {
                   ))}
                 </div>
 
-                <div className="border-t border-white/10 pt-3 space-y-2 text-sm text-white/70">
+                <div className="border-t border-white/15 pt-3 space-y-2 text-sm text-white/70">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="tabular-nums">{cartReady ? fmt(subtotal) : '—'}</span>
                   </div>
                   {cartReady && voucherDiscount > 0 && (
-                    <div className="flex justify-between text-green-400">
+                    <div className="flex justify-between text-green-300">
                       <span>Diskon voucher</span>
                       <span className="tabular-nums">− {fmt(voucherDiscount)}</span>
                     </div>
@@ -314,7 +345,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="border-t border-white/10 mt-3 pt-3 flex justify-between font-bold text-white mb-6">
+                <div className="border-t border-white/15 mt-3 pt-3 flex justify-between font-semibold text-white mb-5">
                   <span>Total</span>
                   <span className="tabular-nums">{cartReady ? fmt(total) : '—'}</span>
                 </div>
@@ -322,13 +353,13 @@ export default function Checkout() {
                 <button
                   onClick={handlePay}
                   disabled={!selectedAddress || !selectedRate || paying || cartSyncing || !cartReady}
-                  className="w-full py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0 text-sm"
+                  className="w-full py-3 bg-white text-primary font-semibold rounded-md text-sm hover:bg-[#F7F9FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {!cartHydrated || cartSyncing ? 'Sinkronisasi...' : paying ? 'Memproses...' : 'Bayar Sekarang'}
                 </button>
 
                 {(!selectedAddress || !selectedRate || !cartReady) && (
-                  <p className="text-center text-xs text-white/40 mt-3">
+                  <p className="text-center text-xs text-white/50 mt-3">
                     {!selectedAddress
                       ? 'Pilih alamat pengiriman terlebih dahulu'
                       : !cartReady

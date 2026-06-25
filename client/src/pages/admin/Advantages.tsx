@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
+import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
@@ -186,24 +187,18 @@ export default function AdminAdvantages() {
             />
           </div>
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
+            <Button type="submit">
               Simpan Header
-            </button>
+            </Button>
           </div>
         </form>
       </div>
 
       <div className="flex items-center justify-between mb-6">
         <p className="text-gray-600">Total {advantages.length} keunggulan</p>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
+        <Button onClick={() => setShowModal(true)}>
           + Tambah Keunggulan
-        </button>
+        </Button>
       </div>
 
       <div className="space-y-4">
@@ -222,18 +217,12 @@ export default function AdminAdvantages() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(item)}
-                  className="px-3 py-1 text-indigo-600 hover:bg-indigo-50 rounded"
-                >
+                <Button variant="secondary" size="xs" onClick={() => handleEdit(item)}>
                   Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(item._id)}
-                  className="px-3 py-1 text-red-600 hover:bg-red-50 rounded"
-                >
+                </Button>
+                <Button variant="destructive" size="xs" onClick={() => handleDelete(item._id)}>
                   Hapus
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -309,19 +298,17 @@ export default function AdminAdvantages() {
                 />
               </div>
               <div className="flex gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
                   onClick={resetForm}
-                  className="flex-1 px-4 py-2 border rounded-lg"
+                  className="flex-1"
                 >
                   Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg"
-                >
+                </Button>
+                <Button type="submit" className="flex-1">
                   Simpan
-                </button>
+                </Button>
               </div>
             </form>
           </div>

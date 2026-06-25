@@ -1,11 +1,9 @@
 import { useState, useRef } from 'react'
-import { MapPin, Plus, Trash2, Star, CheckCircle } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import type { BiteshipArea } from '../types/ecommerce'
 import { useCustomerAddresses } from '../hooks/useApi'
 import api from '../services/api'
 import UserLayout from '../components/UserLayout'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
 const emptyForm = {
@@ -21,6 +19,9 @@ const emptyForm = {
   postalCode: '',
   isDefault: false,
 }
+
+const inputCls =
+  'w-full px-3 py-2 border border-[#E8E8E5] rounded-md focus:outline-none focus:ring-2 focus:ring-[#1F1F1F] text-sm bg-white text-[#1F1F1F] placeholder:text-[#9A9A9A]'
 
 export default function AlamatSaya() {
   const { addresses, loading, addAddress, deleteAddress, setDefault } = useCustomerAddresses()
@@ -107,207 +108,276 @@ export default function AlamatSaya() {
     }
   }
 
-  const inputCls = 'w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white'
-
   return (
     <UserLayout title="Alamat Saya">
       <div className="w-full space-y-4">
-        <Card className="overflow-visible">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="size-5 text-primary" />
-                Alamat Pengiriman
-              </CardTitle>
-              <CardDescription>Kelola alamat pengiriman yang tersimpan</CardDescription>
-            </div>
-            {!showForm && (
-              <Button
-                onClick={() => { setShowForm(true); setMsg(null) }}
-                size="sm"
-                className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white hover:opacity-90"
-              >
-                <Plus className="size-4 mr-1" /> Tambah
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {msg && (
-              <div className={`flex items-center gap-2 text-sm p-3 rounded-lg ${msg.type === 'success' ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'}`}>
-                {msg.type === 'success' && <CheckCircle className="size-4 shrink-0" />}
-                {msg.text}
-              </div>
-            )}
 
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => <Skeleton key={i} className="h-24 w-full" />)}
-              </div>
-            ) : addresses.length === 0 && !showForm ? (
-              <p className="text-sm text-black/60 py-4 text-center">Belum ada alamat tersimpan. Tambahkan alamat pengiriman Anda.</p>
-            ) : (
-              <div className="space-y-3">
-                {addresses.map((addr) => (
-                  <div
-                    key={addr._id}
-                    className={`border rounded-xl p-4 ${addr.isDefault ? 'border-primary bg-blue-50' : 'border-gray-200'}`}
-                  >
+        {/* Top action row */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-[#4A4A4A]">Kelola alamat pengiriman tersimpan</p>
+          <button
+            type="button"
+            onClick={() => { setShowForm((v) => !v); setMsg(null) }}
+            className="border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+          >
+            {showForm ? 'Tutup Form' : 'Tambah Alamat'}
+          </button>
+        </div>
+
+        {/* Feedback message */}
+        {msg && (
+          <div
+            className={`text-sm px-4 py-2.5 rounded-md ${
+              msg.type === 'success'
+                ? 'bg-emerald-50 text-emerald-700'
+                : 'bg-red-50 text-red-700'
+            }`}
+          >
+            {msg.text}
+          </div>
+        )}
+
+        {/* Add address form */}
+        {showForm && (
+          <div className="rounded-lg border border-[#E8E8E5] bg-white p-4 space-y-3">
+            <p className="text-[15px] font-semibold text-[#1F1F1F]">Tambah Alamat Baru</p>
+
+            <div>
+              <label className="text-sm text-[#9A9A9A] mb-1 block">Label (contoh: Rumah, Kantor)</label>
+              <input
+                type="text"
+                placeholder="Rumah"
+                value={form.label}
+                onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#9A9A9A] mb-1 block">Nama penerima *</label>
+              <input
+                type="text"
+                placeholder="Nama lengkap"
+                value={form.recipientName}
+                onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#9A9A9A] mb-1 block">Nomor HP penerima *</label>
+              <input
+                type="tel"
+                placeholder="08xx-xxxx-xxxx"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#9A9A9A] mb-1 block">Alamat lengkap (jalan, nomor, RT/RW) *</label>
+              <input
+                type="text"
+                placeholder="Jl. Contoh No. 1, RT 01/RW 02"
+                value={form.street}
+                onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-[#9A9A9A] mb-1 block">Kecamatan / Kelurahan *</label>
+              <div className="relative">
+                {form.areaId ? (
+                  <div className="rounded-md border border-[#E8E8E5] bg-[#FAFAF9] p-3">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          {addr.label && (
-                            <span className="text-xs font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                              {addr.label}
-                            </span>
-                          )}
-                          {addr.isDefault && (
-                            <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <Star className="size-3" /> Utama
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm font-bold text-black">{addr.recipientName}</p>
-                        <p className="text-xs text-black/60">{addr.phone}</p>
-                        <p className="text-xs text-black/60 mt-0.5">{addr.street}, {addr.areaName}</p>
+                      <div className="space-y-0.5 text-sm">
+                        <p className="text-xs font-medium text-emerald-700 mb-1.5">Area terpilih</p>
+                        <p className="text-[#4A4A4A]">
+                          <span className="text-[#9A9A9A] inline-block w-24">Kecamatan</span>
+                          {form.kecamatan}
+                        </p>
+                        <p className="text-[#4A4A4A]">
+                          <span className="text-[#9A9A9A] inline-block w-24">Kota</span>
+                          {form.city}
+                        </p>
+                        <p className="text-[#4A4A4A]">
+                          <span className="text-[#9A9A9A] inline-block w-24">Provinsi</span>
+                          {form.province}
+                        </p>
+                        <p className="text-[#4A4A4A]">
+                          <span className="text-[#9A9A9A] inline-block w-24">Kode Pos</span>
+                          {form.postalCode}
+                        </p>
                       </div>
-                      <div className="flex flex-col gap-1.5 shrink-0">
-                        {!addr.isDefault && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-7 px-2"
-                            onClick={() => handleSetDefault(addr._id)}
-                          >
-                            Jadikan Utama
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50 h-7 px-2 text-xs"
-                          onClick={() => handleDelete(addr._id)}
-                        >
-                          <Trash2 className="size-3 mr-1" /> Hapus
-                        </Button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAreaKeyword('')
+                          setAreaResults([])
+                          setForm((f) => ({
+                            ...f,
+                            areaId: '',
+                            areaName: '',
+                            kecamatan: '',
+                            city: '',
+                            province: '',
+                            postalCode: '',
+                          }))
+                        }}
+                        className="text-xs text-[#1F1F1F] underline shrink-0 hover:opacity-70 transition"
+                      >
+                        Ganti
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {showForm && (
-              <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50">
-                <p className="text-sm font-bold text-black">Tambah Alamat Baru</p>
-                <input
-                  type="text"
-                  placeholder="Label (contoh: Rumah, Kantor)"
-                  value={form.label}
-                  onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                  className={inputCls}
-                />
-                <input
-                  type="text"
-                  placeholder="Nama penerima *"
-                  value={form.recipientName}
-                  onChange={(e) => setForm((f) => ({ ...f, recipientName: e.target.value }))}
-                  className={inputCls}
-                />
-                <input
-                  type="tel"
-                  placeholder="Nomor HP penerima *"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className={inputCls}
-                />
-                <input
-                  type="text"
-                  placeholder="Alamat lengkap (jalan, nomor, RT/RW) *"
-                  value={form.street}
-                  onChange={(e) => setForm((f) => ({ ...f, street: e.target.value }))}
-                  className={inputCls}
-                />
-                <div className="relative">
-                  {form.areaId ? (
-                    <div className="border border-green-200 bg-green-50 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-0.5 text-sm">
-                          <p className="text-xs font-semibold text-green-700 mb-1.5">✓ Area terpilih</p>
-                          <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Kecamatan</span>{form.kecamatan}</p>
-                          <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Kota</span>{form.city}</p>
-                          <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Provinsi</span>{form.province}</p>
-                          <p className="text-black/80"><span className="text-black/50 w-24 inline-block">Kode Pos</span>{form.postalCode}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAreaKeyword('')
-                            setAreaResults([])
-                            setForm((f) => ({ ...f, areaId: '', areaName: '', kecamatan: '', city: '', province: '', postalCode: '' }))
-                          }}
-                          className="text-xs text-primary underline shrink-0 hover:opacity-70 transition"
-                        >
-                          Ganti
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <input
-                        type="text"
-                        placeholder="Cari nama kecamatan atau kelurahan..."
-                        value={areaKeyword}
-                        onChange={(e) => handleAreaSearch(e.target.value)}
-                        className={inputCls}
-                      />
-                      {areaResults.length > 0 && (
-                        <ul className="absolute z-20 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-52 overflow-y-auto">
-                          {areaResults.map((area) => (
-                            <li
-                              key={area.area_id}
-                              className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer text-sm"
-                              onClick={() => selectArea(area)}
-                            >
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Cari nama kecamatan atau kelurahan..."
+                      value={areaKeyword}
+                      onChange={(e) => handleAreaSearch(e.target.value)}
+                      className={inputCls}
+                    />
+                    {areaResults.length > 0 && (
+                      <ul className="absolute z-20 left-0 right-0 bg-white border border-[#E8E8E5] rounded-md mt-1 max-h-52 overflow-y-auto">
+                        {areaResults.map((area) => (
+                          <li
+                            key={area.area_id}
+                            className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer text-sm text-[#4A4A4A]"
+                            onClick={() => selectArea(area)}
+                          >
+                            <span>
                               {area.administrative_division_level_3_name},{' '}
                               {area.administrative_division_level_2_name},{' '}
-                              {area.administrative_division_level_1_name}{' '}
-                              {area.postal_code}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </>
+                              {area.administrative_division_level_1_name}
+                            </span>
+                            <span className="text-xs text-[#9A9A9A] ml-2 shrink-0">{area.postal_code}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-[#4A4A4A] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isDefault}
+                onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
+                className="accent-[#1F1F1F]"
+              />
+              Jadikan alamat utama
+            </label>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => { setShowForm(false); setForm(emptyForm); setAreaKeyword('') }}
+                className="border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving || !form.recipientName || !form.phone || !form.street || !form.areaId}
+                className="bg-[#1F1F1F] text-white text-sm font-medium rounded-md px-4 py-2 hover:bg-[#2F2F2F] transition-colors disabled:opacity-40"
+              >
+                {saving ? 'Menyimpan...' : 'Simpan Alamat'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading skeletons */}
+        {loading && (
+          <div className="space-y-3">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!loading && addresses.length === 0 && !showForm && (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <MapPin className="size-10 text-[#D0D0CC] mb-3" />
+            <p className="text-sm font-medium text-[#4A4A4A]">Belum ada alamat tersimpan</p>
+            <p className="text-xs text-[#9A9A9A] mt-1">Tambahkan alamat pengiriman untuk mempercepat checkout</p>
+            <button
+              type="button"
+              onClick={() => { setShowForm(true); setMsg(null) }}
+              className="border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors mt-4"
+            >
+              Tambah Alamat
+            </button>
+          </div>
+        )}
+
+        {/* Address list */}
+        {!loading && addresses.length > 0 && (
+          <div className="space-y-3">
+            {addresses.map((addr) => (
+              <div
+                key={addr._id}
+                className="rounded-lg border border-[#E8E8E5] bg-white p-4"
+              >
+                {/* Line 1: label + default badge */}
+                <div className="flex items-center gap-2">
+                  {addr.label && (
+                    <span className="text-sm font-semibold text-[#1F1F1F]">{addr.label}</span>
+                  )}
+                  {!addr.label && (
+                    <span className="text-sm font-semibold text-[#1F1F1F]">Alamat</span>
+                  )}
+                  {addr.isDefault && (
+                    <span className="text-[11px] font-medium bg-[#1F1F1F] text-white px-2 py-0.5 rounded">
+                      Utama
+                    </span>
                   )}
                 </div>
-                <label className="flex items-center gap-2 text-sm text-black/70 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.isDefault}
-                    onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
-                    className="accent-primary"
-                  />
-                  Jadikan alamat utama
-                </label>
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => { setShowForm(false); setForm(emptyForm); setAreaKeyword('') }}
+
+                {/* Line 2: recipient · phone */}
+                <p className="text-sm text-[#4A4A4A] mt-1">
+                  {addr.recipientName} · {addr.phone}
+                </p>
+
+                {/* Line 3: street */}
+                <p className="text-sm text-[#9A9A9A] mt-0.5">{addr.street}</p>
+
+                {/* Line 4: city, province */}
+                <p className="text-xs text-[#9A9A9A]">
+                  {addr.city}, {addr.province}
+                </p>
+
+                {/* Footer actions */}
+                <div className="pt-3 border-t border-[#F0F0EC] mt-3 flex gap-2 flex-wrap">
+                  {!addr.isDefault && (
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefault(addr._id)}
+                      className="border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+                    >
+                      Jadikan Utama
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(addr._id)}
+                    className="border border-red-200 text-red-600 text-sm rounded-md px-3 py-1.5 hover:bg-red-50 transition-colors"
                   >
-                    Batal
-                  </Button>
-                  <Button
-                    onClick={handleSave}
-                    disabled={saving || !form.recipientName || !form.phone || !form.street || !form.areaId}
-                    className="flex-1 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white disabled:opacity-50 hover:opacity-90"
-                  >
-                    {saving ? 'Menyimpan...' : 'Simpan Alamat'}
-                  </Button>
+                    Hapus
+                  </button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        )}
       </div>
     </UserLayout>
   )

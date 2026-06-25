@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import { API_BASE_URL } from "../../services/api";
+import { Button } from "@/components/ui/button";
 
 const API_URL = API_BASE_URL;
 
@@ -65,7 +66,7 @@ export default function AdminContactPageContent() {
 
   return (
     <AdminLayout title="Konten Hal. Kontak">
-      <div className="max-w-4xl">
+      <div className="w-full">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
             <h3 className="font-semibold text-gray-900 mb-4">Header Content</h3>
@@ -116,13 +117,13 @@ export default function AdminContactPageContent() {
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={saving}
-            className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            className="w-full"
           >
             {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
+          </Button>
         </form>
       </div>
     </AdminLayout>

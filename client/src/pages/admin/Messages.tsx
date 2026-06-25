@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "../../components/AdminLayout";
+import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "../../services/api";
 
 const API_URL = API_BASE_URL;
@@ -102,12 +103,13 @@ export default function AdminMessages() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   {selectedMessage.subject || "No Subject"}
                 </h3>
-                <button
+                <Button
+                  variant="destructive"
+                  size="xs"
                   onClick={() => handleDelete(selectedMessage._id)}
-                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
                 >
                   Hapus
-                </button>
+                </Button>
               </div>
               <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                 <div>

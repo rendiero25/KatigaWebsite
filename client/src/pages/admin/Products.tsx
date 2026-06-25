@@ -267,7 +267,7 @@ export default function AdminProducts() {
           <p className="text-gray-500 text-sm">
             {loading ? "Memuat..." : `${products.length} produk`}
           </p>
-          <Button onClick={() => setView("form")} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => setView("form")}>
             + Tambah Produk
           </Button>
         </div>
@@ -325,8 +325,7 @@ export default function AdminProducts() {
                         className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 text-xs h-7 px-2">
                         Edit
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(product._id)}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 text-xs h-7 px-2">
+                      <Button variant="destructive" size="xs" onClick={() => handleDelete(product._id)}>
                         Hapus
                       </Button>
                     </div>
@@ -355,11 +354,11 @@ export default function AdminProducts() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-200 shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={resetForm} className="text-gray-400 hover:text-gray-700 transition p-1 rounded-md hover:bg-gray-100">
+            <Button variant="ghost" size="icon-sm" onClick={resetForm}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </button>
+            </Button>
             <div>
               <p className="text-xs text-gray-400">Produk</p>
               <p className="text-sm font-semibold text-gray-800 leading-tight">
@@ -368,11 +367,11 @@ export default function AdminProducts() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={resetForm} size="sm" className="text-gray-600">
+            <Button variant="secondary" onClick={resetForm} size="sm">
               Batal
             </Button>
             <Button onClick={handleSubmit} disabled={saving} size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[90px]">
+              className="min-w-[90px]">
               {saving ? "Menyimpan…" : "Simpan"}
             </Button>
           </div>
@@ -518,9 +517,9 @@ export default function AdminProducts() {
               <CardHeader className="pb-3 pt-4 px-5">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-gray-700">Varian Produk</CardTitle>
-                  <Button type="button" variant="outline" size="sm"
+                  <Button type="button" variant="secondary" size="sm"
                     onClick={() => setVariants((prev) => [...prev, { name: "", image: "", price: "", weightGrams: "", dimensionLength: "", dimensionWidth: "", dimensionHeight: "" }])}
-                    className="h-7 text-xs border-indigo-200 text-indigo-600 hover:bg-indigo-50">
+                    className="h-7 text-xs">
                     + Tambah
                   </Button>
                 </div>
@@ -536,8 +535,7 @@ export default function AdminProducts() {
                       <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/50 flex-1 min-w-[260px]">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Varian {i + 1}</span>
-                          <button type="button" onClick={() => setVariants((prev) => prev.filter((_, idx) => idx !== i))}
-                            className="text-xs text-red-400 hover:text-red-600 transition">Hapus</button>
+                          <Button variant="destructive" size="xs" type="button" onClick={() => setVariants((prev) => prev.filter((_, idx) => idx !== i))}>Hapus</Button>
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-xs text-gray-500">Nama <span className="text-red-400">*</span></Label>
@@ -587,22 +585,19 @@ export default function AdminProducts() {
                               )}
                             </div>
                             <div className="flex flex-col gap-1">
-                              <button type="button"
-                                onClick={() => setOpenPickerIdx(openPickerIdx === i ? null : i)}
-                                className="text-xs text-indigo-600 hover:text-indigo-700 text-left transition">
+                              <Button variant="secondary" type="button" size="xs"
+                                onClick={() => setOpenPickerIdx(openPickerIdx === i ? null : i)}>
                                 Pilih dari foto produk
-                              </button>
-                              <button type="button"
-                                onClick={() => { setPendingVariantUploadIdx(i); variantFileInputRef.current?.click(); }}
-                                className="text-xs text-indigo-600 hover:text-indigo-700 text-left transition">
+                              </Button>
+                              <Button variant="secondary" type="button" size="xs"
+                                onClick={() => { setPendingVariantUploadIdx(i); variantFileInputRef.current?.click(); }}>
                                 Upload baru
-                              </button>
+                              </Button>
                               {v.image && (
-                                <button type="button"
-                                  onClick={() => setVariant(i, "image", "")}
-                                  className="text-xs text-red-400 hover:text-red-500 text-left transition">
+                                <Button variant="destructive" type="button" size="xs"
+                                  onClick={() => setVariant(i, "image", "")}>
                                   Hapus
-                                </button>
+                                </Button>
                               )}
                             </div>
                           </div>

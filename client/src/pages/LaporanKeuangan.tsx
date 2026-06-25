@@ -1,8 +1,8 @@
+import { Link } from 'react-router-dom'
 import { useMyOrders } from '../hooks/useApi'
 import UserLayout from '../components/UserLayout'
-import { CreditCard, Tag } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PackageOpen } from 'lucide-react'
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   awaiting_payment: { label: 'Menunggu Bayar', color: 'bg-amber-100 text-amber-700' },
@@ -27,15 +27,22 @@ export default function LaporanKeuangan() {
     return acc
   }, {})
 
+  const sortedDelivered = delivered.slice().sort((a, b) => {
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+    return bTime - aTime
+  })
+
   if (loading) {
     return (
       <UserLayout title="Laporan Keuangan">
         <div className="space-y-6 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Skeleton className="h-24 rounded-xl" />
-            <Skeleton className="h-24 rounded-xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Skeleton className="h-24 rounded-lg" />
+            <Skeleton className="h-24 rounded-lg" />
           </div>
-          <Skeleton className="h-48 rounded-2xl" />
+          <Skeleton className="h-48 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg" />
         </div>
       </UserLayout>
     )
@@ -44,59 +51,93 @@ export default function LaporanKeuangan() {
   return (
     <UserLayout title="Laporan Keuangan">
       <div className="space-y-6 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="border-0 shadow-sm bg-white rounded-xl">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-500 mb-1">Total Belanja</p>
-                  <p className="text-lg font-bold text-violet-600 truncate">{fmt(totalBelanja)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Dari {delivered.length} pesanan selesai</p>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0 ml-2">
-                  <CreditCard className="w-4 h-4 text-violet-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="border-0 shadow-sm bg-white rounded-xl">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-500 mb-1">Total Hemat dari Voucher</p>
-                  <p className="text-lg font-bold text-emerald-600 truncate">{fmt(totalHemat)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Dari pesanan selesai</p>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0 ml-2">
-                  <Tag className="w-4 h-4 text-emerald-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stat Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-lg border border-[#E8E8E5] bg-white p-4">
+            <p className="text-xs text-[#9A9A9A] uppercase tracking-wide mb-2">Total Belanja</p>
+            <p className="text-2xl font-semibold text-[#1F1F1F]">{fmt(totalBelanja)}</p>
+            <p className="text-xs text-[#9A9A9A] mt-1">Dari {delivered.length} pesanan selesai</p>
+          </div>
+
+          <div className="rounded-lg border border-[#E8E8E5] bg-white p-4">
+            <p className="text-xs text-[#9A9A9A] uppercase tracking-wide mb-2">Total Hemat</p>
+            <p className="text-2xl font-semibold text-[#1F1F1F]">{fmt(totalHemat)}</p>
+            <p className="text-xs text-[#9A9A9A] mt-1">Dari diskon voucher</p>
+          </div>
         </div>
 
-        <Card className="border-0 shadow-sm bg-white rounded-2xl">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-gray-900">Breakdown Status Pesanan</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {orders.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">Belum ada pesanan</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(statusCounts).map(([status, count]) => {
-                  const s = STATUS_LABEL[status] ?? { label: status, color: 'bg-gray-100 text-gray-700' }
-                  return (
-                    <span key={status} className={`px-3 py-1.5 rounded-full text-xs font-medium ${s.color}`}>
-                      {s.label}: {count}
-                    </span>
-                  )
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Status Breakdown */}
+        <div className="rounded-lg border border-[#E8E8E5] bg-white overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+            <p className="text-[15px] font-semibold text-[#1F1F1F]">Ringkasan Status</p>
+          </div>
+          {Object.keys(statusCounts).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <PackageOpen className="size-10 text-[#D0D0CC] mb-3" />
+              <p className="text-sm font-medium text-[#4A4A4A]">Belum ada pesanan</p>
+              <p className="text-xs text-[#9A9A9A] mt-1">Status pesanan akan tampil di sini</p>
+            </div>
+          ) : (
+            Object.entries(statusCounts).map(([status, count]) => {
+              const s = STATUS_LABEL[status] ?? { label: status, color: 'bg-gray-100 text-gray-700' }
+              return (
+                <div
+                  key={status}
+                  className="flex items-center justify-between px-4 py-2.5 border-b border-[#F0F0EC] last:border-0"
+                >
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${s.color}`}>
+                    {s.label}
+                  </span>
+                  <span className="text-sm text-[#4A4A4A]">{count} pesanan</span>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Transaction List */}
+        <div className="rounded-lg border border-[#E8E8E5] bg-white overflow-hidden">
+          <div className="px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+            <p className="text-[15px] font-semibold text-[#1F1F1F]">Riwayat Transaksi</p>
+          </div>
+          {sortedDelivered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <PackageOpen className="size-10 text-[#D0D0CC] mb-3" />
+              <p className="text-sm font-medium text-[#4A4A4A]">Belum ada transaksi selesai</p>
+              <p className="text-xs text-[#9A9A9A] mt-1">Pesanan yang sudah diterima akan muncul di sini</p>
+              <Link
+                to="/pesanan"
+                className="mt-4 border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+              >
+                Lihat Pesanan
+              </Link>
+            </div>
+          ) : (
+            sortedDelivered.map((order) => (
+              <Link
+                key={order._id}
+                to={`/pesanan/${order._id}`}
+                className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-mono text-xs text-[#9A9A9A]">#{order._id}</span>
+                  <span className="text-xs text-[#9A9A9A]">
+                    {order.createdAt
+                      ? new Date(order.createdAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })
+                      : '-'}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-[#1F1F1F]">{fmt(order.total)}</span>
+              </Link>
+            ))
+          )}
+        </div>
+
       </div>
     </UserLayout>
   )
