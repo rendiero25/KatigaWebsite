@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import { Button } from '@/components/ui/button';
 import { API_BASE_URL } from '../../services/api';
 import type { Order, Pagination } from '../../types/ecommerce';
 
@@ -148,21 +149,23 @@ export default function AdminOrders() {
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-6">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
             disabled={filters.page <= 1}
-            className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50"
           >
             ← Prev
-          </button>
+          </Button>
           <span className="text-sm text-gray-600">Hal {filters.page} / {pagination.pages}</span>
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
             disabled={filters.page >= pagination.pages}
-            className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-50"
           >
             Next →
-          </button>
+          </Button>
         </div>
       )}
     </AdminLayout>

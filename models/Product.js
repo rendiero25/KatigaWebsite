@@ -60,6 +60,7 @@ const productSchema = new mongoose.Schema({
     image:      { type: String, default: '' },
     price:      { type: Number, default: 0 },
     weightGrams:{ type: Number, default: 0 },
+    stock:      { type: Number, default: 0 },
     dimensions: {
       length: { type: Number, default: 1 },
       width:  { type: Number, default: 1 },
@@ -67,7 +68,9 @@ const productSchema = new mongoose.Schema({
     }
   }],
   ratingAvg:   { type: Number, default: 0 },
-  reviewCount: { type: Number, default: 0 }
+  reviewCount: { type: Number, default: 0 },
+  soldCount:   { type: Number, default: 0 },
+  stock:       { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);

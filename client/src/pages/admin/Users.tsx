@@ -349,7 +349,7 @@ export default function AdminUsers() {
             <Button onClick={saveEdit} disabled={editSaving} className="flex-1">
               {editSaving ? 'Menyimpan...' : 'Simpan'}
             </Button>
-            <Button variant="outline" onClick={() => setEditOpen(false)} className="flex-1">
+            <Button variant="secondary" onClick={() => setEditOpen(false)} className="flex-1">
               Batal
             </Button>
           </div>
@@ -386,7 +386,7 @@ export default function AdminUsers() {
             >
               {resetSaving ? 'Mereset...' : 'Reset Password'}
             </Button>
-            <Button variant="outline" onClick={() => setResetOpen(false)} className="flex-1">
+            <Button variant="secondary" onClick={() => setResetOpen(false)} className="flex-1">
               Batal
             </Button>
           </div>

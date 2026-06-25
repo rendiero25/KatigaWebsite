@@ -192,7 +192,7 @@ export default function AdminNews() {
                 </div>
                 <div className="flex justify-end">
                   <Button type="submit" disabled={savingHeader} size="sm"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[120px]">
+                    className="min-w-[120px]">
                     {savingHeader ? "Menyimpan…" : "Simpan Header"}
                   </Button>
                 </div>
@@ -204,7 +204,7 @@ export default function AdminNews() {
         {/* Articles list */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500">{loading ? "Memuat…" : `${articles.length} artikel`}</p>
-          <Button onClick={() => setView("form")} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => setView("form")}>
             + Tambah Berita
           </Button>
         </div>
@@ -268,9 +268,9 @@ export default function AdminNews() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={resetForm} size="sm" className="text-gray-600">Batal</Button>
+            <Button variant="secondary" onClick={resetForm} size="sm">Batal</Button>
             <Button onClick={handleSubmit} disabled={saving} size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[90px]">
+              className="min-w-[90px]">
               {saving ? "Menyimpan…" : "Simpan"}
             </Button>
           </div>

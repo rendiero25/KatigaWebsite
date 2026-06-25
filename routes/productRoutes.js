@@ -120,7 +120,7 @@ router.post('/', auth, upload.any(), async (req, res) => {
   console.log('Body:', req.body);
   console.log('Files:', req.files); // Debug log
   try {
-    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants } = req.body;
+    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants, stock } = req.body;
 
     let imageFiles = req.files || [];
     const imagePaths = imageFiles.map(file => file.path);
@@ -153,6 +153,7 @@ router.post('/', auth, upload.any(), async (req, res) => {
       linkTokopedia,
       linkShopee,
       isFeatured: isFeatured === 'true',
+      stock: Number(stock) || 0,
       image: primaryImage,
       images: imagePaths,
       variants: parsedVariants
@@ -178,7 +179,7 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, keptImages, variants } = req.body;
+    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, keptImages, variants, stock } = req.body;
 
     if (name) product.name = name;
     if (description) product.description = description;
@@ -197,6 +198,7 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
     if (linkTokopedia !== undefined) product.linkTokopedia = linkTokopedia;
     if (linkShopee !== undefined) product.linkShopee = linkShopee;
     if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true';
+    if (stock !== undefined) product.stock = Number(stock) || 0;
 
     // Handle images first so newImagePaths is available for variant resolution
     let currentImages = [];

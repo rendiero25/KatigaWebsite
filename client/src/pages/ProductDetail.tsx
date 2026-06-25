@@ -55,11 +55,11 @@ interface Product {
   activePromotion: { _id: string; name: string; discountPercent: number } | null;
 }
 
-interface FeaturedProduct {
+interface RelatedProduct {
   _id: string;
   name: string;
   image: string;
-  category: { name: string } | null;
+  category: { _id: string; name: string } | null;
   priceNumeric: number;
 }
 
@@ -591,11 +591,11 @@ export default function ProductDetail() {
           </div>
         </section>
 
-        {/* Featured Products */}
+        {/* Related Products */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Produk Unggulan</h2>
-            <FeaturedProducts />
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">Produk dari Kategori Lain</h2>
+            <RelatedProducts excludeId={product._id} excludeCategoryId={product.category?._id} />
           </div>
         </section>
       </main>
@@ -604,14 +604,23 @@ export default function ProductDetail() {
   );
 }
 
-function FeaturedProducts() {
-  const [products, setProducts] = useState<FeaturedProduct[]>([]);
+interface RelatedProductsProps {
+  excludeId: string;
+  excludeCategoryId?: string;
+}
+
+function RelatedProducts({ excludeId, excludeCategoryId }: RelatedProductsProps) {
+  const [products, setProducts] = useState<RelatedProduct[]>([]);
 
   useEffect(() => {
-    api.getProducts({ featured: true }).then((data: FeaturedProduct[]) => {
-      if (Array.isArray(data)) setProducts(data);
+    api.getProducts({ exclude: excludeId }).then((data: RelatedProduct[]) => {
+      if (!Array.isArray(data)) return;
+      const filtered = excludeCategoryId
+        ? data.filter((p) => p.category?._id !== excludeCategoryId)
+        : data;
+      setProducts(filtered);
     });
-  }, []);
+  }, [excludeId, excludeCategoryId]);
 
   if (products.length === 0) return null;
 
@@ -630,24 +639,25 @@ function FeaturedProducts() {
     >
       {products.map((p) => (
         <SwiperSlide key={p._id} className="h-auto">
-          <Link
-            to={`/produk/${p._id}`}
-            className="block h-full bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition group"
-          >
-            <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+          <Link to={`/produk/${p._id}`} className="group flex flex-col h-full">
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
               <img
                 src={api.getImageUrl(p.image)}
                 alt={p.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
               />
             </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary transition">
+            <div className="flex flex-col flex-1 pt-1">
+              {p.category?.name && (
+                <span className="text-xs font-medium text-primary/80 mb-1 block">
+                  {p.category.name}
+                </span>
+              )}
+              <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2 leading-tight h-10 overflow-hidden">
                 {p.name}
               </h3>
-              <p className="text-gray-500 text-sm mb-3">{p.category?.name}</p>
-              <p className="font-bold text-primary">
-                {p.priceNumeric > 0 ? formatRp(p.priceNumeric) : 'Hubungi Kami'}
+              <p className="text-base font-bold text-gray-900">
+                {p.priceNumeric > 0 ? `Rp ${p.priceNumeric.toLocaleString('id-ID')}` : 'Hubungi Kami'}
               </p>
             </div>
           </Link>

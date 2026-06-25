@@ -128,8 +128,8 @@ export default function PengaturanAkun() {
     return (
       <UserLayout title="Pengaturan">
         <div className="w-full space-y-4">
-          <Skeleton className="h-20 w-full rounded-2xl" />
-          <Skeleton className="h-[28rem] w-full rounded-2xl" />
+          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-[28rem] w-full rounded-lg" />
         </div>
       </UserLayout>
     )
@@ -141,7 +141,7 @@ export default function PengaturanAkun() {
     <UserLayout title="Pengaturan">
       <div className="w-full space-y-4">
         {/* Profile summary strip */}
-        <div className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-lg border border-[#E8E8E5] bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             <button
               type="button"
@@ -190,8 +190,22 @@ export default function PengaturanAkun() {
         </div>
 
         {/* Settings panel */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <Tabs defaultValue="profil" className="gap-0">
+        <div className="overflow-hidden rounded-lg border border-[#E8E8E5] bg-white">
+          <Tabs defaultValue="profil" className="flex-col gap-0">
+            {/* TabsList above TabsContent */}
+            <div className="px-4 py-3 border-b border-[#F0F0EC]">
+              <TabsList className="h-9 w-full sm:w-auto">
+                <TabsTrigger value="profil" className="gap-2 px-4 text-sm">
+                  <User className="size-4" />
+                  Informasi Akun
+                </TabsTrigger>
+                <TabsTrigger value="password" className="gap-2 px-4 text-sm">
+                  <Lock className="size-4" />
+                  Ubah Password
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
             <TabsContent value="profil" className="mt-0 p-5 sm:p-6">
               <div className="mb-6 max-w-xl">
                 <h2 className="text-base font-semibold text-black">Informasi Akun</h2>
@@ -200,7 +214,7 @@ export default function PengaturanAkun() {
                 </p>
               </div>
 
-              <form onSubmit={handleProfileSave} className="max-w-2xl space-y-6">
+              <form onSubmit={handleProfileSave} className="w-full space-y-6">
                 <div className="space-y-2">
                   <Label className="text-sm text-black/70">Email</Label>
                   <div className="relative">
@@ -274,7 +288,7 @@ export default function PengaturanAkun() {
                   <Button
                     type="submit"
                     disabled={profileSaving}
-                    className="w-full border-0 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] sm:w-auto sm:rounded-full sm:px-8"
+                    className="w-full bg-[#1F1F1F] text-white text-sm font-medium rounded-md px-6 py-2 hover:bg-[#2F2F2F] transition-colors disabled:opacity-50 sm:w-auto"
                   >
                     <Save className="mr-2 size-4" />
                     {profileSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
@@ -294,7 +308,7 @@ export default function PengaturanAkun() {
                 </p>
               </div>
 
-              <form onSubmit={handlePasswordSave} className="max-w-md space-y-5">
+              <form onSubmit={handlePasswordSave} className="w-full space-y-5">
                 {!isGoogleOnly && (
                   <div className="space-y-2">
                     <Label htmlFor="current-password" className="text-sm text-black/70">
@@ -395,7 +409,7 @@ export default function PengaturanAkun() {
                   <Button
                     type="submit"
                     disabled={pwSaving}
-                    className="w-full border-0 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] sm:w-auto sm:rounded-full sm:px-8"
+                    className="w-full bg-[#1F1F1F] text-white text-sm font-medium rounded-md px-6 py-2 hover:bg-[#2F2F2F] transition-colors disabled:opacity-50 sm:w-auto"
                   >
                     <Lock className="mr-2 size-4" />
                     {pwSaving ? 'Menyimpan...' : 'Simpan Password'}
@@ -403,19 +417,6 @@ export default function PengaturanAkun() {
                 </div>
               </form>
             </TabsContent>
-
-            <div className="border-t border-black/5 px-4 py-3 sm:px-6">
-              <TabsList className="h-10 w-full sm:w-auto">
-                <TabsTrigger value="profil" className="gap-2 px-4 text-sm">
-                  <User className="size-4" />
-                  Informasi Akun
-                </TabsTrigger>
-                <TabsTrigger value="password" className="gap-2 px-4 text-sm">
-                  <Lock className="size-4" />
-                  Ubah Password
-                </TabsTrigger>
-              </TabsList>
-            </div>
           </Tabs>
         </div>
       </div>

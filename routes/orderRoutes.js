@@ -176,6 +176,9 @@ const webhookHandler = async (req, res) => {
 
     try {
       if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
+        for (const item of order.items) {
+          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+        }
         await notifyAdmin({
           type: 'payment_paid',
           title: 'Pembayaran diterima',
@@ -588,6 +591,9 @@ router.put('/:id/status', auth, async (req, res) => {
     if (paymentStatus && paymentStatus !== previousPaymentStatus) {
       try {
         if (paymentStatus === 'paid') {
+          for (const item of order.items) {
+            await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+          }
           await notifyCustomer({
             customerId: order.customer,
             type: 'payment_confirmed',

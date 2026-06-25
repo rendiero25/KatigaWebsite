@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import AdminLayout from "../../components/AdminLayout";
 import api, { API_BASE_URL } from "../../services/api";
+import { Button } from "@/components/ui/button";
 
 const API_URL = API_BASE_URL;
 
@@ -117,7 +118,7 @@ export default function AdminManufacturing() {
 
   return (
     <AdminLayout title="Manufacturing Section">
-      <div className="max-w-4xl">
+      <div className="w-full">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Main Content */}
           <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
@@ -241,13 +242,13 @@ export default function AdminManufacturing() {
             ))}
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={saving}
-            className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+            className="w-full"
           >
             {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </button>
+          </Button>
         </form>
       </div>
     </AdminLayout>
