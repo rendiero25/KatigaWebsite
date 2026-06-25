@@ -29,6 +29,7 @@ export default function ProductsSection() {
 
   return (
     <section className="pt-10 bg-white">
+      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
       <div className="flex flex-col items-center gap-15 w-full overflow-hidden">
         {/* Swiper Carousel */}
         <div className="relative group/section w-full">
@@ -125,7 +126,7 @@ export default function ProductsSection() {
         </div>
 
         {/* Section Header */}
-        <div className="flex items-center justify-end mb-10 gap-4 px-4 sm:px-0">
+        <div className="flex items-center justify-end mb-10 gap-4">
           {/* Custom Navigation Arrows (Moved here) */}
           <div className="flex gap-2">
             <button
@@ -142,6 +143,7 @@ export default function ProductsSection() {
             </button>
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

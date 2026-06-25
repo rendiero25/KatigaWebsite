@@ -20,9 +20,9 @@ export default function AdvantagesSection() {
   }
 
   return (
-    <section className="pt-10 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section className="pt-10 pb-20 bg-white overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+
         {/* Intro Text */}
         <div className="w-full">
           <p className="text-lg font-bold text-black mb-4">{sectionContent?.subtitle || 'Tumbuh Bersama 4 Juta Bayi di Indonesia.'}</p>
@@ -31,28 +31,27 @@ export default function AdvantagesSection() {
           </h2>
         </div>
 
-        <div className="pt-20 flex flex-col lg:flex-row gap-12 items-end">
+        <div className="pt-12 flex flex-col lg:flex-row gap-12 items-start">
           {/* Left Side - Vertical Title */}
-          <div className="hidden lg:flex w-24 shrink-0 flex-row items-center justify-start">
-             <div className="[writing-mode:vertical-rl] text-[80px] xl:text-9xl font-black text-black leading-none h-auto tracking-tighter opacity-90 rotate-180">
-                <span className="uppercase">{sectionContent?.title || 'KEUNGGULAN KAMI'}</span>
-             </div>
+          <div className="hidden lg:flex w-24 shrink-0 items-center justify-start">
+            <div className="[writing-mode:vertical-rl] text-[80px] xl:text-9xl font-black text-black leading-none tracking-tighter opacity-90 rotate-180">
+              <span className="uppercase">{sectionContent?.title || 'KEUNGGULAN KAMI'}</span>
+            </div>
           </div>
 
           {/* Right Side - Advantages List */}
-          <div className="flex-1 space-y-12 lg:pl-20">
+          <div className="flex-1 lg:pl-20">
             {advantages?.map((advantage: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-              <div key={advantage._id} className="group">
+              <div key={advantage._id} className={`group py-8 ${index > 0 ? 'border-t border-gray-100' : ''}`}>
                 <div className="flex items-baseline gap-6">
-                  <span className="text-3xl font-normal text-black/70 group-hover:text-gray-900 transition">
+                  <span className="text-2xl font-normal text-black/30 shrink-0 w-8">
                     {advantage.number || `0${index + 1}`}
                   </span>
-                  
                   <div>
-                    <h4 className="text-3xl font-bold text-black mb-3">
+                    <h4 className="text-2xl md:text-3xl font-bold text-black mb-2 leading-tight">
                       {advantage.title}
                     </h4>
-                    <p className="text-black leading-relaxed text-base md:text-lg lg:text-xl">
+                    <p className="text-black/70 leading-relaxed text-base md:text-lg">
                       {advantage.description}
                     </p>
                   </div>

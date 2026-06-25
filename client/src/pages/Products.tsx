@@ -110,7 +110,7 @@ export default function Products() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
-      <main className="pt-20 grow">
+      <main className="pt-20 pb-20 grow">
         <div className="">
           {/* Main Header Section */}
           <div className="container mx-auto mb-20 overflow-hidden px-4 sm:px-10 lg:px-20 xl:px-30">

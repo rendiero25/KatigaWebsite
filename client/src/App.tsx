@@ -56,7 +56,7 @@ const AdminNotifikasi = lazy(() => import('./pages/admin/Notifikasi'));
 function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" richColors closeButton />
+      <Toaster position="top-center" richColors closeButton />
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F9F7F2]"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <Routes>
         {/* Public Routes */}
