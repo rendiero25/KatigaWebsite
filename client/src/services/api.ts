@@ -452,7 +452,7 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json().catch(() => ({})) as { message?: string };
       throw new Error(err.message || 'Gagal membatalkan pesanan');
     }
     return res.json();
@@ -464,18 +464,18 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json().catch(() => ({})) as { message?: string };
       throw new Error(err.message || 'Gagal mengambil data tracking');
     }
     return res.json();
   },
 
-  getOrderInvoiceUrl: (id: string) => {
+  getOrderInvoiceUrl: (id: string): string => {
     const token = localStorage.getItem('customerToken');
     return `${API_BASE_URL}/orders/my/${id}/invoice?token=${token}`;
   },
 
-  getAdminInvoiceUrl: (id: string) => {
+  getAdminInvoiceUrl: (id: string): string => {
     const token = localStorage.getItem('adminToken');
     return `${API_BASE_URL}/orders/${id}/invoice?token=${token}`;
   },
@@ -487,7 +487,7 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json().catch(() => ({})) as { message?: string };
       throw new Error(err.message || 'Gagal menerima pesanan');
     }
     return res.json();
@@ -528,7 +528,7 @@ export const api = {
       body: formData,
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json().catch(() => ({})) as { message?: string };
       throw new Error(err.message || 'Gagal membuat komplain');
     }
     return res.json();
@@ -539,6 +539,10 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/complaints/my`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengambil daftar komplain');
+    }
     return res.json();
   },
 
@@ -547,6 +551,10 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/complaints/my/order/${orderId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengambil komplain');
+    }
     return res.json();
   },
 
@@ -557,6 +565,10 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/complaints${qs}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengambil daftar komplain');
+    }
     return res.json();
   },
 
@@ -565,6 +577,10 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/complaints/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengambil detail komplain');
+    }
     return res.json();
   },
 
@@ -576,7 +592,7 @@ export const api = {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
+      const err = await res.json().catch(() => ({})) as { message?: string };
       throw new Error(err.message || 'Gagal update komplain');
     }
     return res.json();
