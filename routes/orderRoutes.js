@@ -869,7 +869,7 @@ const buildInvoicePdf = (order, res) => {
 
   // Totals
   const addRow = (label, value, bold = false) => {
-    doc.fontSize(bold ? 11 : 10)[bold ? 'font' : 'font']('Helvetica' + (bold ? '-Bold' : ''));
+    doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 11 : 10);
     doc.text(label, 380, doc.y);
     doc.text(value, 470, doc.y - doc.currentLineHeight());
     doc.moveDown(0.3);
