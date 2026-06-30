@@ -264,6 +264,7 @@ export const api = {
     const res = await fetch(`${API_BASE_URL}/customers/wishlist`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.status === 401) throw new UnauthorizedError();
     if (!res.ok) throw new Error('Failed to fetch wishlist');
     return res.json();
   },
@@ -274,6 +275,7 @@ export const api = {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.status === 401) throw new UnauthorizedError();
     if (!res.ok) throw new Error('Failed to add to wishlist');
   },
 
@@ -283,6 +285,7 @@ export const api = {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.status === 401) throw new UnauthorizedError();
     if (!res.ok) throw new Error('Failed to remove from wishlist');
   },
 
@@ -363,6 +366,15 @@ export const api = {
   getMyOrder: async (id: string) => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/orders/my/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  verifyOrderPayment: async (id: string) => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/orders/my/${id}/verify-payment`, {
+      method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.json();

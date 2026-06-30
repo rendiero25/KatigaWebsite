@@ -580,7 +580,14 @@ export function useWishlist() {
     setLoading(true)
     api.getWishlist()
       .then(d => setWishlist(d.wishlist ?? []))
-      .catch(() => {})
+      .catch((err) => {
+        if (err instanceof UnauthorizedError) {
+          localStorage.removeItem('customerToken')
+          localStorage.removeItem('customerName')
+          localStorage.removeItem('customerAvatar')
+          window.location.href = '/masuk'
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -592,8 +599,9 @@ export function useWishlist() {
         ? prev
         : [...prev, { _id: productId, name: '', image: '', images: [], priceNumeric: 0 }]
     )
-    await api.addToWishlist(productId).catch(() => {
+    await api.addToWishlist(productId).catch((err) => {
       setWishlist(prev => prev.filter(p => !(p._id === productId && p.name === '')))
+      throw err
     })
   }, [])
 
@@ -603,8 +611,9 @@ export function useWishlist() {
       removed = prev.find(p => p._id === productId)
       return prev.filter(p => p._id !== productId)
     })
-    await api.removeFromWishlist(productId).catch(() => {
+    await api.removeFromWishlist(productId).catch((err) => {
       if (removed) setWishlist(prev => [...prev, removed!])
+      throw err
     })
   }, [])
 

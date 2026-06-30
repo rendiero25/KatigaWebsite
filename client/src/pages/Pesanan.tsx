@@ -73,7 +73,7 @@ export default function Pesanan() {
           </Link>
         </div>
       ) : (
-        <div>
+        <div className="w-full">
           {/* Tab navigation */}
           <div className="flex gap-1 border-b border-[#F0F0EC] mb-4 -mx-1 overflow-x-auto">
             {TABS.map((tab) => (
@@ -107,7 +107,7 @@ export default function Pesanan() {
                   <Link
                     key={order._id}
                     to={`/pesanan/${order._id}`}
-                    className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors"
+                    className="flex w-full items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors"
                   >
                     <div>
                       <p className="text-xs text-[#9A9A9A] font-mono">#{order._id.slice(-8).toUpperCase()}</p>

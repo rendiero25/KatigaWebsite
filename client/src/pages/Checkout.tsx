@@ -182,6 +182,12 @@ export default function Checkout() {
         return;
       }
 
+      if (!window.snap) {
+        toast.error('Sistem pembayaran belum siap. Refresh halaman dan coba lagi.');
+        setPaying(false);
+        return;
+      }
+
       const purchasedCartItemIds = effectiveCart.map((item) => item.cartItemId);
       const removePurchasedItems = () => removeManyFromCart(purchasedCartItemIds);
       const clearCheckoutSelection = () => {
@@ -193,12 +199,12 @@ export default function Checkout() {
         onSuccess:  () => {
           removePurchasedItems();
           clearCheckoutSelection();
-          navigate(`/pesanan/${result.orderId}`);
+          navigate(`/pesanan/${result.orderId}`, { state: { fromPayment: true } });
         },
         onPending:  () => {
           removePurchasedItems();
           clearCheckoutSelection();
-          navigate(`/pesanan/${result.orderId}`);
+          navigate(`/pesanan/${result.orderId}`, { state: { fromPayment: true } });
         },
         onError:    () => { toast.error('Pembayaran gagal, silakan coba lagi.'); setPaying(false); },
         onClose:    () => {
@@ -315,11 +321,28 @@ export default function Checkout() {
               <div className="bg-primary rounded-xl p-6 sticky top-24">
                 <h2 className="text-base font-semibold text-white mb-4">Ringkasan Pesanan</h2>
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-3 mb-4">
                   {effectiveCart.map((c) => (
-                    <div key={c.cartItemId} className="flex justify-between text-sm text-white/70">
-                      <span className="truncate max-w-[160px]">{c.name} ×{c.quantity}</span>
-                      <span className="shrink-0 tabular-nums">
+                    <div key={c.cartItemId} className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-md overflow-hidden bg-white/10 shrink-0">
+                        {c.image ? (
+                          <img
+                            src={api.getImageUrl(c.image)}
+                            alt={c.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-white/10" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white/90 truncate leading-tight">{c.name}</p>
+                        {c.variantName && (
+                          <p className="text-[11px] text-white/50 truncate">{c.variantName}</p>
+                        )}
+                        <p className="text-[11px] text-white/50">×{c.quantity}</p>
+                      </div>
+                      <span className="text-sm text-white/70 shrink-0 tabular-nums">
                         {cartReady ? fmt(c.priceNumeric * c.quantity) : '—'}
                       </span>
                     </div>

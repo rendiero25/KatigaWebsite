@@ -71,31 +71,26 @@ export default function News() {
             alt="News Banner"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-              <motion.div 
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-center">
+            <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7 }}
+                className="text-white/80 text-base font-medium tracking-widest mb-3"
+              >
+                {sectionContent?.subtitle}
+              </motion.p>
+              <motion.h1
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                className="hidden md:block mb-2"
+                transition={{ duration: 0.8, delay: 0.15 }}
+                className="text-4xl md:text-5xl font-bold text-white uppercase leading-tight max-w-xl"
               >
-                <div className="bg-black px-2 w-fit py-1">
-                  <p className="text-white text-lg font-medium leading-relaxed ">
-                    {sectionContent?.subtitle}
-                  </p>
-                </div>
-              </motion.div>
-
-                <motion.h1 
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="text-4xl font-bold text-white uppercase leading-tight mb-4 max-w-lg"
-                >
-                  {sectionContent?.title}
-                </motion.h1>
-              </div>
+                {sectionContent?.title}
+              </motion.h1>
             </div>
           </div>
         </div>

@@ -516,6 +516,88 @@ router.get('/my/:id', customerAuth, async (req, res) => {
   }
 });
 
+// ─── POST /api/orders/my/:id/verify-payment — pull fresh status from Midtrans ───
+router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, customer: req.customer._id });
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (order.paymentStatus === 'paid') return res.json(order);
+
+    const coreApi = new midtransClient.CoreApi({
+      isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
+      serverKey: process.env.MIDTRANS_SERVER_KEY,
+      clientKey: process.env.MIDTRANS_CLIENT_KEY,
+    });
+
+    const statusResponse = await coreApi.transaction.status(order.midtransOrderId);
+    const { transaction_status, fraud_status, payment_type } = statusResponse;
+
+    let newPaymentStatus = order.paymentStatus;
+    if (transaction_status === 'capture' && fraud_status === 'accept') newPaymentStatus = 'paid';
+    else if (transaction_status === 'settlement') newPaymentStatus = 'paid';
+    else if (transaction_status === 'pending') newPaymentStatus = 'pending';
+    else if (['deny', 'cancel', 'failure'].includes(transaction_status)) newPaymentStatus = 'failed';
+    else if (transaction_status === 'expire') newPaymentStatus = 'expired';
+
+    if (newPaymentStatus === order.paymentStatus) return res.json(order);
+
+    const previousPaymentStatus = order.paymentStatus;
+    order.paymentStatus = newPaymentStatus;
+    order.midtransPaymentType = payment_type ?? '';
+
+    if (newPaymentStatus === 'paid' && order.orderStatus === 'awaiting_payment') {
+      order.orderStatus = 'processing';
+      try {
+        const biteshipResult = await biteshipCreateOrder(order);
+        order.biteshipOrderId = biteshipResult.id ?? '';
+        order.biteshipTrackingCode = biteshipResult.courier?.tracking_id ?? '';
+        order.biteshipWaybillId = biteshipResult.courier?.waybill_id ?? '';
+      } catch (bErr) {
+        console.error('[Biteship] verify-payment auto-create failed:', bErr.message);
+      }
+    }
+
+    if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
+      if (newPaymentStatus === 'paid') {
+        order.voucherReserved = false;
+        order.voucherConsumed = true;
+      }
+    }
+
+    await order.save();
+
+    if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
+      try {
+        for (const item of order.items) {
+          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+        }
+        await notifyAdmin({
+          type: 'payment_paid',
+          title: 'Pembayaran diterima',
+          message: `Pesanan ${order.midtransOrderId} telah dibayar`,
+          link: `/admin/orders/${order._id}`,
+          relatedId: order._id,
+        });
+        await notifyCustomer({
+          customerId: order.customer,
+          type: 'payment_confirmed',
+          title: 'Pembayaran dikonfirmasi',
+          message: 'Pembayaran untuk pesanan kamu telah dikonfirmasi',
+          link: `/pesanan/${order._id}`,
+          relatedId: order._id,
+        });
+      } catch (notifyErr) {
+        console.error('[Notify] verify-payment notify failed:', notifyErr.message);
+      }
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error('[Verify Payment]', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ─── GET /api/orders — admin: all orders ───
 router.get('/', auth, async (req, res) => {
   try {
