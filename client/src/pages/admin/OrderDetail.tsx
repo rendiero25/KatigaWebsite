@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { API_BASE_URL } from '../../services/api';
-import type { Order } from '../../types/ecommerce';
+import api, { API_BASE_URL } from '../../services/api';
+import type { Order, BiteshipTracking } from '../../types/ecommerce';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -11,6 +11,7 @@ const fmt = (n: number) =>
 const ORDER_STATUS_OPTIONS = [
   { value: 'awaiting_payment', label: 'Menunggu Bayar' },
   { value: 'processing',       label: 'Diproses' },
+  { value: 'packing',          label: 'Dikemas' },
   { value: 'shipped',          label: 'Dikirim' },
   { value: 'delivered',        label: 'Selesai' },
   { value: 'cancelled',        label: 'Dibatalkan' },
@@ -27,6 +28,7 @@ const PAYMENT_STATUS_OPTIONS = [
 const ORDER_STATUS_COLOR: Record<string, string> = {
   awaiting_payment: 'bg-yellow-100 text-yellow-700',
   processing:       'bg-blue-100 text-blue-700',
+  packing:          'bg-violet-100 text-violet-700',
   shipped:          'bg-indigo-100 text-indigo-700',
   delivered:        'bg-green-100 text-green-700',
   cancelled:        'bg-red-100 text-red-700',
@@ -47,6 +49,15 @@ export default function AdminOrderDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const [accepting, setAccepting] = useState(false);
+  const [shipModal, setShipModal] = useState(false);
+  const [shipResi, setShipResi] = useState('');
+  const [shipLoading, setShipLoading] = useState(false);
+  const [fetchingResi, setFetchingResi] = useState(false);
+  const [delivering, setDelivering] = useState(false);
+  const [tracking, setTracking] = useState<BiteshipTracking | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState('');
 
   const [form, setForm] = useState({
     orderStatus: '',
@@ -73,6 +84,55 @@ export default function AdminOrderDetail() {
       .finally(() => setLoading(false));
   }, [id, token]);
 
+  useEffect(() => {
+    if (!id || !order?.biteshipOrderId) return;
+    if (!['shipped', 'delivered'].includes(order.orderStatus)) return;
+    const load = async () => {
+      setTrackingLoading(true);
+      setTrackingError('');
+      try {
+        const t = await api.getAdminOrderTracking(id);
+        setTracking(t);
+      } catch (err: unknown) {
+        setTrackingError(err instanceof Error ? err.message : 'Gagal memuat tracking');
+      } finally {
+        setTrackingLoading(false);
+      }
+    };
+    void load();
+  }, [id, order?.biteshipOrderId, order?.orderStatus]);
+
+  useEffect(() => {
+    if (!shipModal || !id || !order?.biteshipOrderId) return;
+    const fetch = async () => {
+      setFetchingResi(true);
+      try {
+        const t = await api.getAdminOrderTracking(id);
+        const code = t.courier?.tracking_id || t.waybill_id || '';
+        if (code) setShipResi(code);
+      } catch {
+        // Silent — admin can input manually
+      } finally {
+        setFetchingResi(false);
+      }
+    };
+    void fetch();
+  }, [shipModal, id, order?.biteshipOrderId]);
+
+  const handleAccept = async () => {
+    if (!id) return;
+    setAccepting(true);
+    try {
+      const data = await api.acceptOrder(id);
+      setOrder(data);
+      setForm((f) => ({ ...f, orderStatus: data.orderStatus }));
+    } catch (err) {
+      setSaveMsg(err instanceof Error ? err.message : 'Gagal menerima pesanan');
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!id) return;
     setSaving(true);
@@ -92,6 +152,46 @@ export default function AdminOrderDetail() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleShip = async () => {
+    if (!id) return;
+    setShipLoading(true);
+    try {
+      const data = await api.shipOrder(id, shipResi || undefined);
+      setOrder(data);
+      setForm((f) => ({ ...f, orderStatus: data.orderStatus }));
+      setShipModal(false);
+      setShipResi('');
+    } catch (err) {
+      setSaveMsg(err instanceof Error ? err.message : 'Gagal mengirim pesanan');
+      setShipModal(false);
+    } finally {
+      setShipLoading(false);
+    }
+  };
+
+  const handleDeliver = async () => {
+    if (!id) return;
+    setDelivering(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/orders/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ orderStatus: 'delivered' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOrder(data);
+        setForm((f) => ({ ...f, orderStatus: data.orderStatus }));
+      } else {
+        setSaveMsg(data.message || 'Gagal mengubah status');
+      }
+    } catch {
+      setSaveMsg('Gagal mengubah status');
+    } finally {
+      setDelivering(false);
     }
   };
 
@@ -182,6 +282,52 @@ export default function AdminOrderDetail() {
             )}
           </div>
 
+          {/* Tracking timeline — visible when shipped or delivered */}
+          {['shipped', 'delivered'].includes(order.orderStatus) && (
+            <div className="bg-white rounded-xl shadow-sm p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-700">Status Pengiriman</h2>
+                {order.biteshipTrackingCode && (
+                  <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-600 select-all">
+                    {order.biteshipTrackingCode}
+                  </span>
+                )}
+              </div>
+              {trackingLoading && <p className="text-xs text-gray-400">Memuat tracking...</p>}
+              {trackingError && <p className="text-xs text-red-500">{trackingError}</p>}
+              {!trackingLoading && !trackingError && tracking && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-600 mb-2">
+                    {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
+                  </p>
+                  <div className="space-y-2">
+                    {tracking.courier.history.slice().reverse().map((h, i) => (
+                      <div key={i} className="flex gap-2 text-xs">
+                        <div className="flex flex-col items-center mt-0.5">
+                          <div className={`size-2 rounded-full ${i === 0 ? 'bg-indigo-600' : 'bg-gray-300'}`} />
+                          {i < tracking.courier.history.length - 1 && (
+                            <div className="w-px flex-1 bg-gray-200 my-1" />
+                          )}
+                        </div>
+                        <div className="pb-2">
+                          <p className="text-gray-800 font-medium leading-tight">{h.note}</p>
+                          <p className="text-gray-400 mt-0.5">
+                            {new Date(h.updated_at).toLocaleString('id-ID', {
+                              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {!trackingLoading && !trackingError && !tracking && (
+                <p className="text-xs text-gray-400">Data tracking belum tersedia.</p>
+              )}
+            </div>
+          )}
+
           {/* Midtrans */}
           <div className="bg-white rounded-xl shadow-sm p-5">
             <h2 className="font-semibold text-gray-700 mb-3">Pembayaran</h2>
@@ -192,6 +338,71 @@ export default function AdminOrderDetail() {
 
         {/* Right — manual correction */}
         <div className="space-y-6">
+          {/* Accept order action */}
+          {order.orderStatus === 'processing' && (
+            <div className="bg-white rounded-xl shadow-sm p-5">
+              <h2 className="font-semibold text-gray-700 mb-3">Tindakan Cepat</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                Terima pesanan untuk mulai proses pengemasan. Setelah diterima, customer tidak bisa membatalkan.
+              </p>
+              <Button
+                onClick={handleAccept}
+                disabled={accepting}
+                className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium"
+              >
+                {accepting ? 'Memproses...' : '✓ Terima & Mulai Kemas'}
+              </Button>
+            </div>
+          )}
+
+          {/* Ship action — visible when packing */}
+          {order.orderStatus === 'packing' && (
+            <div className="bg-white rounded-xl shadow-sm p-5">
+              <h2 className="font-semibold text-gray-700 mb-3">Tindakan Cepat</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                Konfirmasi paket diserahkan ke kurir. Nomor resi akan diambil otomatis dari Biteship jika tersedia.
+              </p>
+              <Button
+                onClick={() => setShipModal(true)}
+                disabled={shipLoading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium"
+              >
+                Serahkan ke Kurir
+              </Button>
+            </div>
+          )}
+
+          {/* Deliver action — visible when shipped, as webhook fallback */}
+          {order.orderStatus === 'shipped' && (
+            <div className="bg-white rounded-xl shadow-sm p-5">
+              <h2 className="font-semibold text-gray-700 mb-3">Konfirmasi Penerimaan</h2>
+              <p className="text-xs text-gray-500 mb-3">
+                Gunakan jika kurir sudah konfirmasi paket diterima namun status belum diperbarui otomatis.
+              </p>
+              <Button
+                variant="outline"
+                onClick={handleDeliver}
+                disabled={delivering}
+                className="w-full text-sm font-medium"
+              >
+                {delivering ? 'Memproses...' : '✓ Tandai Diterima'}
+              </Button>
+            </div>
+          )}
+
+          {/* Invoice download */}
+          <div className="bg-white rounded-xl shadow-sm p-5">
+            <h2 className="font-semibold text-gray-700 mb-3">Invoice</h2>
+            <a
+              href={api.getAdminInvoiceUrl(order._id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 text-sm rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+            >
+              Download Invoice PDF
+            </a>
+          </div>
+
           <div className="bg-white rounded-xl shadow-sm p-5">
             <h2 className="font-semibold text-gray-700 mb-4">Koreksi Manual</h2>
             <div className="space-y-4">
@@ -261,6 +472,44 @@ export default function AdminOrderDetail() {
           )}
         </div>
       </div>
+
+      {/* Ship confirmation modal */}
+      {shipModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-1">Konfirmasi Pengiriman</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Masukkan nomor resi. Jika sudah terdaftar di Biteship akan diisi otomatis.
+            </p>
+            <label className="block text-xs font-medium text-gray-500 mb-1">No. Resi</label>
+            <input
+              type="text"
+              value={shipResi}
+              onChange={(e) => setShipResi(e.target.value)}
+              placeholder={fetchingResi ? 'Mengambil dari Biteship...' : 'Contoh: JNE1234567'}
+              disabled={fetchingResi}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4 disabled:bg-gray-50 disabled:text-gray-400"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShipModal(false); setShipResi(''); }}
+                disabled={shipLoading}
+              >
+                Batal
+              </Button>
+              <Button
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                onClick={handleShip}
+                disabled={shipLoading || fetchingResi}
+              >
+                {shipLoading ? 'Memproses...' : 'Konfirmasi'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
