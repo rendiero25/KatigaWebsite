@@ -15,14 +15,25 @@ export default function ProductsSection() {
   const [prevEl, setPrevEl] = useState<HTMLElement | null>(null);
   const [nextEl, setNextEl] = useState<HTMLElement | null>(null);
 
-  // Get featured products or latest 8
-  const filtered = products?.filter((p: any) => p.isFeatured) ?? []; // eslint-disable-line @typescript-eslint/no-explicit-any
-  const featuredProducts = filtered.length > 0 ? filtered : (products?.slice(0, 8) ?? []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filtered = products?.filter((p: any) => p.isFeatured) ?? [];
+  const featuredProducts = (filtered.length > 0 ? filtered : (products ?? [])).slice(0, 10);
 
   if (loading) {
     return (
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">Loading...</div>
+      <section className="pt-10 bg-white">
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="w-full aspect-[3/4] rounded-2xl bg-gray-200 mb-6" />
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-3" />
+                <div className="h-4 bg-gray-200 rounded w-full mb-2" />
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
     );
   }
@@ -30,61 +41,45 @@ export default function ProductsSection() {
   return (
     <section className="pt-10 bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-      <div className="flex flex-col items-center gap-15 w-full overflow-hidden">
-        {/* Swiper Carousel */}
-        <div className="relative group/section w-full">
+        <div className="w-full overflow-hidden">
           <Swiper
             modules={[Navigation]}
             slidesPerView={1}
-            navigation={{
-              prevEl,
-              nextEl,
-            }}
-            spaceBetween={20}
+            navigation={{ prevEl, nextEl }}
+            spaceBetween={24}
             breakpoints={{
-              640: { slidesPerView: 2, spaceBetween: 20 },
-              1024: { slidesPerView: 3.2, spaceBetween: 30 },
-              1280: { slidesPerView: 4, spaceBetween: 40 },
+              640: { slidesPerView: 2, spaceBetween: 24 },
+              1024: { slidesPerView: 3, spaceBetween: 32 },
             }}
           >
-            {featuredProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {featuredProducts.map((product: any) => (
               <SwiperSlide key={product._id}>
-                <div className="group h-full flex flex-col">
-                  {/* Image Card */}
-                  <div className="w-full aspect-[4/3] lg:aspect-[3/4] rounded-2xl bg-gray-100 mb-6 relative overflow-hidden">
+                <div className="group flex flex-col h-full min-h-[650px]">
+                  {/* Image */}
+                  <div className="w-full aspect-[3/4] rounded-2xl bg-gray-100 mb-6 relative overflow-hidden">
                     <img
                       src={api.getImageUrl(product.image)}
                       alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 rounded-3xl transition duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400";
                       }}
                     />
-                    {/* Navigation Arrow Overlay */}
                     <Link
                       to={`/produk/${product._id}`}
                       className="absolute bottom-4 right-4 w-10 h-10 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition duration-300 hover:bg-white"
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </Link>
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 flex flex-col items-start px-4 sm:px-6 lg:px-8">
-                    <h3 className="max-w-xs xl:max-w-lg text-2xl font-bold text-black mb-2 leading-tight">
+                  <div className="flex-1 flex flex-col items-start">
+                    <h3 className="text-2xl font-bold text-black mb-2 leading-tight">
                       {product.name}
                     </h3>
                     {product.reviewCount > 0 && (
@@ -106,10 +101,9 @@ export default function ProductsSection() {
                         </span>
                       </div>
                     )}
-                    <p className="text-lg text-black/80 max-w-xs xl:max-w-lg line-clamp-2 mb-4 leading-relaxed ">
+                    <p className="text-lg text-black/80 line-clamp-2 mb-4 leading-relaxed">
                       {product.description}
                     </p>
-
                     <div className="mt-auto">
                       <Link
                         to={`/produk/${product._id}`}
@@ -123,12 +117,9 @@ export default function ProductsSection() {
               </SwiperSlide>
             ))}
           </Swiper>
-        </div>
 
-        {/* Section Header */}
-        <div className="flex items-center justify-end mb-10 gap-4">
-          {/* Custom Navigation Arrows (Moved here) */}
-          <div className="flex gap-2">
+          {/* Navigation arrows */}
+          <div className="flex justify-center gap-2 mt-8">
             <button
               ref={(node) => setPrevEl(node)}
               className="cursor-pointer w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-primary hover:border-0 hover:text-white transition disabled:opacity-50"
@@ -143,7 +134,6 @@ export default function ProductsSection() {
             </button>
           </div>
         </div>
-      </div>
       </div>
     </section>
   );

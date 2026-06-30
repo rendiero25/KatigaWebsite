@@ -3,17 +3,17 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, ShoppingCart, Share2, Heart, Zap } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
+import { toast } from 'sonner';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 import type { ItemDimensions, CartItem } from '../types/ecommerce';
-import api from '../services/api';
+import api, { UnauthorizedError } from '../services/api';
 import { addToCart, buildCartItemId, normalizeDimensions } from '../utils/cart';
 import { cn } from '../lib/utils';
 import { useWishlist, useProductReviews } from '../hooks/useApi';
 
 import Header from '../components/Header';
-import WishlistButton from '../components/WishlistButton';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
 import StarRating from '../components/StarRating';
@@ -32,7 +32,7 @@ interface Variant {
   _id: string;
   name: string;
   image?: string;
-  price: number;
+  price: number | null;
   weightGrams: number;
   dimensions: ItemDimensions;
 }
@@ -81,13 +81,7 @@ export default function ProductDetail() {
   const { wishlistIds, add, remove } = useWishlist();
   const { reviews, meta, loading: reviewsLoading, loadingMore, loadMore } = useProductReviews(id ?? '');
 
-  const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
-    if (currentlyInWishlist) {
-      remove(productId);
-    } else {
-      add(productId);
-    }
-  };
+
 
   useEffect(() => {
     if (!id) return;
@@ -95,15 +89,16 @@ export default function ProductDetail() {
       .getProduct(id)
       .then((data: Product) => {
         setProduct(data);
-        const firstVariant = data.variants?.[0];
-        if (firstVariant?.image) {
-          setActiveImage(firstVariant.image);
+        const firstWithPrice = data.variants?.find((v: Variant) => (v.price ?? 0) > 0);
+        const autoVariant = firstWithPrice ?? data.variants?.[0] ?? null;
+        if (autoVariant?.image) {
+          setActiveImage(autoVariant.image);
         } else if (data.images.length > 0) {
           setActiveImage(data.images[0]);
         } else if (data.image) {
           setActiveImage(data.image);
         }
-        if (data.variants?.length > 0) setSelectedVariant(data.variants[0]);
+        if (data.variants?.length > 0) setSelectedVariant(autoVariant);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -137,8 +132,8 @@ export default function ProductDetail() {
 
   const variants: Variant[] = product.variants ?? [];
   const effectivePrice =
-    selectedVariant !== null && selectedVariant.price > 0
-      ? selectedVariant.price
+    selectedVariant !== null && (selectedVariant.price ?? 0) > 0
+      ? (selectedVariant.price as number)
       : (product.priceNumeric ?? 0);
   const hasPrice = effectivePrice > 0;
 
@@ -150,8 +145,8 @@ export default function ProductDetail() {
     setAdding(true);
 
     const promo = product.activePromotion;
-    const basePrice = selectedVariant !== null && selectedVariant.price > 0
-      ? selectedVariant.price
+    const basePrice = selectedVariant !== null && (selectedVariant.price ?? 0) > 0
+      ? (selectedVariant.price as number)
       : (product.priceNumeric ?? 0);
     const discountedPrice = promo
       ? Math.round(basePrice * (1 - promo.discountPercent / 100))
@@ -188,8 +183,8 @@ export default function ProductDetail() {
     }
 
     const promo = product.activePromotion;
-    const basePrice = selectedVariant !== null && selectedVariant.price > 0
-      ? selectedVariant.price
+    const basePrice = selectedVariant !== null && (selectedVariant.price ?? 0) > 0
+      ? (selectedVariant.price as number)
       : (product.priceNumeric ?? 0);
     const discountedPrice = promo
       ? Math.round(basePrice * (1 - promo.discountPercent / 100))
@@ -249,12 +244,30 @@ export default function ProductDetail() {
     }
   };
 
-  const handleLoveClick = () => {
+  const handleLoveClick = async () => {
     if (!localStorage.getItem('customerToken')) {
       navigate(`/masuk?redirect=/produk/${id}`);
       return;
     }
-    handleToggleWishlist(product._id, inWishlist);
+    const wasInWishlist = inWishlist;
+    try {
+      if (wasInWishlist) {
+        await remove(product._id);
+      } else {
+        await add(product._id);
+      }
+      toast.success(wasInWishlist ? 'Dihapus dari Suka' : 'Ditambahkan ke Suka');
+    } catch (err) {
+      if (err instanceof UnauthorizedError) {
+        localStorage.removeItem('customerToken');
+        localStorage.removeItem('customerName');
+        localStorage.removeItem('customerAvatar');
+        toast.error('Sesi berakhir. Silakan masuk kembali.');
+        navigate(`/masuk?redirect=/produk/${id}`);
+      } else {
+        toast.error('Gagal menyimpan. Silakan coba lagi.');
+      }
+    }
   };
 
   return (
@@ -295,15 +308,6 @@ export default function ProductDetail() {
                       'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
                   }}
                 />
-                {product && (
-                  <WishlistButton
-                    productId={product._id}
-                    inWishlist={wishlistIds.has(product._id)}
-                    onToggle={handleToggleWishlist}
-                    size="md"
-                    redirectTo={`/produk/${product._id}`}
-                  />
-                )}
                 {product.isFeatured && (
                   <span className="absolute top-4 left-4 px-3 py-1 bg-pink-500 text-white font-medium rounded-full text-sm">
                     Featured
@@ -502,16 +506,16 @@ export default function ProductDetail() {
                     </Button>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant={inWishlist ? 'ghost' : 'outline'}
                       onClick={handleLoveClick}
                       className={cn(
-                        'flex-1 h-11 rounded-xl font-medium hover:bg-gray-50',
+                        'flex-1 h-11 rounded-xl font-medium transition',
                         inWishlist
-                          ? 'border-red-200 text-red-500 hover:bg-red-50'
-                          : 'border-gray-200 text-gray-700'
+                          ? 'bg-red-500 text-white border border-red-500 hover:bg-red-600'
+                          : 'border-gray-200 text-gray-700 hover:bg-gray-50'
                       )}
                     >
-                      <Heart className={cn('mr-2 size-4', inWishlist && 'fill-red-500')} />
+                      <Heart className={cn('mr-2 size-4', inWishlist && 'fill-white')} />
                       {inWishlist ? 'Disukai' : 'Suka'}
                     </Button>
                   </div>

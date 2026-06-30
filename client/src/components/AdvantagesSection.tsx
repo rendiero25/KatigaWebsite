@@ -31,16 +31,16 @@ export default function AdvantagesSection() {
           </h2>
         </div>
 
-        <div className="pt-12 flex flex-col lg:flex-row gap-12 items-start">
+        <div className="flex flex-col lg:flex-row items-stretch">
           {/* Left Side - Vertical Title */}
-          <div className="hidden lg:flex w-24 shrink-0 items-center justify-start">
-            <div className="[writing-mode:vertical-rl] text-[80px] xl:text-9xl font-black text-black leading-none tracking-tighter opacity-90 rotate-180">
+          <div className="hidden lg:flex w-80 shrink-0 self-stretch overflow-hidden items-start justify-start">
+            <div className="[writing-mode:vertical-rl] text-[58px] xl:text-9xl font-black text-black leading-none tracking-tighter opacity-90 rotate-180 overflow-hidden text-left self-start">
               <span className="uppercase">{sectionContent?.title || 'KEUNGGULAN KAMI'}</span>
             </div>
           </div>
 
           {/* Right Side - Advantages List */}
-          <div className="flex-1 lg:pl-20">
+          <div className="flex-1 lg:pl-20 flex flex-col justify-end">
             {advantages?.map((advantage: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <div key={advantage._id} className={`group py-8 ${index > 0 ? 'border-t border-gray-100' : ''}`}>
                 <div className="flex items-baseline gap-6">

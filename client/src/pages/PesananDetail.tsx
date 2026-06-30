@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import type { Order, CanReviewResponse } from '../types/ecommerce'
 import api from '../services/api'
@@ -31,6 +31,7 @@ const STATUS_STEP_INDEX: Record<string, number> = {
 export default function PesananDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
@@ -42,10 +43,23 @@ export default function PesananDetail() {
   useEffect(() => {
     if (!localStorage.getItem('customerToken')) { navigate('/masuk'); return }
     if (!id) return
+    const fromPayment = !!location.state?.fromPayment
     api.getMyOrder(id)
-      .then((data) => setOrder(data?.message ? null : data))
+      .then(async (data) => {
+        const fetched = data?.message ? null : data
+        if (fetched && fromPayment && fetched.paymentStatus !== 'paid') {
+          try {
+            const verified = await api.verifyOrderPayment(fetched._id)
+            setOrder(verified?._id ? verified : fetched)
+          } catch {
+            setOrder(fetched)
+          }
+        } else {
+          setOrder(fetched)
+        }
+      })
       .finally(() => setLoading(false))
-  }, [id, navigate])
+  }, [id, navigate, location.state])
 
   useEffect(() => {
     if (!order || order.orderStatus !== 'delivered') return
@@ -67,6 +81,10 @@ export default function PesananDetail() {
 
   const handleRepay = () => {
     if (!order?.midtransToken) return
+    if (!window.snap) {
+      toast.error('Sistem pembayaran belum siap. Refresh halaman dan coba lagi.')
+      return
+    }
     setPaying(true)
     window.snap.pay(order.midtransToken, {
       onSuccess: () => window.location.reload(),
@@ -115,7 +133,7 @@ export default function PesananDetail() {
 
   return (
     <UserLayout title="Detail Pesanan">
-      <div className="max-w-2xl">
+      <div className="w-full">
         <Link to="/pesanan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A] mb-4 block transition-colors">
           ← Semua Pesanan
         </Link>

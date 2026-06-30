@@ -11,7 +11,7 @@ interface ImportMeta {
 }
 
 interface Window {
-  snap: {
+  snap?: {
     pay: (token: string, options: {
       onSuccess?: (result: object) => void;
       onPending?: (result: object) => void;
