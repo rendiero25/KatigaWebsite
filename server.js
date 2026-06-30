@@ -46,7 +46,7 @@ app.use(cors({
 }));
 // Midtrans webhook needs raw body for signature verification — must come before express.json()
 app.post('/api/orders/webhook/midtrans', express.raw({ type: '*/*' }), require('./routes/orderRoutes').webhookHandler);
-app.post('/api/orders/webhook/biteship', require('./routes/orderRoutes').biteshipWebhookHandler);
+app.post('/api/orders/webhook/biteship', express.json(), require('./routes/orderRoutes').biteshipWebhookHandler);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
