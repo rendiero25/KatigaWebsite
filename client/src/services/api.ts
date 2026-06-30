@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse, Order, BiteshipTracking } from '../types/ecommerce';
 
 interface ShippingRateRequestItem {
   name: string;
@@ -442,6 +442,143 @@ export const api = {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(data),
     });
+    return res.json();
+  },
+
+  cancelMyOrder: async (id: string) => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/orders/my/${id}/cancel`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal membatalkan pesanan');
+    }
+    return res.json();
+  },
+
+  getOrderTracking: async (id: string) => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/orders/my/${id}/tracking`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal mengambil data tracking');
+    }
+    return res.json();
+  },
+
+  getOrderInvoiceUrl: (id: string) => {
+    const token = localStorage.getItem('customerToken');
+    return `${API_BASE_URL}/orders/my/${id}/invoice?token=${token}`;
+  },
+
+  getAdminInvoiceUrl: (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    return `${API_BASE_URL}/orders/${id}/invoice?token=${token}`;
+  },
+
+  acceptOrder: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/orders/${id}/accept`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal menerima pesanan');
+    }
+    return res.json();
+  },
+
+  shipOrder: async (id: string, trackingCode?: string): Promise<Order> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/orders/${id}/ship`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(trackingCode ? { trackingCode } : {}),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengubah status pengiriman');
+    }
+    return res.json() as Promise<Order>;
+  },
+
+  getAdminOrderTracking: async (id: string): Promise<BiteshipTracking> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/orders/${id}/tracking`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengambil data tracking');
+    }
+    return res.json() as Promise<BiteshipTracking>;
+  },
+
+  // Complaints — customer
+  createComplaint: async (formData: FormData) => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/complaints`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal membuat komplain');
+    }
+    return res.json();
+  },
+
+  getMyComplaints: async () => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/my`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getMyComplaintByOrder: async (orderId: string) => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/my/order/${orderId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  // Complaints — admin
+  getAdminComplaints: async (params?: Record<string, string | number>) => {
+    const token = localStorage.getItem('adminToken');
+    const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
+    const res = await fetch(`${API_BASE_URL}/complaints${qs}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  getAdminComplaint: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.json();
+  },
+
+  updateComplaint: async (id: string, data: { status?: string; adminNote?: string }) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Gagal update komplain');
+    }
     return res.json();
   },
 
