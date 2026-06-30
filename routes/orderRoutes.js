@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const PDFDocument = require('pdfkit');
 const midtransClient = require('midtrans-client');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
@@ -10,6 +11,8 @@ const customerAuth = require('../middleware/customerAuth');
 const {
   createOrder: biteshipCreateOrder,
   getRates,
+  getOrderTracking,
+  cancelBiteshipOrder,
 } = require('../services/biteshipService');
 const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
@@ -126,7 +129,7 @@ const webhookHandler = async (req, res) => {
     else if (transaction_status === 'settlement') newPaymentStatus = 'paid';
     else if (transaction_status === 'pending') newPaymentStatus = 'pending';
     else if (['deny', 'cancel', 'failure'].includes(transaction_status)) newPaymentStatus = 'failed';
-    else if (transaction_status === 'expire') newPaymentStatus = 'expired';
+    else if (transaction_status === 'expire') { newPaymentStatus = 'expired'; order.orderStatus = 'cancelled'; order.cancelledAt = new Date(); }
     else if (transaction_status === 'refund') newPaymentStatus = 'refunded';
 
     const previousPaymentStatus = order.paymentStatus;
@@ -177,7 +180,7 @@ const webhookHandler = async (req, res) => {
     try {
       if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
         for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
         }
         await notifyAdmin({
           type: 'payment_paid',
@@ -569,7 +572,7 @@ router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
     if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
       try {
         for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity } });
+          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
         }
         await notifyAdmin({
           type: 'payment_paid',
@@ -705,5 +708,320 @@ router.put('/:id/status', auth, async (req, res) => {
   }
 });
 
+// ─── POST /api/orders/my/:id/cancel — customer cancel ───
+router.post('/my/:id/cancel', customerAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, customer: req.customer._id });
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+
+    const cancellableStatuses = ['awaiting_payment', 'processing'];
+    if (!cancellableStatuses.includes(order.orderStatus)) {
+      return res.status(400).json({ message: 'Pesanan tidak dapat dibatalkan pada tahap ini' });
+    }
+
+    const coreApi = new midtransClient.CoreApi({
+      isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
+      serverKey: process.env.MIDTRANS_SERVER_KEY,
+      clientKey: process.env.MIDTRANS_CLIENT_KEY,
+    });
+
+    if (order.paymentStatus === 'paid') {
+      try {
+        await coreApi.transaction.refund(order.midtransOrderId, {
+          refund_key: `refund-${order._id}`,
+          amount: order.total,
+          reason: 'Customer request',
+        });
+        order.paymentStatus = 'refunded';
+      } catch (refundErr) {
+        console.error('[Cancel] Midtrans refund failed:', refundErr.message);
+        return res.status(502).json({ message: 'Gagal memproses refund. Hubungi admin.' });
+      }
+    } else if (order.paymentStatus === 'pending') {
+      try {
+        await coreApi.transaction.cancel(order.midtransOrderId);
+      } catch (cancelErr) {
+        if (!cancelErr.message?.includes('404')) {
+          console.error('[Cancel] Midtrans cancel failed:', cancelErr.message);
+        }
+      }
+      order.paymentStatus = 'expired';
+    }
+
+    if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
+      try {
+        await Voucher.findOneAndUpdate(
+          { code: order.voucherCode, usedCount: { $gt: 0 } },
+          { $inc: { usedCount: -1 } }
+        );
+        order.voucherReserved = false;
+      } catch (vErr) {
+        console.error('[Cancel] Voucher release failed:', vErr.message);
+      }
+    }
+
+    if (order.biteshipOrderId) {
+      try {
+        await cancelBiteshipOrder(order.biteshipOrderId);
+      } catch (bErr) {
+        console.error('[Cancel] Biteship cancel failed:', bErr.message);
+      }
+    }
+
+    order.orderStatus = 'cancelled';
+    order.cancelledAt = new Date();
+    await order.save();
+
+    try {
+      await notifyAdmin({
+        type: 'order_cancelled',
+        title: 'Pesanan dibatalkan',
+        message: `Pesanan ${order.midtransOrderId} dibatalkan oleh customer`,
+        link: `/admin/orders/${order._id}`,
+        relatedId: order._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] cancel notify failed:', notifyErr.message);
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error('[Cancel Order]', err);
+    res.status(500).json({ message: 'Gagal membatalkan pesanan' });
+  }
+});
+
+// ─── GET /api/orders/my/:id/tracking — Biteship live tracking ───
+router.get('/my/:id/tracking', customerAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, customer: req.customer._id });
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (!order.biteshipOrderId) return res.status(400).json({ message: 'Pesanan belum memiliki data pengiriman' });
+
+    const tracking = await getOrderTracking(order.biteshipOrderId);
+    res.json(tracking);
+  } catch (err) {
+    console.error('[Tracking]', err.message);
+    res.status(502).json({ message: 'Gagal mengambil data tracking' });
+  }
+});
+
+// ─── helper: generate invoice PDF into response stream ───
+const buildInvoicePdf = (order, res) => {
+  const fmtIDR = (n) =>
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
+
+  const doc = new PDFDocument({ margin: 50, size: 'A4' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="invoice-${order._id}.pdf"`);
+  doc.pipe(res);
+
+  // Header
+  doc.fontSize(20).text('KumaKuma / Katiga.id', { align: 'left' });
+  doc.fontSize(10).fillColor('#666').text('katiga.id', { align: 'left' });
+  doc.fillColor('#000');
+  doc.moveDown();
+
+  doc.fontSize(16).text('INVOICE', { align: 'right' });
+  doc.fontSize(10).text(`#${order._id.toString().toUpperCase()}`, { align: 'right' });
+  doc.text(`Tanggal: ${new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`, { align: 'right' });
+  doc.moveDown();
+
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  doc.moveDown(0.5);
+
+  // Customer info
+  doc.fontSize(11).text('Kepada:');
+  doc.fontSize(10).text(order.customerSnapshot?.name ?? '');
+  doc.text(order.customerSnapshot?.email ?? '');
+  if (order.customerSnapshot?.phone) doc.text(order.customerSnapshot.phone);
+  doc.moveDown(0.5);
+  doc.text(`${order.shippingAddress.street}`);
+  doc.text(`${order.shippingAddress.areaName} ${order.shippingAddress.postalCode}`);
+  doc.moveDown();
+
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+  doc.moveDown(0.5);
+
+  // Items table
+  const col = { name: 50, qty: 320, price: 380, subtotal: 470 };
+  doc.fontSize(10).fillColor('#444');
+  doc.text('Produk', col.name, doc.y);
+  doc.text('Qty', col.qty, doc.y - doc.currentLineHeight());
+  doc.text('Harga', col.price, doc.y - doc.currentLineHeight());
+  doc.text('Subtotal', col.subtotal, doc.y - doc.currentLineHeight());
+  doc.moveDown(0.3);
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+  doc.fillColor('#000');
+  doc.moveDown(0.3);
+
+  for (const item of order.items) {
+    const y = doc.y;
+    doc.fontSize(9).text(item.name, col.name, y, { width: 260 });
+    doc.text(String(item.quantity), col.qty, y);
+    doc.text(fmtIDR(item.priceNumeric), col.price, y);
+    doc.text(fmtIDR(item.subtotal), col.subtotal, y);
+    doc.moveDown(0.5);
+  }
+
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke('#ccc');
+  doc.moveDown(0.5);
+
+  // Totals
+  const addRow = (label, value, bold = false) => {
+    doc.fontSize(bold ? 11 : 10)[bold ? 'font' : 'font']('Helvetica' + (bold ? '-Bold' : ''));
+    doc.text(label, 380, doc.y);
+    doc.text(value, 470, doc.y - doc.currentLineHeight());
+    doc.moveDown(0.3);
+  };
+  doc.font('Helvetica');
+  addRow('Subtotal produk', fmtIDR(order.subtotal));
+  addRow(`Ongkir (${order.shippingServiceName})`, fmtIDR(order.shippingCost));
+  if ((order.voucherDiscount ?? 0) > 0) {
+    addRow(`Diskon voucher${order.voucherCode ? ` (${order.voucherCode})` : ''}`, `-${fmtIDR(order.voucherDiscount)}`);
+  }
+  doc.font('Helvetica-Bold');
+  addRow('TOTAL', fmtIDR(order.total), true);
+
+  doc.moveDown();
+  doc.font('Helvetica').fontSize(9).fillColor('#888').text('Terima kasih telah berbelanja di KumaKuma!', { align: 'center' });
+
+  doc.end();
+};
+
+// ─── GET /api/orders/my/:id/invoice — customer download invoice ───
+router.get('/my/:id/invoice', customerAuth, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, customer: req.customer._id });
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (!['paid', 'refunded'].includes(order.paymentStatus) && order.orderStatus !== 'cancelled') {
+      return res.status(400).json({ message: 'Invoice hanya tersedia untuk pesanan yang sudah dibayar' });
+    }
+    buildInvoicePdf(order, res);
+  } catch (err) {
+    console.error('[Invoice]', err);
+    res.status(500).json({ message: 'Gagal membuat invoice' });
+  }
+});
+
+// ─── GET /api/orders/:id/invoice — admin download invoice ───
+router.get('/:id/invoice', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    buildInvoicePdf(order, res);
+  } catch (err) {
+    console.error('[Invoice Admin]', err);
+    res.status(500).json({ message: 'Gagal membuat invoice' });
+  }
+});
+
+// ─── POST /api/orders/:id/accept — admin accept order → packing ───
+router.post('/:id/accept', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (order.orderStatus !== 'processing') {
+      return res.status(400).json({ message: 'Hanya pesanan berstatus "Diproses" yang dapat diterima' });
+    }
+    order.orderStatus = 'packing';
+    await order.save();
+    try {
+      await notifyCustomer({
+        customerId: order.customer,
+        type: 'order_packing',
+        title: 'Pesanan sedang disiapkan',
+        message: 'Pesananmu sedang dikemas oleh tim kami',
+        link: `/pesanan/${order._id}`,
+        relatedId: order._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] accept notify failed:', notifyErr.message);
+    }
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── PUT /api/orders/:id/ship — admin: mark as shipped ───
+router.put('/:id/ship', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (order.orderStatus !== 'packing') {
+      return res.status(400).json({ message: 'Hanya pesanan berstatus "Dikemas" yang dapat dikirim' });
+    }
+    const { trackingCode } = req.body;
+    order.orderStatus = 'shipped';
+    if (trackingCode) order.biteshipTrackingCode = trackingCode;
+    await order.save();
+    try {
+      await notifyCustomer({
+        customerId: order.customer,
+        type: 'order_shipped',
+        title: 'Pesanan sedang dikirim',
+        message: `Pesananmu sedang dalam perjalanan${trackingCode ? ` — resi: ${trackingCode}` : ''}`,
+        link: `/pesanan/${order._id}`,
+        relatedId: order._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] ship notify failed:', notifyErr.message);
+    }
+    res.json(order);
+  } catch (err) {
+    console.error('[Ship Order]', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── GET /api/orders/:id/tracking — admin: Biteship live tracking ───
+router.get('/:id/tracking', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (!order.biteshipOrderId) return res.status(400).json({ message: 'Pesanan belum memiliki data pengiriman' });
+    const tracking = await getOrderTracking(order.biteshipOrderId);
+    res.json(tracking);
+  } catch (err) {
+    console.error('[Admin Tracking]', err.message);
+    res.status(502).json({ message: 'Gagal mengambil data tracking' });
+  }
+});
+
+// ─── Biteship webhook (registered in server.js before express-json routes) ───
+const biteshipWebhookHandler = async (req, res) => {
+  try {
+    const { event, data } = req.body ?? {};
+    if (event !== 'order.status_update' || !data?.id) {
+      return res.status(200).json({ message: 'OK' });
+    }
+    if (data.status === 'delivered') {
+      const order = await Order.findOne({ biteshipOrderId: data.id });
+      if (order && order.orderStatus !== 'delivered') {
+        order.orderStatus = 'delivered';
+        await order.save();
+        try {
+          await notifyCustomer({
+            customerId: order.customer,
+            type: 'order_delivered',
+            title: 'Pesanan telah sampai',
+            message: 'Pesananmu telah berhasil diterima',
+            link: `/pesanan/${order._id}`,
+            relatedId: order._id,
+          });
+        } catch (notifyErr) {
+          console.error('[Notify] delivered notify failed:', notifyErr.message);
+        }
+      }
+    }
+    res.status(200).json({ message: 'OK' });
+  } catch (err) {
+    console.error('[Biteship Webhook]', err.message);
+    res.status(200).json({ message: 'OK' }); // Always 200 to prevent Biteship retries
+  }
+};
+
 module.exports = router;
 module.exports.webhookHandler = webhookHandler;
+module.exports.biteshipWebhookHandler = biteshipWebhookHandler;
