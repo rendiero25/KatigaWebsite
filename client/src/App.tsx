@@ -38,6 +38,7 @@ const AdminPromotions = lazy(() => import('./pages/admin/Promotions'));
 const AdminPromosiTampilan = lazy(() => import('./pages/admin/PromosiTampilan'));
 const AdminLaporan = lazy(() => import('./pages/admin/Laporan'));
 const AdminShippingSettings = lazy(() => import('./pages/admin/ShippingSettings'));
+const AdminComplaints = lazy(() => import('./pages/admin/Complaints'));
 const Daftar = lazy(() => import('./pages/Daftar'));
 const Masuk = lazy(() => import('./pages/Masuk'));
 const Keranjang = lazy(() => import('./pages/Keranjang'));
@@ -109,6 +110,7 @@ function App() {
         <Route path="/admin/contact-page-content" element={<AdminContactPageContent />} />
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/orders/:id" element={<AdminOrderDetail />} />
+        <Route path="/admin/complaints" element={<AdminComplaints />} />
         <Route path="/admin/users" element={<AdminUsers />} />
         <Route path="/admin/reviews" element={<AdminReviews />} />
         <Route path="/admin/laporan" element={<AdminLaporan />} />

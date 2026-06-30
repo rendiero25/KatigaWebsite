@@ -140,9 +140,10 @@ const menuGroups: MenuGroup[] = [
   {
     label: 'Transaksi',
     items: [
-      { path: '/admin/orders',  icon: ShoppingCart,  label: 'Pesanan' },
-      { path: '/admin/users',   icon: UsersIcon,     label: 'Users'   },
-      { path: '/admin/reviews', icon: MessageSquare, label: 'Ulasan'  },
+      { path: '/admin/orders',     icon: ShoppingCart,  label: 'Pesanan'       },
+      { path: '/admin/complaints', icon: MessageSquare, label: 'Komplain/Retur' },
+      { path: '/admin/users',      icon: UsersIcon,     label: 'Users'         },
+      { path: '/admin/reviews',    icon: MessageSquare, label: 'Ulasan'        },
       { path: '/admin/laporan', icon: BarChart3,     label: 'Laporan' },
     ],
   },

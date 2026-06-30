@@ -150,7 +150,7 @@ export default function AdminOrders() {
       {pagination && pagination.pages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-6">
           <Button
-            variant="secondary"
+            variant="outline"
             size="sm"
             onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
             disabled={filters.page <= 1}
@@ -159,7 +159,7 @@ export default function AdminOrders() {
           </Button>
           <span className="text-sm text-gray-600">Hal {filters.page} / {pagination.pages}</span>
           <Button
-            variant="secondary"
+            variant="outline"
             size="sm"
             onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
             disabled={filters.page >= pagination.pages}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import { API_BASE_URL } from '../../services/api';
 import StarRating from '../../components/StarRating';
+import { Button } from '@/components/ui/button';
 
 interface AdminReview {
   _id: string;
@@ -178,22 +179,21 @@ export default function AdminReviews() {
                         </td>
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
-                            <button
+                            <Button
+                              variant="outline"
+                              size="xs"
                               onClick={() => toggleVisibility(review._id)}
-                              className={`text-xs px-2 py-1 rounded-lg border transition ${
-                                review.isVisible
-                                  ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                                  : 'border-green-200 text-green-700 hover:bg-green-50'
-                              }`}
+                              className={review.isVisible ? '' : 'border-green-200 text-green-700 hover:bg-green-50'}
                             >
                               {review.isVisible ? 'Hide' : 'Show'}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="xs"
                               onClick={() => deleteReview(review._id)}
-                              className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition"
                             >
                               Hapus
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -236,23 +236,25 @@ export default function AdminReviews() {
         {/* Pagination */}
         {pagination && pagination.pages > 1 && (
           <div className="flex justify-center gap-2">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               disabled={page <= 1}
               onClick={() => { const p = page - 1; setPage(p); fetchReviews(p); }}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-40 hover:bg-gray-50 transition"
             >
               ← Sebelumnya
-            </button>
+            </Button>
             <span className="px-3 py-1.5 text-sm text-gray-600">
               {page} / {pagination.pages}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               disabled={page >= pagination.pages}
               onClick={() => { const p = page + 1; setPage(p); fetchReviews(p); }}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm disabled:opacity-40 hover:bg-gray-50 transition"
             >
               Berikutnya →
-            </button>
+            </Button>
           </div>
         )}
       </div>

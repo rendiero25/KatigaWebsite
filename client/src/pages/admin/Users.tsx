@@ -236,41 +236,46 @@ export default function AdminUsers() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
-                        <button
+                        <Button
+                          variant="outline"
+                          size="xs"
                           onClick={() => openEdit(c)}
-                          className="px-3 py-1 text-xs bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition"
                         >
                           Edit
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="xs"
                           onClick={() => openReset(c)}
-                          className="px-3 py-1 text-xs bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition"
                         >
                           Reset PW
-                        </button>
+                        </Button>
                         {deleteTarget === c._id ? (
                           <div className="flex items-center gap-1">
-                            <button
+                            <Button
+                              variant="destructive"
+                              size="xs"
                               onClick={() => confirmDelete(c._id)}
                               disabled={deleteLoading}
-                              className="px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
                             >
                               {deleteLoading ? '...' : 'Hapus?'}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="xs"
                               onClick={() => setDeleteTarget(null)}
-                              className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition"
                             >
                               Batal
-                            </button>
+                            </Button>
                           </div>
                         ) : (
-                          <button
+                          <Button
+                            variant="destructive"
+                            size="xs"
                             onClick={() => setDeleteTarget(c._id)}
-                            className="px-3 py-1 text-xs bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition"
                           >
                             Hapus
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </td>
@@ -283,23 +288,25 @@ export default function AdminUsers() {
 
         {data && data.pages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-1.5 text-sm border rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
             >
               Sebelumnya
-            </button>
+            </Button>
             <span className="text-sm text-gray-500">
               Hal {page} / {data.pages}
             </span>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
               disabled={page === data.pages}
-              className="px-4 py-1.5 text-sm border rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
             >
               Berikutnya
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -349,7 +356,7 @@ export default function AdminUsers() {
             <Button onClick={saveEdit} disabled={editSaving} className="flex-1">
               {editSaving ? 'Menyimpan...' : 'Simpan'}
             </Button>
-            <Button variant="secondary" onClick={() => setEditOpen(false)} className="flex-1">
+            <Button variant="outline" onClick={() => setEditOpen(false)} className="flex-1">
               Batal
             </Button>
           </div>
@@ -386,7 +393,7 @@ export default function AdminUsers() {
             >
               {resetSaving ? 'Mereset...' : 'Reset Password'}
             </Button>
-            <Button variant="secondary" onClick={() => setResetOpen(false)} className="flex-1">
+            <Button variant="outline" onClick={() => setResetOpen(false)} className="flex-1">
               Batal
             </Button>
           </div>

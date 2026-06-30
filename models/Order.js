@@ -64,9 +64,10 @@ const orderSchema = new mongoose.Schema({
 
   orderStatus: {
     type: String,
-    enum: ['awaiting_payment', 'processing', 'shipped', 'delivered', 'cancelled'],
+    enum: ['awaiting_payment', 'processing', 'packing', 'shipped', 'delivered', 'cancelled'],
     default: 'awaiting_payment',
   },
+  cancelledAt: { type: Date },
   biteshipOrderId:      { type: String, default: '' },
   biteshipTrackingCode: { type: String, default: '' },
   biteshipWaybillId:    { type: String, default: '' },

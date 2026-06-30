@@ -8,6 +8,7 @@ import CartItemCard from '../components/CartItemCard';
 import RelatedProductsCarousel from '../components/RelatedProductsCarousel';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { Button } from '@/components/ui/button';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -143,12 +144,14 @@ export default function Keranjang() {
           {cartSyncError && (
             <div className="mb-4 flex flex-col gap-2 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
               <span>{cartSyncError}</span>
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={refreshCart}
-                className="text-left font-medium text-red-700 hover:underline"
+                className="text-red-700 p-0 h-auto font-medium"
               >
                 Coba lagi
-              </button>
+              </Button>
             </div>
           )}
 
@@ -199,7 +202,7 @@ export default function Keranjang() {
                   <span className="tabular-nums">{cartReady ? fmt(selectedTotal) : '—'}</span>
                 </div>
 
-                <button
+                <Button
                   onClick={handleCheckout}
                   disabled={selectedIds.size === 0 || cartSyncing || !cartReady}
                   className="w-full py-3 bg-white text-primary font-semibold rounded-md text-sm hover:bg-[#F7F9FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
@@ -209,7 +212,7 @@ export default function Keranjang() {
                     : selectedIds.size > 0
                     ? `Checkout (${selectedIds.size} Produk)`
                     : 'Pilih Produk'}
-                </button>
+                </Button>
 
                 <Link
                   to="/produk"

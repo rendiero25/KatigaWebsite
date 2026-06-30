@@ -288,7 +288,7 @@ export default function PengaturanAkun() {
                   <Button
                     type="submit"
                     disabled={profileSaving}
-                    className="w-full bg-[#1F1F1F] text-white text-sm font-medium rounded-md px-6 py-2 hover:bg-[#2F2F2F] transition-colors disabled:opacity-50 sm:w-auto"
+                    className="w-full sm:w-auto"
                   >
                     <Save className="mr-2 size-4" />
                     {profileSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
@@ -409,7 +409,7 @@ export default function PengaturanAkun() {
                   <Button
                     type="submit"
                     disabled={pwSaving}
-                    className="w-full bg-[#1F1F1F] text-white text-sm font-medium rounded-md px-6 py-2 hover:bg-[#2F2F2F] transition-colors disabled:opacity-50 sm:w-auto"
+                    className="w-full sm:w-auto"
                   >
                     <Lock className="mr-2 size-4" />
                     {pwSaving ? 'Menyimpan...' : 'Simpan Password'}

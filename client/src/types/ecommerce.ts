@@ -122,7 +122,8 @@ export interface Order {
   shippingServiceName: string;
   estimatedDays: string;
   paymentStatus: 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
-  orderStatus: 'awaiting_payment' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  orderStatus: 'awaiting_payment' | 'processing' | 'packing' | 'shipped' | 'delivered' | 'cancelled';
+  cancelledAt?: string;
   midtransOrderId: string;
   midtransToken: string;
   midtransPaymentType?: string;
@@ -317,6 +318,46 @@ export interface PromotionsReport {
   promotions: PromotionReportRow[];
 }
 
+export interface BiteshipTrackingHistory {
+  note: string;
+  updated_at: string;
+  status: string;
+}
+
+export interface BiteshipTracking {
+  id: string;
+  order_id: string;
+  waybill_id: string;
+  courier: {
+    company: string;
+    name: string;
+    phone: string;
+    tracking_id: string;
+    status: string;
+    history: BiteshipTrackingHistory[];
+  };
+}
+
+export interface Complaint {
+  _id: string;
+  order: string | { _id: string; midtransOrderId: string; total: number };
+  customer: string;
+  customerSnapshot: { name: string; email: string };
+  type: 'complaint' | 'return';
+  reason: string;
+  photos: string[];
+  status: 'open' | 'processing' | 'resolved' | 'rejected';
+  adminNote: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComplaintsResponse {
+  data: Complaint[];
+  pagination: { total: number; page: number; pages: number; limit: number };
+}
+
 export type NotificationRole = 'admin' | 'customer';
 
 export interface AppNotification {
@@ -325,7 +366,7 @@ export interface AppNotification {
   recipientId: string | null;
   type:
     | 'order_new' | 'payment_paid' | 'payment_failed' | 'review_new' | 'contact_new' | 'promo_expiring'
-    | 'payment_confirmed' | 'promo_new';
+    | 'payment_confirmed' | 'promo_new' | 'order_cancelled' | 'order_packing' | 'complaint_new';
   title: string;
   message: string;
   link: string;
