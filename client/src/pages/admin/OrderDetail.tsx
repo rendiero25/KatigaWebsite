@@ -58,6 +58,8 @@ export default function AdminOrderDetail() {
   const [tracking, setTracking] = useState<BiteshipTracking | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
 
   const [form, setForm] = useState({
     orderStatus: '',
@@ -195,6 +197,25 @@ export default function AdminOrderDetail() {
     }
   };
 
+  const handleSyncBiteship = async () => {
+    if (!id) return;
+    setSyncing(true);
+    setSyncMsg('');
+    try {
+      const data = await api.syncBiteshipOrder(id);
+      setOrder(data);
+      setSyncMsg(
+        data.biteshipTrackingCode
+          ? `Resi tersinkron: ${data.biteshipTrackingCode}`
+          : 'Sinkron berhasil, resi belum tersedia dari kurir.'
+      );
+    } catch (err) {
+      setSyncMsg(err instanceof Error ? err.message : 'Gagal sinkronisasi dengan Biteship');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (loading) return <AdminLayout title="Detail Pesanan"><p className="text-gray-400">Memuat...</p></AdminLayout>;
   if (!order) return <AdminLayout title="Detail Pesanan"><p className="text-gray-400">Pesanan tidak ditemukan.</p></AdminLayout>;
 
@@ -279,6 +300,26 @@ export default function AdminOrderDetail() {
             )}
             {order.biteshipOrderId && (
               <p className="text-xs text-gray-400 mt-1">Biteship Order ID: {order.biteshipOrderId}</p>
+            )}
+            {['processing', 'packing', 'shipped', 'delivered'].includes(order.orderStatus) && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <Button
+                  variant="outline"
+                  onClick={handleSyncBiteship}
+                  disabled={syncing}
+                  className="w-full text-sm font-medium"
+                >
+                  {syncing ? 'Sinkronisasi...' : 'Sync Biteship (Ambil Resi)'}
+                </Button>
+                <p className="text-xs text-gray-400 mt-2">
+                  Gunakan jika resi/AWB tidak otomatis tersinkron dari Biteship.
+                </p>
+                {syncMsg && (
+                  <p className={`text-xs text-center mt-2 ${syncMsg.startsWith('Gagal') ? 'text-red-600' : 'text-green-600'}`}>
+                    {syncMsg}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
