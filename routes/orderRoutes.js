@@ -989,6 +989,34 @@ router.get('/:id/tracking', auth, async (req, res) => {
   }
 });
 
+// ─── POST /api/orders/:id/sync-biteship — admin: manual retry AWB/tracking sync ───
+router.post('/:id/sync-biteship', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (['awaiting_payment', 'cancelled'].includes(order.orderStatus)) {
+      return res.status(400).json({ message: 'Sinkronisasi hanya untuk pesanan yang sudah diproses' });
+    }
+
+    if (!order.biteshipOrderId) {
+      const biteshipResult = await biteshipCreateOrder(order);
+      order.biteshipOrderId = biteshipResult.id ?? '';
+      order.biteshipTrackingCode = biteshipResult.courier?.tracking_id ?? '';
+      order.biteshipWaybillId = biteshipResult.courier?.waybill_id ?? '';
+    } else {
+      const tracking = await getOrderTracking(order.biteshipOrderId);
+      if (tracking.courier?.tracking_id) order.biteshipTrackingCode = tracking.courier.tracking_id;
+      if (tracking.waybill_id) order.biteshipWaybillId = tracking.waybill_id;
+    }
+
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    console.error('[Sync Biteship]', err.message);
+    res.status(502).json({ message: 'Gagal sinkronisasi dengan Biteship' });
+  }
+});
+
 // ─── Biteship webhook (registered in server.js before express-json routes) ───
 const biteshipWebhookHandler = async (req, res) => {
   try {
