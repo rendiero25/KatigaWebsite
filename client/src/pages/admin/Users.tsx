@@ -74,6 +74,10 @@ export default function AdminUsers() {
       const res = await fetch(`${API_BASE_URL}/admin/customers?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
+      if (!res.ok) {
+        setData(null)
+        return
+      }
       const json: CustomersResponse = await res.json()
       setData(json)
     } finally {
@@ -196,7 +200,7 @@ export default function AdminUsers() {
                     Memuat...
                   </td>
                 </tr>
-              ) : !data?.customers.length ? (
+              ) : !data?.customers?.length ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
                     Tidak ada user
