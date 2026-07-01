@@ -5,7 +5,8 @@
       "name": "Backend (Express)",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["nodemon", "server.js"],
-      "port": 8000
+      "port": 8000,
+      "autoPort": false
     },
     {
       "name": "Frontend (Vite)",

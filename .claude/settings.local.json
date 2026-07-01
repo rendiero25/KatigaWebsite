@@ -20,7 +20,20 @@
       "Bash(echo \"LINT_EXIT:$?\")",
       "Bash(./node_modules/.bin/eslint src/hooks/useApi.ts src/pages/LaporanKeuangan.tsx src/pages/Profil.tsx src/components/UserLayout.tsx src/App.tsx)",
       "Bash(echo \"SCOPED_LINT_EXIT:$?\")",
-      "WebFetch(domain:biteship.com)"
+      "WebFetch(domain:biteship.com)",
+      "Bash(echo \"TSC_EXIT=$?\")",
+      "Bash(echo \"LINT_EXIT=$?\")",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(command -v chromium-cli)",
+      "Bash(npx --no-install chromium-cli --version)",
+      "Bash(tail -n 60 /tmp/dev-server.log)",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__read_console_messages",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
