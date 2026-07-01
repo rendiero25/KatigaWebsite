@@ -326,14 +326,12 @@ export interface BiteshipTrackingHistory {
 
 export interface BiteshipTracking {
   id: string;
-  order_id: string;
-  waybill_id: string;
   courier: {
     company: string;
-    name: string;
-    phone: string;
+    name: string | null;
+    phone: string | null;
     tracking_id: string;
-    status: string;
+    waybill_id: string;
     history: BiteshipTrackingHistory[];
   };
 }

@@ -110,7 +110,7 @@ export default function AdminOrderDetail() {
       setFetchingResi(true);
       try {
         const t = await api.getAdminOrderTracking(id);
-        const code = t.courier?.tracking_id || t.waybill_id || '';
+        const code = t.courier?.tracking_id || t.courier?.waybill_id || '';
         if (code) setShipResi(code);
       } catch {
         // Silent — admin can input manually
