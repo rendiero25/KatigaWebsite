@@ -1,0 +1,5 @@
+Tambahkan inputan stok di tambah produk
+Stok varian mengikuti data main tapi bisa diinput juga di variannya
+button batal, tambah varian, pilh dari foto produk, dan upload baru, ketika dihover malah warna putih, harusnya button secondary shadcn
+ketika button pilih produk dipilih, muncul popup grid foto yang nanti dipilih
+button suka di detail produk tidak tersimpan ke wishlist dashboard user
