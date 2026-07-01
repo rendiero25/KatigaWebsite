@@ -78,29 +78,6 @@ async function getRates({ destinationAreaId, items, courierCodes }) {
   return res.data.pricing ?? [];
 }
 
-// Hitung tanggal pickup berikutnya dalam WIB (UTC+7).
-// Cutoff 15:00 WIB: pesanan setelah jam ini dijadwalkan besok.
-// Skip Sabtu & Minggu ke hari Senin.
-function getPickupDate() {
-  const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
-  const wib = new Date(Date.now() + WIB_OFFSET_MS);
-
-  // Kalau sudah lewat cutoff, geser ke hari berikutnya
-  if (wib.getUTCHours() >= 15) {
-    wib.setUTCDate(wib.getUTCDate() + 1);
-  }
-
-  // Skip weekend: Sabtu (6) → +2, Minggu (0) → +1
-  const dow = wib.getUTCDay();
-  if (dow === 6) wib.setUTCDate(wib.getUTCDate() + 2);
-  else if (dow === 0) wib.setUTCDate(wib.getUTCDate() + 1);
-
-  const yyyy = wib.getUTCFullYear();
-  const mm = String(wib.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(wib.getUTCDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 async function createOrder(order) {
   const payload = {
     shipper_contact_name: process.env.SHIPPER_NAME || 'Katiga',
@@ -118,8 +95,7 @@ async function createOrder(order) {
     destination_area_id: order.shippingAddress.areaId,
     courier_company: order.shippingCourier,
     courier_type: order.shippingService,
-    delivery_type: 'later',
-    delivery_date: getPickupDate(),
+    delivery_type: 'now',
     order_note: `Order ID: ${order._id}`,
     items: order.items.map((item) => {
       const dimensions = normalizeDimensions(item.dimensions);
@@ -142,7 +118,7 @@ async function createOrder(order) {
 }
 
 async function getOrderTracking(biteshipOrderId) {
-  const res = await axios.get(`${BASE_URL}/v1/orders/${biteshipOrderId}/tracking`, { headers: headers() });
+  const res = await axios.get(`${BASE_URL}/v1/orders/${biteshipOrderId}`, { headers: headers() });
   return res.data;
 }
 
