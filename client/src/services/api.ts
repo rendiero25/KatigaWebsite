@@ -519,6 +519,19 @@ export const api = {
     return res.json() as Promise<BiteshipTracking>;
   },
 
+  syncBiteshipOrder: async (id: string): Promise<Order> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/orders/${id}/sync-biteship`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal sinkronisasi dengan Biteship');
+    }
+    return res.json() as Promise<Order>;
+  },
+
   // Complaints — customer
   createComplaint: async (formData: FormData) => {
     const token = localStorage.getItem('customerToken');
