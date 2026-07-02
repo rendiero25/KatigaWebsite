@@ -332,6 +332,7 @@ export interface BiteshipTracking {
     phone: string | null;
     tracking_id: string;
     waybill_id: string;
+    driver_photo_url: string | null;
     history: BiteshipTrackingHistory[];
   };
 }
@@ -344,9 +345,11 @@ export interface Complaint {
   type: 'complaint' | 'return';
   reason: string;
   photos: string[];
-  status: 'open' | 'processing' | 'resolved' | 'rejected';
+  status: 'open' | 'processing' | 'awaiting_return_shipment' | 'return_shipped' | 'return_received' | 'resolved' | 'rejected';
   adminNote: string;
   resolvedAt?: string;
+  returnShipment?: { courier: string; trackingNumber: string; shippedAt: string };
+  resolution?: { type: 'refund' | 'replace'; note: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -364,7 +367,7 @@ export interface AppNotification {
   recipientId: string | null;
   type:
     | 'order_new' | 'payment_paid' | 'payment_failed' | 'review_new' | 'contact_new' | 'promo_expiring'
-    | 'payment_confirmed' | 'promo_new' | 'order_cancelled' | 'order_packing' | 'complaint_new';
+    | 'payment_confirmed' | 'promo_new' | 'order_cancelled' | 'order_packing' | 'complaint_new' | 'complaint_update';
   title: string;
   message: string;
   link: string;
