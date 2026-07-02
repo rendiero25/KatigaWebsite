@@ -477,6 +477,9 @@ export default function PesananDetail() {
                                   src={tracking.courier.driver_photo_url}
                                   alt="Foto kurir"
                                   className="size-8 rounded-full object-cover shrink-0"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
                                 />
                               )}
                               <p className="text-xs font-semibold text-[#1F1F1F]">
