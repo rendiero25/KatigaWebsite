@@ -516,7 +516,7 @@ export default function PesananDetail() {
             )}
             {canComplain && complaintDeadlineLabel && (
               <p className="text-[11px] text-[#9A9A9A] text-center">
-                Anda dapat mengajukan komplain hingga {complaintDeadlineLabel}
+                Kamu dapat mengajukan komplain hingga {complaintDeadlineLabel}
               </p>
             )}
             {order.orderStatus === 'delivered' && complaintWindowExpired && complaint === null && (
