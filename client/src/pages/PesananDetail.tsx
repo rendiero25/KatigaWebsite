@@ -19,6 +19,14 @@ const PAYMENT_METHOD_LABEL: Record<string, string> = {
   credit_card: 'Kartu Kredit',
   cstore: 'Gerai Retail (Alfamart/Indomaret)',
   shopeepay: 'ShopeePay',
+  bca_va: 'Transfer Bank BCA',
+  bni_va: 'Transfer Bank BNI',
+  bri_va: 'Transfer Bank BRI',
+  permata_va: 'Transfer Bank Permata',
+  other_va: 'Transfer Bank (VA)',
+  akulaku: 'Akulaku PayLater',
+  kredivo: 'Kredivo',
+  echannel: 'Mandiri Bill',
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -41,6 +49,26 @@ const STATUS_STEP_INDEX: Record<string, number> = {
 }
 
 const COMPLAINT_WINDOW_DAYS = 3
+
+const COMPLAINT_STATUS_LABEL: Record<string, string> = {
+  open: 'Menunggu',
+  processing: 'Diproses',
+  awaiting_return_shipment: 'Retur Disetujui',
+  return_shipped: 'Barang Dikirim',
+  return_received: 'Barang Diterima',
+  resolved: 'Selesai',
+  rejected: 'Ditolak',
+}
+
+const COMPLAINT_STATUS_COLOR: Record<string, string> = {
+  open: 'bg-amber-100 text-amber-700',
+  processing: 'bg-blue-100 text-blue-700',
+  awaiting_return_shipment: 'bg-purple-100 text-purple-700',
+  return_shipped: 'bg-indigo-100 text-indigo-700',
+  return_received: 'bg-cyan-100 text-cyan-700',
+  resolved: 'bg-emerald-100 text-emerald-700',
+  rejected: 'bg-red-100 text-red-700',
+}
 
 function useCountdown(targetMs: number | null) {
   const [remaining, setRemaining] = useState<number>(0)
@@ -181,6 +209,9 @@ export default function PesananDetail() {
   const [showTracking, setShowTracking] = useState(false)
   const [complaint, setComplaint] = useState<Complaint | null | undefined>(undefined)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
+  const [shipCourier, setShipCourier] = useState('')
+  const [shipTrackingNumber, setShipTrackingNumber] = useState('')
+  const [shipSubmitting, setShipSubmitting] = useState(false)
   const [nowMs] = useState(() => Date.now())
   const [reviewStatuses, setReviewStatuses] = useState<Record<string, CanReviewResponse>>({})
   const [reviewFormItem, setReviewFormItem] = useState<{
@@ -267,6 +298,23 @@ export default function PesananDetail() {
       toast.error(err instanceof Error ? err.message : 'Gagal membatalkan pesanan')
     } finally {
       setCancelling(false)
+    }
+  }
+
+  const handleShipReturn = async () => {
+    if (!complaint || !shipCourier.trim() || !shipTrackingNumber.trim()) return
+    setShipSubmitting(true)
+    try {
+      const updated = await api.shipReturnComplaint(complaint._id, {
+        courier: shipCourier.trim(),
+        trackingNumber: shipTrackingNumber.trim(),
+      })
+      setComplaint(updated)
+      toast.success('Data resi retur berhasil dikirim')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Gagal mengirim data resi retur')
+    } finally {
+      setShipSubmitting(false)
     }
   }
 
@@ -400,24 +448,69 @@ export default function PesananDetail() {
           <div className="space-y-4">
             {/* Complaint status (if exists) */}
             {complaint && complaint._id && (
-              <div className="rounded-lg border border-[#E8E8E5] bg-white px-4 py-3 flex items-center gap-3">
-                <MessageSquare className="size-4 text-[#4A4A4A] shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1F1F1F]">
-                    {complaint.type === 'return' ? 'Permintaan Retur' : 'Komplain'} dikirim
-                  </p>
-                  <p className="text-xs text-[#9A9A9A] truncate">{complaint.reason}</p>
+              <div className="rounded-lg border border-[#E8E8E5] bg-white px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="size-4 text-[#4A4A4A] shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#1F1F1F]">
+                      {complaint.type === 'return' ? 'Permintaan Retur' : 'Komplain'} dikirim
+                    </p>
+                    <p className="text-xs text-[#9A9A9A] truncate">{complaint.reason}</p>
+                  </div>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ${
+                    COMPLAINT_STATUS_COLOR[complaint.status] ?? 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {COMPLAINT_STATUS_LABEL[complaint.status] ?? complaint.status}
+                  </span>
                 </div>
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ${
-                  complaint.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
-                  complaint.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                  complaint.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                  'bg-amber-100 text-amber-700'
-                }`}>
-                  {complaint.status === 'open' ? 'Menunggu' :
-                   complaint.status === 'processing' ? 'Diproses' :
-                   complaint.status === 'resolved' ? 'Selesai' : 'Ditolak'}
-                </span>
+
+                {complaint.type === 'return' && complaint.status === 'awaiting_return_shipment' && (
+                  <div className="mt-3 pt-3 border-t border-[#F0F0EC] space-y-2">
+                    <p className="text-xs text-[#4A4A4A]">Retur disetujui. Kirim barang balik lalu isi data resi di bawah ini.</p>
+                    <input
+                      type="text"
+                      value={shipCourier}
+                      onChange={(e) => setShipCourier(e.target.value)}
+                      placeholder="Nama kurir (mis. JNE)"
+                      className="w-full border border-[#E8E8E5] rounded-lg px-3 py-2 text-sm text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#1F1F1F]"
+                    />
+                    <input
+                      type="text"
+                      value={shipTrackingNumber}
+                      onChange={(e) => setShipTrackingNumber(e.target.value)}
+                      placeholder="Nomor resi"
+                      className="w-full border border-[#E8E8E5] rounded-lg px-3 py-2 text-sm text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#1F1F1F]"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleShipReturn}
+                      disabled={shipSubmitting || !shipCourier.trim() || !shipTrackingNumber.trim()}
+                      className="w-full"
+                    >
+                      {shipSubmitting ? 'Mengirim...' : 'Saya Sudah Mengirim Barang'}
+                    </Button>
+                  </div>
+                )}
+
+                {complaint.type === 'return' && ['return_shipped', 'return_received'].includes(complaint.status) && complaint.returnShipment && (
+                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
+                    <p className="text-xs text-[#9A9A9A]">
+                      Resi: {complaint.returnShipment.courier} — {complaint.returnShipment.trackingNumber}
+                    </p>
+                    <p className="text-xs text-[#9A9A9A] mt-0.5">Menunggu verifikasi admin.</p>
+                  </div>
+                )}
+
+                {complaint.status === 'resolved' && complaint.resolution?.type && (
+                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
+                    <p className="text-sm font-medium text-[#1F1F1F]">
+                      {complaint.resolution.type === 'refund' ? 'Dana Dikembalikan' : 'Barang Diganti'}
+                    </p>
+                    {complaint.resolution.note && (
+                      <p className="text-xs text-[#9A9A9A] mt-0.5">{complaint.resolution.note}</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
