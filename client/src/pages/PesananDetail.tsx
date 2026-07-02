@@ -278,7 +278,7 @@ export default function PesananDetail() {
 
   if (loading) return (
     <UserLayout title="Detail Pesanan">
-      <div className="max-w-2xl space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         <div className="flex items-start justify-between mb-6">
           <div className="space-y-1">
             <Skeleton className="h-3 w-28 rounded" />
@@ -323,7 +323,7 @@ export default function PesananDetail() {
 
   return (
     <UserLayout title="Detail Pesanan">
-      <div className="w-full">
+      <div className="w-full max-w-6xl mx-auto">
         <Link to="/pesanan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A] mb-4 block transition-colors">
           ← Semua Pesanan
         </Link>
@@ -381,244 +381,249 @@ export default function PesananDetail() {
           </div>
         )}
 
-        {/* Complaint status (if exists) */}
-        {complaint && complaint._id && (
-          <div className="rounded-lg border border-[#E8E8E5] bg-white px-4 py-3 mb-4 flex items-center gap-3">
-            <MessageSquare className="size-4 text-[#4A4A4A] shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[#1F1F1F]">
-                {complaint.type === 'return' ? 'Permintaan Retur' : 'Komplain'} dikirim
-              </p>
-              <p className="text-xs text-[#9A9A9A] truncate">{complaint.reason}</p>
-            </div>
-            <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ${
-              complaint.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
-              complaint.status === 'rejected' ? 'bg-red-100 text-red-700' :
-              complaint.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-              'bg-amber-100 text-amber-700'
-            }`}>
-              {complaint.status === 'open' ? 'Menunggu' :
-               complaint.status === 'processing' ? 'Diproses' :
-               complaint.status === 'resolved' ? 'Selesai' : 'Ditolak'}
-            </span>
-          </div>
-        )}
-
-        {/* Shipping info */}
-        <div className="rounded-lg border border-[#E8E8E5] bg-white mb-4">
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-            <p className="text-[15px] font-semibold text-[#1F1F1F]">Info Pengiriman</p>
-          </div>
-          <div className="px-4 pb-4 pt-3 space-y-1">
-            <p className="text-sm text-[#1F1F1F] font-medium">{order.shippingAddress.recipientName}</p>
-            <p className="text-sm text-[#4A4A4A]">{order.shippingAddress.phone}</p>
-            <p className="text-sm text-[#4A4A4A]">{order.shippingAddress.street}</p>
-            <p className="text-sm text-[#4A4A4A]">
-              {order.shippingAddress.areaName}{order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ''}
-            </p>
-            <div className="pt-2 border-t border-[#F0F0EC] mt-2">
-              <p className="text-sm text-[#4A4A4A]">
-                <span className="font-medium text-[#1F1F1F]">{order.shippingCourier.toUpperCase()}</span>
-                {' — '}{order.shippingServiceName}
-                {order.estimatedDays ? ` (${order.estimatedDays})` : ''}
-              </p>
-              {order.biteshipTrackingCode && ['shipped', 'delivered'].includes(order.orderStatus) && (
-                <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-[#F5F5F3] rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-[#9A9A9A] uppercase tracking-wide">No. Resi</p>
-                    <p className="text-sm font-medium text-[#1F1F1F] font-mono truncate">{order.biteshipTrackingCode}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigator.clipboard.writeText(order.biteshipTrackingCode ?? '')}
-                    className="text-xs text-[#4A4A4A] border border-[#E8E8E5] px-2 py-1 rounded-md hover:bg-white transition-colors shrink-0"
-                  >
-                    Salin
-                  </button>
+        <div className="lg:grid lg:grid-cols-2 lg:gap-6">
+          {/* Left column: status & shipping */}
+          <div className="space-y-4">
+            {/* Complaint status (if exists) */}
+            {complaint && complaint._id && (
+              <div className="rounded-lg border border-[#E8E8E5] bg-white px-4 py-3 flex items-center gap-3">
+                <MessageSquare className="size-4 text-[#4A4A4A] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#1F1F1F]">
+                    {complaint.type === 'return' ? 'Permintaan Retur' : 'Komplain'} dikirim
+                  </p>
+                  <p className="text-xs text-[#9A9A9A] truncate">{complaint.reason}</p>
                 </div>
-              )}
-            </div>
-            {/* Tracking button */}
-            {order.biteshipOrderId && ['packing', 'shipped', 'delivered'].includes(order.orderStatus) && (
-              <div className="pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={showTracking ? () => setShowTracking(false) : handleLoadTracking}
-                  className="flex items-center gap-1.5"
-                >
-                  {trackingLoading
-                    ? <><RefreshCw className="size-3 animate-spin" /> Memuat...</>
-                    : <><Truck className="size-3" /> {showTracking ? 'Sembunyikan Tracking' : 'Cek Status Pengiriman'}</>
-                  }
-                </Button>
-                {showTracking && (
-                  <div className="mt-3 border border-[#E8E8E5] rounded-lg p-3">
-                    {trackingLoading && (
-                      <p className="text-xs text-[#9A9A9A]">Mengambil data tracking...</p>
-                    )}
-                    {trackingError && (
-                      <p className="text-xs text-red-600">{trackingError}</p>
-                    )}
-                    {!trackingLoading && !trackingError && tracking && (
-                      <div>
-                        <p className="text-xs font-semibold text-[#1F1F1F] mb-2">
-                          {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
-                        </p>
-                        <div className="space-y-2">
-                          {(tracking.courier?.history ?? []).slice().reverse().map((h, i) => (
-                            <div key={i} className="flex gap-2 text-xs">
-                              <div className="flex flex-col items-center mt-0.5">
-                                <div className={`size-2 rounded-full ${i === 0 ? 'bg-[#1F1F1F]' : 'bg-[#C8C8C4]'}`} />
-                                {i < (tracking.courier?.history?.length ?? 0) - 1 && (
-                                  <div className="w-px flex-1 bg-[#E8E8E5] my-1" />
-                                )}
-                              </div>
-                              <div className="pb-2">
-                                <p className="text-[#1F1F1F] font-medium leading-tight">{h.note}</p>
-                                <p className="text-[#9A9A9A] mt-0.5">
-                                  {new Date(h.updated_at).toLocaleString('id-ID', {
-                                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                                  })}
-                                </p>
-                              </div>
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ${
+                  complaint.status === 'resolved' ? 'bg-emerald-100 text-emerald-700' :
+                  complaint.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                  complaint.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                  'bg-amber-100 text-amber-700'
+                }`}>
+                  {complaint.status === 'open' ? 'Menunggu' :
+                   complaint.status === 'processing' ? 'Diproses' :
+                   complaint.status === 'resolved' ? 'Selesai' : 'Ditolak'}
+                </span>
+              </div>
+            )}
+
+            {/* Shipping info */}
+            <div className="rounded-lg border border-[#E8E8E5] bg-white">
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+                <p className="text-[15px] font-semibold text-[#1F1F1F]">Info Pengiriman</p>
+              </div>
+              <div className="px-4 pb-4 pt-3 space-y-1">
+                <p className="text-sm text-[#1F1F1F] font-medium">{order.shippingAddress.recipientName}</p>
+                <p className="text-sm text-[#4A4A4A]">{order.shippingAddress.phone}</p>
+                <p className="text-sm text-[#4A4A4A]">{order.shippingAddress.street}</p>
+                <p className="text-sm text-[#4A4A4A]">
+                  {order.shippingAddress.areaName}{order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ''}
+                </p>
+                <div className="pt-2 border-t border-[#F0F0EC] mt-2">
+                  <p className="text-sm text-[#4A4A4A]">
+                    <span className="font-medium text-[#1F1F1F]">{order.shippingCourier.toUpperCase()}</span>
+                    {' — '}{order.shippingServiceName}
+                    {order.estimatedDays ? ` (${order.estimatedDays})` : ''}
+                  </p>
+                  {order.biteshipTrackingCode && ['shipped', 'delivered'].includes(order.orderStatus) && (
+                    <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-[#F5F5F3] rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] text-[#9A9A9A] uppercase tracking-wide">No. Resi</p>
+                        <p className="text-sm font-medium text-[#1F1F1F] font-mono truncate">{order.biteshipTrackingCode}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(order.biteshipTrackingCode ?? '')}
+                        className="text-xs text-[#4A4A4A] border border-[#E8E8E5] px-2 py-1 rounded-md hover:bg-white transition-colors shrink-0"
+                      >
+                        Salin
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {/* Tracking button */}
+                {order.biteshipOrderId && ['packing', 'shipped', 'delivered'].includes(order.orderStatus) && (
+                  <div className="pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={showTracking ? () => setShowTracking(false) : handleLoadTracking}
+                      className="flex items-center gap-1.5"
+                    >
+                      {trackingLoading
+                        ? <><RefreshCw className="size-3 animate-spin" /> Memuat...</>
+                        : <><Truck className="size-3" /> {showTracking ? 'Sembunyikan Tracking' : 'Cek Status Pengiriman'}</>
+                      }
+                    </Button>
+                    {showTracking && (
+                      <div className="mt-3 border border-[#E8E8E5] rounded-lg p-3">
+                        {trackingLoading && (
+                          <p className="text-xs text-[#9A9A9A]">Mengambil data tracking...</p>
+                        )}
+                        {trackingError && (
+                          <p className="text-xs text-red-600">{trackingError}</p>
+                        )}
+                        {!trackingLoading && !trackingError && tracking && (
+                          <div>
+                            <p className="text-xs font-semibold text-[#1F1F1F] mb-2">
+                              {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
+                            </p>
+                            <div className="space-y-2">
+                              {(tracking.courier?.history ?? []).slice().reverse().map((h, i) => (
+                                <div key={i} className="flex gap-2 text-xs">
+                                  <div className="flex flex-col items-center mt-0.5">
+                                    <div className={`size-2 rounded-full ${i === 0 ? 'bg-[#1F1F1F]' : 'bg-[#C8C8C4]'}`} />
+                                    {i < (tracking.courier?.history?.length ?? 0) - 1 && (
+                                      <div className="w-px flex-1 bg-[#E8E8E5] my-1" />
+                                    )}
+                                  </div>
+                                  <div className="pb-2">
+                                    <p className="text-[#1F1F1F] font-medium leading-tight">{h.note}</p>
+                                    <p className="text-[#9A9A9A] mt-0.5">
+                                      {new Date(h.updated_at).toLocaleString('id-ID', {
+                                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 )}
               </div>
+            </div>
+
+            {canComplain && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowComplaintForm(true)}
+                className="w-full"
+              >
+                <MessageSquare className="size-4" />
+                Buka Komplain / Retur
+              </Button>
+            )}
+
+            {canCancel && (
+              <Button
+                variant="destructive"
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="w-full"
+              >
+                <XCircle className="size-4" />
+                {cancelling ? 'Membatalkan...' : 'Batalkan Pesanan'}
+              </Button>
             )}
           </div>
-        </div>
 
-        {/* Items */}
-        <div className="rounded-lg border border-[#E8E8E5] bg-white mb-4">
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-            <p className="text-[15px] font-semibold text-[#1F1F1F]">Daftar Item</p>
-          </div>
-          <div>
-            {order.items.map((item, i) => {
-              const key = item.product ? `${order._id}-${item.product}` : null
-              const status = key ? reviewStatuses[key] : null
-              return (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 px-4 py-3 border-b border-[#F0F0EC] last:border-0"
-                >
-                  <img
-                    src={api.getImageUrl(item.image)}
-                    alt={item.name}
-                    className="size-10 rounded-md object-cover bg-[#F7F7F5] shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[#1F1F1F] truncate">{item.name}</p>
-                    {item.variantName && (
-                      <p className="text-xs text-[#9A9A9A]">{item.variantName}</p>
-                    )}
-                    <p className="text-xs text-[#9A9A9A]">{item.quantity} × {fmt(item.priceNumeric)}</p>
-                    {order.orderStatus === 'delivered' && status?.canReview && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setReviewFormItem({ productId: item.product, orderId: order._id, productName: item.name })}
-                        className="mt-1.5"
-                      >
-                        Tulis Ulasan
-                      </Button>
-                    )}
-                    {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
-                      <span className="mt-1 inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                        Sudah Diulas
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm font-semibold text-[#1F1F1F] shrink-0 ml-auto">{fmt(item.subtotal)}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Cost summary */}
-        <div className="rounded-lg border border-[#E8E8E5] bg-white mb-4">
-          <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-            <p className="text-[15px] font-semibold text-[#1F1F1F]">Ringkasan Biaya</p>
-          </div>
-          <div className="py-1">
-            <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-              <span>Subtotal produk</span>
-              <span>{fmt(order.subtotal)}</span>
-            </div>
-            <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-              <span>Ongkos kirim</span>
-              <span>{fmt(order.shippingCost)}</span>
-            </div>
-            {(order.voucherDiscount ?? 0) > 0 && (
-              <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-                <span>Diskon voucher{order.voucherCode ? ` (${order.voucherCode})` : ''}</span>
-                <span className="text-emerald-700">-{fmt(order.voucherDiscount ?? 0)}</span>
+          {/* Right column: items & cost */}
+          <div className="space-y-4">
+            {/* Items */}
+            <div className="rounded-lg border border-[#E8E8E5] bg-white">
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+                <p className="text-[15px] font-semibold text-[#1F1F1F]">Daftar Item</p>
               </div>
-            )}
-            <div className="border-t border-[#F0F0EC] my-1" />
-            <div className="flex items-center justify-between px-4 py-3 text-[15px] font-semibold text-[#1F1F1F]">
-              <span>Total</span>
-              <span>{fmt(order.total)}</span>
+              <div>
+                {order.items.map((item, i) => {
+                  const key = item.product ? `${order._id}-${item.product}` : null
+                  const status = key ? reviewStatuses[key] : null
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-[#F0F0EC] last:border-0"
+                    >
+                      <img
+                        src={api.getImageUrl(item.image)}
+                        alt={item.name}
+                        className="size-10 rounded-md object-cover bg-[#F7F7F5] shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-[#1F1F1F] truncate">{item.name}</p>
+                        {item.variantName && (
+                          <p className="text-xs text-[#9A9A9A]">{item.variantName}</p>
+                        )}
+                        <p className="text-xs text-[#9A9A9A]">{item.quantity} × {fmt(item.priceNumeric)}</p>
+                        {order.orderStatus === 'delivered' && status?.canReview && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setReviewFormItem({ productId: item.product, orderId: order._id, productName: item.name })}
+                            className="mt-1.5"
+                          >
+                            Tulis Ulasan
+                          </Button>
+                        )}
+                        {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
+                          <span className="mt-1 inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                            Sudah Diulas
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-[#1F1F1F] shrink-0 ml-auto">{fmt(item.subtotal)}</p>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
+
+            {/* Cost summary */}
+            <div className="rounded-lg border border-[#E8E8E5] bg-white">
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
+                <p className="text-[15px] font-semibold text-[#1F1F1F]">Ringkasan Biaya</p>
+              </div>
+              <div className="py-1">
+                <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
+                  <span>Subtotal produk</span>
+                  <span>{fmt(order.subtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
+                  <span>Ongkos kirim</span>
+                  <span>{fmt(order.shippingCost)}</span>
+                </div>
+                {(order.voucherDiscount ?? 0) > 0 && (
+                  <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
+                    <span>Diskon voucher{order.voucherCode ? ` (${order.voucherCode})` : ''}</span>
+                    <span className="text-emerald-700">-{fmt(order.voucherDiscount ?? 0)}</span>
+                  </div>
+                )}
+                <div className="border-t border-[#F0F0EC] my-1" />
+                <div className="flex items-center justify-between px-4 py-3 text-[15px] font-semibold text-[#1F1F1F]">
+                  <span>Total</span>
+                  <span>{fmt(order.total)}</span>
+                </div>
+              </div>
+            </div>
+
+            {canRepay && (
+              <Button
+                onClick={handleRepay}
+                disabled={paying}
+                className="w-full"
+              >
+                {paying ? 'Memproses...' : 'Bayar Sekarang'}
+              </Button>
+            )}
+
+            {canDownloadInvoice && (
+              <a
+                href={api.getOrderInvoiceUrl(order._id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 border border-[#E8E8E5] text-[#4A4A4A] text-sm font-medium rounded-md px-4 py-2.5 hover:bg-[#F7F7F5] transition-colors"
+              >
+                <FileText className="size-4" />
+                Download Invoice
+              </a>
+            )}
           </div>
-        </div>
-
-        {/* Actions */}
-        <div className="space-y-2">
-          {canRepay && (
-            <Button
-              onClick={handleRepay}
-              disabled={paying}
-              className="w-full"
-            >
-              {paying ? 'Memproses...' : 'Bayar Sekarang'}
-            </Button>
-          )}
-
-          {canDownloadInvoice && (
-            <a
-              href={api.getOrderInvoiceUrl(order._id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 border border-[#E8E8E5] text-[#4A4A4A] text-sm font-medium rounded-md px-4 py-2.5 hover:bg-[#F7F7F5] transition-colors"
-            >
-              <FileText className="size-4" />
-              Download Invoice
-            </a>
-          )}
-
-          {canComplain && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowComplaintForm(true)}
-              className="w-full"
-            >
-              <MessageSquare className="size-4" />
-              Buka Komplain / Retur
-            </Button>
-          )}
-
-          {canCancel && (
-            <Button
-              variant="destructive"
-              onClick={handleCancel}
-              disabled={cancelling}
-              className="w-full"
-            >
-              <XCircle className="size-4" />
-              {cancelling ? 'Membatalkan...' : 'Batalkan Pesanan'}
-            </Button>
-          )}
         </div>
       </div>
 
