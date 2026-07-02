@@ -320,6 +320,11 @@ export default function PesananDetail() {
     ? nowMs - deliveredAt > COMPLAINT_WINDOW_DAYS * 24 * 60 * 60 * 1000
     : true
   const canComplain = order.orderStatus === 'delivered' && !complaintWindowExpired && complaint === null
+  const complaintDeadlineLabel = deliveredAt
+    ? new Date(deliveredAt + COMPLAINT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric',
+      })
+    : null
 
   return (
     <UserLayout title="Detail Pesanan">
@@ -508,6 +513,16 @@ export default function PesananDetail() {
                 <MessageSquare className="size-4" />
                 Buka Komplain / Retur
               </Button>
+            )}
+            {canComplain && complaintDeadlineLabel && (
+              <p className="text-[11px] text-[#9A9A9A] text-center">
+                Anda dapat mengajukan komplain hingga {complaintDeadlineLabel}
+              </p>
+            )}
+            {order.orderStatus === 'delivered' && complaintWindowExpired && complaint === null && (
+              <p className="text-[11px] text-[#9A9A9A] text-center">
+                Batas waktu komplain untuk pesanan ini sudah berakhir
+              </p>
             )}
 
             {canCancel && (
