@@ -65,7 +65,7 @@ router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
         type: 'complaint_new',
         title: type === 'return' ? 'Permintaan retur baru' : 'Komplain baru',
         message: `${req.customer.name}: ${reason.trim().substring(0, 60)}`,
-        link: `/admin/complaints/${complaint._id}`,
+        link: `/admin/complaints?id=${complaint._id}`,
         relatedId: complaint._id,
       });
     } catch (notifyErr) {
@@ -134,7 +134,7 @@ router.put('/:id/ship-return', customerAuth, async (req, res) => {
         type: 'complaint_new',
         title: 'Resi retur dikirim customer',
         message: `${req.customer.name} mengirim resi retur: ${courier.trim()} - ${trackingNumber.trim()}`,
-        link: `/admin/complaints/${complaint._id}`,
+        link: `/admin/complaints?id=${complaint._id}`,
         relatedId: complaint._id,
       });
     } catch (notifyErr) {

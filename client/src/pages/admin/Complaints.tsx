@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import api from '../../services/api';
 import type { Complaint } from '../../types/ecommerce';
@@ -47,6 +47,7 @@ interface ComplaintWithOrder extends Complaint {
 }
 
 export default function AdminComplaints() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [complaints, setComplaints] = useState<ComplaintWithOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
@@ -81,6 +82,22 @@ export default function AdminComplaints() {
     setResolutionType('');
     setUpdateMsg('');
   };
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (!id) return;
+    let cancelled = false;
+    api.getAdminComplaint(id)
+      .then((c) => { if (!cancelled) openDetail(c); })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) {
+          setSearchParams((prev) => { prev.delete('id'); return prev; }, { replace: true });
+        }
+      });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleUpdate = async (status: string, resolution?: { type: 'refund' | 'replace'; note: string }) => {
     if (!selected) return;
