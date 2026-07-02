@@ -12,11 +12,20 @@ const complaintSchema = new mongoose.Schema({
   photos: [{ type: String }],
   status: {
     type: String,
-    enum: ['open', 'processing', 'resolved', 'rejected'],
+    enum: ['open', 'processing', 'awaiting_return_shipment', 'return_shipped', 'return_received', 'resolved', 'rejected'],
     default: 'open',
   },
   adminNote: { type: String, default: '' },
   resolvedAt: { type: Date },
+  returnShipment: {
+    courier: { type: String, default: '' },
+    trackingNumber: { type: String, default: '' },
+    shippedAt: { type: Date },
+  },
+  resolution: {
+    type: { type: String, enum: ['refund', 'replace'] },
+    note: { type: String, default: '' },
+  },
 }, { timestamps: true });
 
 complaintSchema.index({ customer: 1 });
