@@ -511,6 +511,20 @@ export default function PesananDetail() {
                     )}
                   </div>
                 )}
+
+                {complaint.status === 'resolved' && !complaint.resolution?.type && complaint.adminNote && (
+                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
+                    <p className="text-sm font-medium text-[#1F1F1F]">Komplain Diselesaikan</p>
+                    <p className="text-xs text-[#9A9A9A] mt-0.5">{complaint.adminNote}</p>
+                  </div>
+                )}
+
+                {complaint.status === 'rejected' && complaint.adminNote && (
+                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
+                    <p className="text-sm font-medium text-[#1F1F1F]">Alasan Penolakan</p>
+                    <p className="text-xs text-[#9A9A9A] mt-0.5">{complaint.adminNote}</p>
+                  </div>
+                )}
               </div>
             )}
 
