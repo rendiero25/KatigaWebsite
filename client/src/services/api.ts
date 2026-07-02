@@ -571,6 +571,20 @@ export const api = {
     return res.json();
   },
 
+  shipReturnComplaint: async (id: string, data: { courier: string; trackingNumber: string }) => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/${id}/ship-return`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengirim data resi retur');
+    }
+    return res.json();
+  },
+
   // Complaints — admin
   getAdminComplaints: async (params?: Record<string, string | number>) => {
     const token = localStorage.getItem('adminToken');
@@ -597,7 +611,7 @@ export const api = {
     return res.json();
   },
 
-  updateComplaint: async (id: string, data: { status?: string; adminNote?: string }) => {
+  updateComplaint: async (id: string, data: { status?: string; adminNote?: string; resolution?: { type: 'refund' | 'replace'; note: string } }) => {
     const token = localStorage.getItem('adminToken');
     const res = await fetch(`${API_BASE_URL}/complaints/${id}`, {
       method: 'PUT',
