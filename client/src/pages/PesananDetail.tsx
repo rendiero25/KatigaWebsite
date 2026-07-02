@@ -471,9 +471,18 @@ export default function PesananDetail() {
                         )}
                         {!trackingLoading && !trackingError && tracking && (
                           <div>
-                            <p className="text-xs font-semibold text-[#1F1F1F] mb-2">
-                              {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
-                            </p>
+                            <div className="flex items-center gap-2 mb-2">
+                              {tracking.courier?.driver_photo_url && (
+                                <img
+                                  src={tracking.courier.driver_photo_url}
+                                  alt="Foto kurir"
+                                  className="size-8 rounded-full object-cover shrink-0"
+                                />
+                              )}
+                              <p className="text-xs font-semibold text-[#1F1F1F]">
+                                {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
+                              </p>
+                            </div>
                             <div className="space-y-2">
                               {(tracking.courier?.history ?? []).slice().reverse().map((h, i) => (
                                 <div key={i} className="flex gap-2 text-xs">
