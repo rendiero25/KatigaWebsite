@@ -12,6 +12,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  bank_transfer: 'Transfer Bank',
+  gopay: 'GoPay',
+  qris: 'QRIS',
+  credit_card: 'Kartu Kredit',
+  cstore: 'Gerai Retail (Alfamart/Indomaret)',
+  shopeepay: 'ShopeePay',
+}
+
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   awaiting_payment: { label: 'Menunggu Pembayaran', color: 'bg-amber-100 text-amber-700' },
   processing:       { label: 'Diproses',             color: 'bg-blue-100 text-blue-700' },
@@ -619,6 +628,14 @@ export default function PesananDetail() {
                   <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
                     <span>Diskon voucher{order.voucherCode ? ` (${order.voucherCode})` : ''}</span>
                     <span className="text-emerald-700">-{fmt(order.voucherDiscount ?? 0)}</span>
+                  </div>
+                )}
+                {order.midtransPaymentType && (
+                  <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
+                    <span>Metode Pembayaran</span>
+                    <span className="text-[#1F1F1F] font-medium">
+                      {PAYMENT_METHOD_LABEL[order.midtransPaymentType] ?? order.midtransPaymentType}
+                    </span>
                   </div>
                 )}
                 <div className="border-t border-[#F0F0EC] my-1" />
