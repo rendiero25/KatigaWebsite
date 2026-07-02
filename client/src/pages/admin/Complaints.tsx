@@ -9,6 +9,9 @@ const STATUS_OPTIONS = [
   { value: '', label: 'Semua Status' },
   { value: 'open', label: 'Menunggu' },
   { value: 'processing', label: 'Diproses' },
+  { value: 'awaiting_return_shipment', label: 'Retur Disetujui' },
+  { value: 'return_shipped', label: 'Barang Dikirim' },
+  { value: 'return_received', label: 'Barang Diterima' },
   { value: 'resolved', label: 'Selesai' },
   { value: 'rejected', label: 'Ditolak' },
 ];
@@ -20,17 +23,23 @@ const TYPE_OPTIONS = [
 ];
 
 const STATUS_COLOR: Record<string, string> = {
-  open:       'bg-amber-100 text-amber-700',
-  processing: 'bg-blue-100 text-blue-700',
-  resolved:   'bg-green-100 text-green-700',
-  rejected:   'bg-red-100 text-red-700',
+  open:                     'bg-amber-100 text-amber-700',
+  processing:               'bg-blue-100 text-blue-700',
+  awaiting_return_shipment: 'bg-purple-100 text-purple-700',
+  return_shipped:           'bg-indigo-100 text-indigo-700',
+  return_received:          'bg-cyan-100 text-cyan-700',
+  resolved:                 'bg-green-100 text-green-700',
+  rejected:                 'bg-red-100 text-red-700',
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  open:       'Menunggu',
-  processing: 'Diproses',
-  resolved:   'Selesai',
-  rejected:   'Ditolak',
+  open:                     'Menunggu',
+  processing:               'Diproses',
+  awaiting_return_shipment: 'Retur Disetujui',
+  return_shipped:           'Barang Dikirim',
+  return_received:          'Barang Diterima',
+  resolved:                 'Selesai',
+  rejected:                 'Ditolak',
 };
 
 interface ComplaintWithOrder extends Complaint {
@@ -44,6 +53,7 @@ export default function AdminComplaints() {
   const [filterType, setFilterType] = useState('');
   const [selected, setSelected] = useState<ComplaintWithOrder | null>(null);
   const [adminNote, setAdminNote] = useState('');
+  const [resolutionType, setResolutionType] = useState<'refund' | 'replace' | ''>('');
   const [updating, setUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState('');
 
@@ -68,15 +78,16 @@ export default function AdminComplaints() {
   const openDetail = (c: ComplaintWithOrder) => {
     setSelected(c);
     setAdminNote(c.adminNote ?? '');
+    setResolutionType('');
     setUpdateMsg('');
   };
 
-  const handleUpdate = async (status: string) => {
+  const handleUpdate = async (status: string, resolution?: { type: 'refund' | 'replace'; note: string }) => {
     if (!selected) return;
     setUpdating(true);
     setUpdateMsg('');
     try {
-      const updated = await api.updateComplaint(selected._id, { status, adminNote });
+      const updated = await api.updateComplaint(selected._id, { status, adminNote, ...(resolution ? { resolution } : {}) });
       setComplaints((prev) => prev.map((c) => c._id === updated._id ? { ...c, ...updated } : c));
       setSelected({ ...selected, ...updated });
       setUpdateMsg('Disimpan.');
@@ -234,22 +245,119 @@ export default function AdminComplaints() {
               <p className={`text-sm mb-3 ${updateMsg === 'Disimpan.' ? 'text-green-600' : 'text-red-600'}`}>{updateMsg}</p>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
-              {['open', 'processing', 'resolved', 'rejected']
-                .filter((s) => s !== selected.status)
-                .map((s) => (
+            {selected.type === 'return' ? (
+              <div className="space-y-3">
+                {['open', 'processing'].includes(selected.status) && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {selected.status === 'open' && (
+                      <Button
+                        type="button"
+                        disabled={updating}
+                        onClick={() => handleUpdate('processing')}
+                        variant="outline"
+                      >
+                        → Tandai Diproses
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      disabled={updating}
+                      onClick={() => handleUpdate('awaiting_return_shipment')}
+                      variant="outline"
+                      className="border-green-300 text-green-700 hover:bg-green-50"
+                    >
+                      → Setujui Retur
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={updating}
+                      onClick={() => handleUpdate('rejected')}
+                      variant="destructive"
+                    >
+                      → Tolak
+                    </Button>
+                  </div>
+                )}
+
+                {selected.status === 'awaiting_return_shipment' && (
+                  <p className="text-sm text-gray-500">Menunggu customer mengirim barang retur.</p>
+                )}
+
+                {(selected.status === 'return_shipped' || selected.status === 'return_received') && selected.returnShipment && (
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Resi Kirim Balik</p>
+                    <p className="text-gray-800">{selected.returnShipment.courier} — {selected.returnShipment.trackingNumber}</p>
+                  </div>
+                )}
+
+                {selected.status === 'return_shipped' && (
                   <Button
-                    key={s}
                     type="button"
                     disabled={updating}
-                    onClick={() => handleUpdate(s)}
-                    variant={s === 'rejected' ? 'destructive' : 'outline'}
-                    className={s === 'resolved' ? 'border-green-300 text-green-700 hover:bg-green-50' : ''}
+                    onClick={() => handleUpdate('return_received')}
+                    variant="outline"
+                    className="w-full border-green-300 text-green-700 hover:bg-green-50"
                   >
-                    → {STATUS_LABEL[s] ?? s}
+                    → Tandai Barang Diterima
                   </Button>
-                ))}
-            </div>
+                )}
+
+                {selected.status === 'return_received' && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-gray-500">Resolusi</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['refund', 'replace'] as const).map((rt) => (
+                        <button
+                          key={rt}
+                          type="button"
+                          onClick={() => setResolutionType(rt)}
+                          className={`py-2 text-sm rounded-lg border transition-colors ${
+                            resolutionType === rt
+                              ? 'border-indigo-600 bg-indigo-600 text-white'
+                              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {rt === 'refund' ? 'Refund' : 'Ganti Barang'}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      disabled={updating || !resolutionType}
+                      onClick={() => resolutionType && handleUpdate('resolved', { type: resolutionType, note: adminNote })}
+                      className="w-full"
+                    >
+                      Simpan Resolusi
+                    </Button>
+                  </div>
+                )}
+
+                {(selected.status === 'resolved' || selected.status === 'rejected') && (
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700">
+                    {selected.status === 'resolved' && selected.resolution?.type
+                      ? `Resolusi: ${selected.resolution.type === 'refund' ? 'Refund' : 'Ganti Barang'}`
+                      : 'Retur ditolak.'}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {['open', 'processing', 'resolved', 'rejected']
+                  .filter((s) => s !== selected.status)
+                  .map((s) => (
+                    <Button
+                      key={s}
+                      type="button"
+                      disabled={updating}
+                      onClick={() => handleUpdate(s)}
+                      variant={s === 'rejected' ? 'destructive' : 'outline'}
+                      className={s === 'resolved' ? 'border-green-300 text-green-700 hover:bg-green-50' : ''}
+                    >
+                      → {STATUS_LABEL[s] ?? s}
+                    </Button>
+                  ))}
+              </div>
+            )}
           </div>
         </div>
       )}
