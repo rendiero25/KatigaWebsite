@@ -5,9 +5,19 @@ const Order = require('../models/Order');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customerAuth');
 const upload = require('../middleware/upload');
-const { notifyAdmin } = require('../utils/notify');
+const { notifyAdmin, notifyCustomer } = require('../utils/notify');
 
 const COMPLAINT_WINDOW_DAYS = 3;
+
+const STATUS_LABEL_ID = {
+  open: 'Menunggu',
+  processing: 'Diproses',
+  awaiting_return_shipment: 'Retur disetujui, menunggu kamu kirim barang',
+  return_shipped: 'Barang retur dalam perjalanan',
+  return_received: 'Barang retur diterima, menunggu resolusi',
+  resolved: 'Selesai',
+  rejected: 'Ditolak',
+};
 
 // ─── POST /api/complaints — customer create complaint ───
 router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
@@ -94,6 +104,50 @@ router.get('/my/order/:orderId', customerAuth, async (req, res) => {
   }
 });
 
+// ─── PUT /api/complaints/:id/ship-return — customer: confirm return shipment ───
+router.put('/:id/ship-return', customerAuth, async (req, res) => {
+  try {
+    const { courier, trackingNumber } = req.body;
+    if (!courier?.trim() || !trackingNumber?.trim()) {
+      return res.status(400).json({ message: 'Kurir dan nomor resi wajib diisi' });
+    }
+
+    const complaint = await Complaint.findOne({ _id: req.params.id, customer: req.customer._id });
+    if (!complaint) return res.status(404).json({ message: 'Komplain tidak ditemukan' });
+    if (complaint.type !== 'return') {
+      return res.status(400).json({ message: 'Hanya retur yang bisa mengirim resi kembali' });
+    }
+    if (complaint.status !== 'awaiting_return_shipment') {
+      return res.status(400).json({ message: 'Retur ini belum disetujui atau resi sudah dikirim' });
+    }
+
+    complaint.returnShipment = {
+      courier: courier.trim(),
+      trackingNumber: trackingNumber.trim(),
+      shippedAt: new Date(),
+    };
+    complaint.status = 'return_shipped';
+    await complaint.save();
+
+    try {
+      await notifyAdmin({
+        type: 'complaint_new',
+        title: 'Resi retur dikirim customer',
+        message: `${req.customer.name} mengirim resi retur: ${courier.trim()} - ${trackingNumber.trim()}`,
+        link: `/admin/complaints/${complaint._id}`,
+        relatedId: complaint._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] ship-return notify failed:', notifyErr.message);
+    }
+
+    res.json(complaint);
+  } catch (err) {
+    console.error('[Complaint Ship-Return]', err);
+    res.status(500).json({ message: 'Gagal mengirim data resi retur' });
+  }
+});
+
 // ─── GET /api/complaints — admin: all complaints ───
 router.get('/', auth, async (req, res) => {
   try {
@@ -124,18 +178,42 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// ─── PUT /api/complaints/:id — admin: update status/note ───
+// ─── PUT /api/complaints/:id — admin: update status/note/resolution ───
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { status, adminNote } = req.body;
+    const { status, adminNote, resolution } = req.body;
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return res.status(404).json({ message: 'Komplain tidak ditemukan' });
 
+    if (status === 'resolved' && complaint.type === 'return') {
+      if (!resolution || !['refund', 'replace'].includes(resolution.type)) {
+        return res.status(400).json({ message: 'Pilih jenis resolusi: refund atau ganti barang' });
+      }
+      complaint.resolution = { type: resolution.type, note: resolution.note || '' };
+    }
+
+    const previousStatus = complaint.status;
     if (status) complaint.status = status;
     if (adminNote !== undefined) complaint.adminNote = adminNote;
     if (status === 'resolved' || status === 'rejected') complaint.resolvedAt = new Date();
 
     await complaint.save();
+
+    if (status && status !== previousStatus) {
+      try {
+        await notifyCustomer({
+          customerId: complaint.customer,
+          type: 'complaint_update',
+          title: complaint.type === 'return' ? 'Update status retur' : 'Update status komplain',
+          message: `Status ${complaint.type === 'return' ? 'retur' : 'komplain'} kamu: ${STATUS_LABEL_ID[status] ?? status}`,
+          link: `/pesanan/${complaint.order}`,
+          relatedId: complaint._id,
+        });
+      } catch (notifyErr) {
+        console.error('[Notify] complaint status notify failed:', notifyErr.message);
+      }
+    }
+
     res.json(complaint);
   } catch (err) {
     res.status(500).json({ message: err.message });
