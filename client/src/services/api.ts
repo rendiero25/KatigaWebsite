@@ -748,6 +748,7 @@ export const api = {
   },
 
   // Reviews — admin
+  // Backend returns the full (unpopulated) Review document; narrowed here to the fields callers need.
   updateAdminReview: async (id: string, data: { comment: string; photos: string[] }): Promise<{ comment: string; photos: string[] }> => {
     const token = localStorage.getItem('adminToken');
     const res = await fetch(`${API_BASE_URL}/admin/reviews/${id}`, {
