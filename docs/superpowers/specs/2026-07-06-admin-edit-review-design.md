@@ -59,7 +59,7 @@ Let admin moderate a customer review's **comment text** and **remove individual 
 
 | Layer | Addition |
 |---|---|
-| `api.ts` | `updateAdminReview(id, data: { comment: string; photos: string[] }): Promise<AdminReview>` → `PATCH /admin/reviews/:id`, throws on non-ok response with server message |
+| `api.ts` | `updateAdminReview(id, data: { comment: string; photos: string[] }): Promise<{ comment: string; photos: string[] }>` → `PATCH /admin/reviews/:id`, throws on non-ok response with server message. Narrower than `AdminReview` deliberately: the backend returns the raw (unpopulated) `Review` document, where `customer`/`product` are plain ObjectId strings, not the aggregated `customerDoc`/`productDoc` shape `AdminReview` expects — so the return type is limited to the two fields the endpoint actually needs to hand back accurately. |
 
 `Reviews.tsx`'s existing actions call `fetch()` directly rather than going through `api.ts`; this new action follows the project's documented convention (`api.ts` as the single source of truth for API calls) instead of copying that pre-existing shortcut, since it's a new call being added fresh.
 
