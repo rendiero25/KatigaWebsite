@@ -747,6 +747,21 @@ export const api = {
     return res.json();
   },
 
+  // Reviews — admin
+  updateAdminReview: async (id: string, data: { comment: string; photos: string[] }): Promise<{ comment: string; photos: string[] }> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/admin/reviews/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err as { message?: string }).message || 'Gagal menyimpan perubahan ulasan');
+    }
+    return res.json();
+  },
+
   // Promotions
   getPromotions: async () => {
     const token = localStorage.getItem('adminToken');
