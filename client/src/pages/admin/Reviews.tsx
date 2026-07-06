@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
-import { API_BASE_URL } from '../../services/api';
+import api, { API_BASE_URL } from '../../services/api';
 import StarRating from '../../components/StarRating';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface AdminReview {
   _id: string;
@@ -37,6 +39,10 @@ export default function AdminReviews() {
   const [page, setPage]               = useState(1);
   const [expandedId, setExpandedId]   = useState<string | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [editingId, setEditingId]     = useState<string | null>(null);
+  const [editComment, setEditComment] = useState('');
+  const [editPhotos, setEditPhotos]   = useState<string[]>([]);
+  const [savingEdit, setSavingEdit]   = useState(false);
 
   const fetchReviews = useCallback(async (p: number) => {
     setLoading(true);
@@ -78,6 +84,28 @@ export default function AdminReviews() {
     });
     setReviews((prev) => prev.filter((r) => r._id !== id));
     setPagination((prev) => prev ? { ...prev, total: prev.total - 1 } : prev);
+  };
+
+  const startEdit = (review: AdminReview) => {
+    setEditingId(review._id);
+    setEditComment(review.comment);
+    setEditPhotos(review.photos);
+    setExpandedId(review._id);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async (id: string) => {
+    setSavingEdit(true);
+    try {
+      const data = await api.updateAdminReview(id, { comment: editComment.trim(), photos: editPhotos });
+      setReviews((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, comment: data.comment, photos: data.photos } : r))
+      );
+      setEditingId(null);
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   return (
@@ -182,6 +210,13 @@ export default function AdminReviews() {
                             <Button
                               variant="outline"
                               size="xs"
+                              onClick={() => startEdit(review)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="xs"
                               onClick={() => toggleVisibility(review._id)}
                               className={review.isVisible ? '' : 'border-green-200 text-green-700 hover:bg-green-50'}
                             >
@@ -202,25 +237,69 @@ export default function AdminReviews() {
                       {expandedId === review._id && (
                         <tr className="bg-gray-50">
                           <td colSpan={8} className="px-6 py-4">
-                            {review.comment && (
-                              <p className="text-sm text-gray-700 mb-3 whitespace-pre-line">{review.comment}</p>
-                            )}
-                            {review.photos.length > 0 && (
-                              <div className="flex flex-wrap gap-2">
-                                {review.photos.map((photo, i) => (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => setLightboxSrc(photo)}
-                                    className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 hover:opacity-80 transition cursor-zoom-in"
-                                  >
-                                    <img src={photo} alt="" className="w-full h-full object-cover" />
-                                  </button>
-                                ))}
+                            {editingId === review._id ? (
+                              <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-500 mb-1">Komentar</label>
+                                  <Textarea
+                                    value={editComment}
+                                    onChange={(e) => setEditComment(e.target.value)}
+                                    maxLength={1000}
+                                    className="resize-none h-24 text-sm bg-white"
+                                  />
+                                  <p className="text-[11px] text-gray-400 text-right mt-1">{editComment.length}/1000</p>
+                                </div>
+                                {editPhotos.length > 0 && (
+                                  <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Foto</label>
+                                    <div className="flex flex-wrap gap-2">
+                                      {editPhotos.map((photo, i) => (
+                                        <div key={i} className="relative w-20 h-20">
+                                          <img src={photo} alt="" className="w-full h-full object-cover rounded-lg border border-gray-200" />
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                                            className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition"
+                                          >
+                                            <X className="size-3" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="flex gap-2 pt-1">
+                                  <Button variant="outline" size="sm" onClick={cancelEdit} disabled={savingEdit}>
+                                    Batal
+                                  </Button>
+                                  <Button size="sm" onClick={() => saveEdit(review._id)} disabled={savingEdit}>
+                                    {savingEdit ? 'Menyimpan...' : 'Simpan'}
+                                  </Button>
+                                </div>
                               </div>
-                            )}
-                            {!review.comment && review.photos.length === 0 && (
-                              <p className="text-sm text-gray-400">Tidak ada komentar atau foto.</p>
+                            ) : (
+                              <>
+                                {review.comment && (
+                                  <p className="text-sm text-gray-700 mb-3 whitespace-pre-line">{review.comment}</p>
+                                )}
+                                {review.photos.length > 0 && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {review.photos.map((photo, i) => (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setLightboxSrc(photo)}
+                                        className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 hover:opacity-80 transition cursor-zoom-in"
+                                      >
+                                        <img src={photo} alt="" className="w-full h-full object-cover" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {!review.comment && review.photos.length === 0 && (
+                                  <p className="text-sm text-gray-400">Tidak ada komentar atau foto.</p>
+                                )}
+                              </>
                             )}
                           </td>
                         </tr>
