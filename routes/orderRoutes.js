@@ -1017,6 +1017,25 @@ router.post('/:id/sync-biteship', auth, async (req, res) => {
   }
 });
 
+// ─── Shared: mark an order delivered + notify customer (used by webhook and the Biteship sync job) ───
+async function markOrderDelivered(order) {
+  if (order.orderStatus === 'delivered') return;
+  order.orderStatus = 'delivered';
+  await order.save();
+  try {
+    await notifyCustomer({
+      customerId: order.customer,
+      type: 'order_delivered',
+      title: 'Pesanan telah sampai',
+      message: 'Pesananmu telah berhasil diterima',
+      link: `/pesanan/${order._id}`,
+      relatedId: order._id,
+    });
+  } catch (notifyErr) {
+    console.error('[Notify] delivered notify failed:', notifyErr.message);
+  }
+}
+
 // ─── Biteship webhook (registered in server.js before express-json routes) ───
 const biteshipWebhookHandler = async (req, res) => {
   try {
@@ -1026,22 +1045,7 @@ const biteshipWebhookHandler = async (req, res) => {
     }
     if (data.status === 'delivered') {
       const order = await Order.findOne({ biteshipOrderId: data.id });
-      if (order && order.orderStatus !== 'delivered') {
-        order.orderStatus = 'delivered';
-        await order.save();
-        try {
-          await notifyCustomer({
-            customerId: order.customer,
-            type: 'order_delivered',
-            title: 'Pesanan telah sampai',
-            message: 'Pesananmu telah berhasil diterima',
-            link: `/pesanan/${order._id}`,
-            relatedId: order._id,
-          });
-        } catch (notifyErr) {
-          console.error('[Notify] delivered notify failed:', notifyErr.message);
-        }
-      }
+      if (order) await markOrderDelivered(order);
     }
     res.status(200).json({ message: 'OK' });
   } catch (err) {
@@ -1053,3 +1057,4 @@ const biteshipWebhookHandler = async (req, res) => {
 module.exports = router;
 module.exports.webhookHandler = webhookHandler;
 module.exports.biteshipWebhookHandler = biteshipWebhookHandler;
+module.exports.markOrderDelivered = markOrderDelivered;

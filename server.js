@@ -173,12 +173,39 @@ async function checkExpiringPromos() {
   }
 }
 
+// ─── Scheduled check: sync stuck 'shipped' orders with live Biteship tracking ───
+// Backstop for the Biteship webhook (routes/orderRoutes.js: biteshipWebhookHandler), which can
+// silently fail to arrive (network issues, misconfigured callback URL, etc).
+async function syncBiteshipDeliveries() {
+  try {
+    const Order = require('./models/Order');
+    const { getOrderTracking } = require('./services/biteshipService');
+    const { markOrderDelivered } = require('./routes/orderRoutes');
+
+    const shippedOrders = await Order.find({ orderStatus: 'shipped', biteshipOrderId: { $ne: '' } });
+    for (const order of shippedOrders) {
+      try {
+        const tracking = await getOrderTracking(order.biteshipOrderId);
+        if (tracking.status === 'delivered') {
+          await markOrderDelivered(order);
+        }
+      } catch (err) {
+        console.error(`[Biteship Sync] order ${order._id} failed:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error('[Biteship Sync] syncBiteshipDeliveries failed:', err.message);
+  }
+}
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
   mongoose.connection.once('connected', checkExpiringPromos);
+  mongoose.connection.once('connected', syncBiteshipDeliveries);
   setInterval(checkExpiringPromos, 60 * 60 * 1000);
+  setInterval(syncBiteshipDeliveries, 15 * 60 * 1000);
 }
 
 module.exports = app;
