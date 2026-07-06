@@ -105,6 +105,9 @@ router.patch('/:id', auth, async (req, res) => {
       if (!Array.isArray(photos) || !photos.every((p) => typeof p === 'string')) {
         return res.status(400).json({ message: 'photos harus berupa array string' });
       }
+      if (!photos.every((p) => review.photos.includes(p))) {
+        return res.status(400).json({ message: 'photos hanya boleh berisi foto yang sudah ada pada ulasan ini' });
+      }
       review.photos = photos;
     }
 
