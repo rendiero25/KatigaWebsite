@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
+import { motion } from 'motion/react'
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Check, Truck, FileText, XCircle, RefreshCw, MessageSquare } from 'lucide-react'
 import type { Order, CanReviewResponse, BiteshipTracking, Complaint } from '../types/ecommerce'
@@ -335,7 +336,7 @@ export default function PesananDetail() {
 
   if (loading) return (
     <UserLayout title="Detail Pesanan">
-      <div className="max-w-6xl mx-auto space-y-4">
+      <div className="w-full space-y-4">
         <div className="flex items-start justify-between mb-6">
           <div className="space-y-1">
             <Skeleton className="h-3 w-28 rounded" />
@@ -385,7 +386,7 @@ export default function PesananDetail() {
 
   return (
     <UserLayout title="Detail Pesanan">
-      <div className="w-full max-w-6xl mx-auto">
+      <div className="w-full">
         <Link to="/pesanan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A] mb-4 block transition-colors">
           ← Semua Pesanan
         </Link>
@@ -639,7 +640,7 @@ export default function PesananDetail() {
                 className="w-full"
               >
                 <MessageSquare className="size-4" />
-                Buka Komplain / Retur
+                Komplain
               </Button>
             )}
             {canComplain && complaintDeadlineLabel && (
@@ -677,40 +678,70 @@ export default function PesananDetail() {
                 {order.items.map((item, i) => {
                   const key = item.product ? `${order._id}-${item.product}` : null
                   const status = key ? reviewStatuses[key] : null
+                  const isLast = i === order.items.length - 1
+                  const isReviewingThis = !!item.product
+                    && reviewFormItem?.orderId === order._id
+                    && reviewFormItem?.productId === item.product
                   return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 px-4 py-3 border-b border-[#F0F0EC] last:border-0"
-                    >
-                      <img
-                        src={api.getImageUrl(item.image)}
-                        alt={item.name}
-                        className="size-10 rounded-md object-cover bg-[#F7F7F5] shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#1F1F1F] truncate">{item.name}</p>
-                        {item.variantName && (
-                          <p className="text-xs text-[#9A9A9A]">{item.variantName}</p>
-                        )}
-                        <p className="text-xs text-[#9A9A9A]">{item.quantity} × {fmt(item.priceNumeric)}</p>
-                        {order.orderStatus === 'delivered' && status?.canReview && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setReviewFormItem({ productId: item.product, orderId: order._id, productName: item.name })}
-                            className="mt-1.5"
-                          >
-                            Tulis Ulasan
-                          </Button>
-                        )}
-                        {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
-                          <span className="mt-1 inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                            Sudah Diulas
-                          </span>
-                        )}
+                    <div key={i} className="border-b border-[#F0F0EC] last:border-0">
+                      <div className="flex items-center gap-3 px-4 py-3">
+                        <img
+                          src={api.getImageUrl(item.image)}
+                          alt={item.name}
+                          className="size-10 rounded-md object-cover bg-[#F7F7F5] shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-[#1F1F1F] truncate">{item.name}</p>
+                          {item.variantName && (
+                            <p className="text-xs text-[#9A9A9A]">{item.variantName}</p>
+                          )}
+                          <p className="text-xs text-[#9A9A9A]">{item.quantity} × {fmt(item.priceNumeric)}</p>
+                          {order.orderStatus === 'delivered' && status?.canReview && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setReviewFormItem((prev) =>
+                                  prev?.productId === item.product ? null : { productId: item.product, orderId: order._id, productName: item.name }
+                                )
+                              }
+                              className="mt-1.5"
+                            >
+                              Selesai
+                            </Button>
+                          )}
+                          {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
+                            <span className="mt-1 inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
+                              Sudah Diulas
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-semibold text-[#1F1F1F] shrink-0 ml-auto">{fmt(item.subtotal)}</p>
                       </div>
-                      <p className="text-sm font-semibold text-[#1F1F1F] shrink-0 ml-auto">{fmt(item.subtotal)}</p>
+
+                      {isReviewingThis && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                          className={`overflow-hidden border-t border-[#F0F0EC] bg-[#FAFAF9] ${isLast ? 'rounded-b-lg' : ''}`}
+                        >
+                          <ReviewForm
+                            productId={item.product}
+                            orderId={order._id}
+                            productName={item.name}
+                            onClose={() => setReviewFormItem(null)}
+                            onSuccess={() => {
+                              setReviewStatuses((prev) => ({
+                                ...prev,
+                                [`${order._id}-${item.product}`]: { canReview: false, alreadyReviewed: true },
+                              }))
+                              setReviewFormItem(null)
+                            }}
+                          />
+                        </motion.div>
+                      )}
                     </div>
                   )
                 })}
@@ -789,22 +820,6 @@ export default function PesananDetail() {
         />
       )}
 
-      <ReviewForm
-        open={!!reviewFormItem}
-        onClose={() => setReviewFormItem(null)}
-        onSuccess={() => {
-          if (!order || !reviewFormItem) return
-          const key = `${reviewFormItem.orderId}-${reviewFormItem.productId}`
-          setReviewStatuses((prev) => ({
-            ...prev,
-            [key]: { canReview: false, alreadyReviewed: true },
-          }))
-          setReviewFormItem(null)
-        }}
-        productId={reviewFormItem?.productId ?? ''}
-        orderId={reviewFormItem?.orderId ?? ''}
-        productName={reviewFormItem?.productName ?? ''}
-      />
     </UserLayout>
   )
 }
