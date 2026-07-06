@@ -93,6 +93,28 @@ router.patch('/:id/visibility', auth, async (req, res) => {
   }
 });
 
+// PATCH /api/admin/reviews/:id — edit comment/photos (moderation; rating is never editable)
+router.patch('/:id', auth, async (req, res) => {
+  try {
+    const { comment, photos } = req.body;
+    const review = await Review.findById(req.params.id);
+    if (!review) return res.status(404).json({ message: 'Review tidak ditemukan' });
+
+    if (comment !== undefined) review.comment = String(comment).trim().slice(0, 1000);
+    if (photos !== undefined) {
+      if (!Array.isArray(photos) || !photos.every((p) => typeof p === 'string')) {
+        return res.status(400).json({ message: 'photos harus berupa array string' });
+      }
+      review.photos = photos;
+    }
+
+    await review.save();
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // DELETE /api/admin/reviews/:id
 router.delete('/:id', auth, async (req, res) => {
   try {
