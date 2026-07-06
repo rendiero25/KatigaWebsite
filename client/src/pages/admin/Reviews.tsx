@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 import AdminLayout from '../../components/AdminLayout';
 import api, { API_BASE_URL } from '../../services/api';
 import StarRating from '../../components/StarRating';
@@ -103,6 +104,8 @@ export default function AdminReviews() {
         prev.map((r) => (r._id === id ? { ...r, comment: data.comment, photos: data.photos } : r))
       );
       setEditingId(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Gagal menyimpan perubahan ulasan');
     } finally {
       setSavingEdit(false);
     }
