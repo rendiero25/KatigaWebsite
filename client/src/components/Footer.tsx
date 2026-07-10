@@ -94,8 +94,24 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Legal Links */}
+        <div className="mt-10 pt-6 border-t border-white/10 flex flex-wrap gap-x-6 gap-y-2 text-md text-white/60">
+          <Link to="/syarat-ketentuan" className="hover:text-white transition">
+            Syarat & Ketentuan
+          </Link>
+          <Link to="/kebijakan-privasi" className="hover:text-white transition">
+            Kebijakan Privasi
+          </Link>
+          <Link to="/kebijakan-pengembalian" className="hover:text-white transition">
+            Kebijakan Pengembalian
+          </Link>
+          <Link to="/faq" className="hover:text-white transition">
+            FAQ
+          </Link>
+        </div>
+
         {/* Bottom Bar */}
-        <div className="mt-12 flex flex-col md:flex-row justify-between items-start xl:items-center text-md text-white/60">
+        <div className="mt-6 flex flex-col md:flex-row justify-between items-start xl:items-center text-md text-white/60">
           <p>
             {footer?.copyright ||
               "© 2026 Kusuma Kencana Khatulistiwa. All rights reserved."}

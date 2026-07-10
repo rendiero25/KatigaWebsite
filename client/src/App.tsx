@@ -41,6 +41,10 @@ const AdminShippingSettings = lazy(() => import('./pages/admin/ShippingSettings'
 const AdminComplaints = lazy(() => import('./pages/admin/Complaints'));
 const Daftar = lazy(() => import('./pages/Daftar'));
 const Masuk = lazy(() => import('./pages/Masuk'));
+const SyaratKetentuan = lazy(() => import('./pages/SyaratKetentuan'));
+const KebijakanPrivasi = lazy(() => import('./pages/KebijakanPrivasi'));
+const KebijakanPengembalian = lazy(() => import('./pages/KebijakanPengembalian'));
+const FAQ = lazy(() => import('./pages/FAQ'));
 const Keranjang = lazy(() => import('./pages/Keranjang'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const Pesanan = lazy(() => import('./pages/Pesanan'));
@@ -71,6 +75,10 @@ function App() {
         
 
         <Route path="/kontak" element={<ContactPage />} />
+        <Route path="/syarat-ketentuan" element={<SyaratKetentuan />} />
+        <Route path="/kebijakan-privasi" element={<KebijakanPrivasi />} />
+        <Route path="/kebijakan-pengembalian" element={<KebijakanPengembalian />} />
+        <Route path="/faq" element={<FAQ />} />
         <Route path="/daftar" element={<Daftar />} />
         <Route path="/masuk" element={<Masuk />} />
         <Route path="/keranjang" element={<Keranjang />} />
