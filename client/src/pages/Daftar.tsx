@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiArrowUpRight, FiEye, FiEyeOff } from 'react-icons/fi';
 import api from '../services/api';
 
 export default function Daftar() {
@@ -146,7 +146,15 @@ export default function Daftar() {
       </div>
 
       {/* Right — form */}
-      <div className="flex items-center justify-center min-h-screen px-8 py-16 bg-[#F9F7F2]">
+      <div className="relative flex items-center justify-center min-h-screen px-8 py-20 bg-[#F9F7F2]">
+        <Link
+          to="/"
+          className="absolute top-6 right-6 inline-flex items-center gap-1.5 text-sm font-medium text-black/60 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-4 focus-visible:ring-offset-[#F9F7F2] rounded-sm"
+        >
+          Kembali ke Website
+          <FiArrowUpRight className="size-4" aria-hidden="true" />
+        </Link>
+
         <div className="w-full max-w-sm">
           <motion.div
             initial={{ opacity: 0, y: 24 }}

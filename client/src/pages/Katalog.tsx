@@ -17,12 +17,6 @@ export default function Katalog() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDownload = () => {
-    if (catalog?.fileUrl) {
-      window.open(api.getImageUrl(catalog.fileUrl), "_blank");
-    }
-  };
-
   const bgImage = catalog?.backgroundImage
     ? api.getImageUrl(catalog.backgroundImage)
     : "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=2070";
@@ -99,23 +93,20 @@ export default function Katalog() {
                   transition={{ duration: 0.55, delay: 0.5 }}
                   className="flex flex-wrap items-center gap-4"
                 >
-                  <motion.button
+                  <motion.a
+                    href="/Catalogue-KumaKuma.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={handleDownload}
-                    disabled={!catalog?.fileUrl}
-                    className="cursor-pointer inline-flex items-center gap-2.5 px-10 py-4 bg-white text-gray-900 text-sm font-semibold rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:bg-gray-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition-all duration-300 disabled:cursor-not-allowed tracking-wide"
+                    className="cursor-pointer inline-flex items-center gap-2.5 px-10 py-4 bg-white text-gray-900 text-sm font-semibold rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:bg-gray-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition-all duration-300 tracking-wide"
                   >
                     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     Unduh Katalog
-                  </motion.button>
-
-                  {!catalog?.fileUrl && (
-                    <span className="text-white/30 text-xs">Katalog belum tersedia</span>
-                  )}
+                  </motion.a>
                 </motion.div>
               </div>
 
