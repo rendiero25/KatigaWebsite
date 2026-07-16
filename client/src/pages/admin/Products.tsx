@@ -23,6 +23,14 @@ interface ProductVariant {
   dimensionHeight: string;
 }
 
+interface UploadSignature {
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+  signature: string;
+  timestamp: number;
+}
+
 const categoryId = (category: Product['category']): string =>
   typeof category === 'string' ? category : category?._id ?? '';
 
@@ -185,45 +193,86 @@ export default function AdminProducts() {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const uploadImages = async (): Promise<string[]> => {
+    if (imageFiles.length === 0) return [];
+
+    const signatureResponse = await fetch(`${API_URL}/products/upload-signature`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!signatureResponse.ok) {
+      throw new Error('Gagal menyiapkan upload gambar');
+    }
+
+    const signature = (await signatureResponse.json()) as UploadSignature;
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`;
+
+    return Promise.all(imageFiles.map(async (file) => {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('api_key', signature.apiKey);
+      uploadData.append('folder', signature.folder);
+      uploadData.append('signature', signature.signature);
+      uploadData.append('timestamp', String(signature.timestamp));
+
+      const uploadResponse = await fetch(uploadUrl, { method: 'POST', body: uploadData });
+      const result = (await uploadResponse.json()) as { secure_url?: string; error?: { message?: string } };
+
+      if (!uploadResponse.ok || !result.secure_url) {
+        throw new Error(result.error?.message ?? `Gagal mengunggah ${file.name}`);
+      }
+
+      return result.secure_url;
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    const data = new FormData();
-    data.append("name", formData.name);
-    data.append("description", formData.description);
-    data.append("category", formData.category);
-    data.append("price", formData.price);
-    data.append("weightGrams", formData.weightGrams);
-    data.append("dimensionLength", formData.dimensionLength);
-    data.append("dimensionWidth", formData.dimensionWidth);
-    data.append("dimensionHeight", formData.dimensionHeight);
-    data.append("link", formData.link);
-    data.append("linkTokopedia", formData.linkTokopedia);
-    data.append("linkShopee", formData.linkShopee);
-    data.append("isFeatured", String(formData.isFeatured));
-    data.append("stock", formData.stock);
-    imageFiles.forEach((file) => data.append("images", file));
-    existingImages.forEach((img) => data.append("keptImages", img));
-    data.append(
-      "variants",
-      JSON.stringify(
-        variants.map((v) => ({
-          name: v.name,
-          image: v.image || '',
-          price: v.price !== "" ? Number(v.price) : formData.price,
-          weightGrams: v.weightGrams !== "" ? Number(v.weightGrams) : Number(formData.weightGrams) || 0,
-          stock: v.stock !== "" ? Number(v.stock) : Number(formData.stock) || 0,
-          dimensions: {
-            length: v.dimensionLength !== "" ? Number(v.dimensionLength) : Number(formData.dimensionLength) || 1,
-            width: v.dimensionWidth !== "" ? Number(v.dimensionWidth) : Number(formData.dimensionWidth) || 1,
-            height: v.dimensionHeight !== "" ? Number(v.dimensionHeight) : Number(formData.dimensionHeight) || 1,
-          },
-        }))
-      )
-    );
-
     try {
+      const uploadedImages = await uploadImages();
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("description", formData.description);
+      data.append("category", formData.category);
+      data.append("price", formData.price);
+      data.append("weightGrams", formData.weightGrams);
+      data.append("dimensionLength", formData.dimensionLength);
+      data.append("dimensionWidth", formData.dimensionWidth);
+      data.append("dimensionHeight", formData.dimensionHeight);
+      data.append("link", formData.link);
+      data.append("linkTokopedia", formData.linkTokopedia);
+      data.append("linkShopee", formData.linkShopee);
+      data.append("isFeatured", String(formData.isFeatured));
+      data.append("stock", formData.stock);
+      data.append("uploadedImages", JSON.stringify(uploadedImages));
+      existingImages.forEach((img) => data.append("keptImages", img));
+      data.append(
+        "variants",
+        JSON.stringify(
+          variants.map((v) => {
+            const image = v.image.startsWith('__new__')
+              ? uploadedImages[parseInt(v.image.replace('__new__', ''), 10)] || ''
+              : v.image;
+
+            return {
+              name: v.name,
+              image,
+              price: v.price !== "" ? Number(v.price) : formData.price,
+              weightGrams: v.weightGrams !== "" ? Number(v.weightGrams) : Number(formData.weightGrams) || 0,
+              stock: v.stock !== "" ? Number(v.stock) : Number(formData.stock) || 0,
+              dimensions: {
+                length: v.dimensionLength !== "" ? Number(v.dimensionLength) : Number(formData.dimensionLength) || 1,
+                width: v.dimensionWidth !== "" ? Number(v.dimensionWidth) : Number(formData.dimensionWidth) || 1,
+                height: v.dimensionHeight !== "" ? Number(v.dimensionHeight) : Number(formData.dimensionHeight) || 1,
+              },
+            };
+          })
+        )
+      );
+
       const url = editingProduct ? `${API_URL}/products/${editingProduct._id}` : `${API_URL}/products`;
       const res = await fetch(url, {
         method: editingProduct ? "PUT" : "POST",
