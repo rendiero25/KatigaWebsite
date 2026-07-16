@@ -221,7 +221,7 @@ export default function Checkout() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-24 pb-20">
+      <main className="min-h-screen bg-[#F9F7F2] pt-6 pb-20">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <h1 className="text-2xl font-semibold text-[#1F1F1F] mb-8">Checkout</h1>
 

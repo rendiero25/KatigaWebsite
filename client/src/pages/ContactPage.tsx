@@ -55,7 +55,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
 
-      <main className="grow pt-20 md:px-8 container mx-auto w-full px-4 sm:px-10 lg:px-20 xl:px-30">
+      <main className="grow pt-6 md:px-8 container mx-auto w-full px-4 sm:px-10 lg:px-20 xl:px-30">
         <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
           {/* Left Column: Text & Info */}
           <motion.div

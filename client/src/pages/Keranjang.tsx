@@ -132,7 +132,7 @@ export default function Keranjang() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-24 pb-0">
+      <main className="min-h-screen bg-[#F9F7F2] pt-6 pb-0">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 pb-16">
           <h1 className="text-2xl font-semibold text-[#1F1F1F] mb-6">Keranjang Belanja</h1>
 

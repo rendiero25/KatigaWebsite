@@ -273,7 +273,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="grow pt-20 pb-16 bg-white">
+      <main className="grow pt-6 pb-16 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <Breadcrumb className="mb-8">
             <BreadcrumbList>
