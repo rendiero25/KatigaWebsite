@@ -19,7 +19,16 @@ const auth = async (req, res, next) => {
     req.admin = admin;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    if (
+      error.name === 'JsonWebTokenError'
+      || error.name === 'TokenExpiredError'
+      || error.name === 'NotBeforeError'
+    ) {
+      return res.status(401).json({ message: 'Token is not valid' });
+    }
+
+    console.error(`Authentication database error: ${error.message}`);
+    res.status(503).json({ message: 'Database sementara tidak tersedia. Coba lagi.' });
   }
 };
 

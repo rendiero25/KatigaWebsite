@@ -5,9 +5,6 @@ const path = require('path');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
-// Connect to MongoDB
-connectDB();
-
 const app = express();
 
 // Middleware
@@ -44,6 +41,17 @@ app.use(cors({
   },
   credentials: true
 }));
+
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error(`Database unavailable: ${error.message}`);
+    res.status(503).json({ message: 'Database sementara tidak tersedia. Coba lagi.' });
+  }
+});
+
 // Midtrans webhook needs raw body for signature verification — must come before express.json()
 app.post('/api/orders/webhook/midtrans', express.raw({ type: '*/*' }), require('./routes/orderRoutes').webhookHandler);
 app.post('/api/orders/webhook/biteship', express.json(), require('./routes/orderRoutes').biteshipWebhookHandler);
@@ -204,6 +212,9 @@ if (require.main === module) {
   });
   mongoose.connection.once('connected', checkExpiringPromos);
   mongoose.connection.once('connected', syncBiteshipDeliveries);
+  connectDB().catch((error) => {
+    console.error(`Initial MongoDB connection error: ${error.message}`);
+  });
   setInterval(checkExpiringPromos, 60 * 60 * 1000);
   setInterval(syncBiteshipDeliveries, 15 * 60 * 1000);
 }
