@@ -19,6 +19,9 @@ const parseUploadedImages = (value) => {
   return images;
 };
 
+// @route   POST /api/products/upload-signature
+// @desc    Create a signed Cloudinary upload payload for an authenticated admin
+// @access  Private
 router.post('/upload-signature', auth, (req, res) => {
   const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = process.env;
 
