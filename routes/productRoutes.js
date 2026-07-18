@@ -152,6 +152,14 @@ router.post('/', auth, upload.any(), async (req, res) => {
   try {
     const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants, stock } = req.body;
 
+    if (!name?.trim()) {
+      return res.status(400).json({ message: 'Nama produk wajib diisi' });
+    }
+
+    if (!category || !/^[0-9a-fA-F]{24}$/.test(category)) {
+      return res.status(400).json({ message: 'Kategori produk wajib dipilih' });
+    }
+
     let imageFiles = req.files || [];
     const imagePaths = [...imageFiles.map(file => file.path), ...parseUploadedImages(req.body.uploadedImages)];
     const primaryImage = imagePaths.length > 0 ? imagePaths[0] : '';
@@ -205,6 +213,10 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
     }
 
     const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, keptImages, variants, stock } = req.body;
+
+    if (category !== undefined && !/^[0-9a-fA-F]{24}$/.test(category)) {
+      return res.status(400).json({ message: 'Kategori produk wajib dipilih' });
+    }
 
     if (name) product.name = name;
     if (description) product.description = description;

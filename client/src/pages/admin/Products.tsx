@@ -523,7 +523,7 @@ export default function AdminProducts() {
                 Simpan Draft
               </Button>
             )}
-            <Button onClick={handleSubmit} disabled={saving} size="sm"
+            <Button type="submit" form="product-form" disabled={saving} size="sm"
               className="min-w-[90px]">
               {saving ? "Menyimpan…" : "Simpan"}
             </Button>
@@ -531,7 +531,7 @@ export default function AdminProducts() {
         </div>
 
         {/* Form body */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form id="product-form" onSubmit={handleSubmit} className="p-6">
           <div className="flex flex-wrap gap-5">
 
             {/* Informasi Dasar */}
