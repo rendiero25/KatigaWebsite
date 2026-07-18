@@ -12,6 +12,11 @@ interface ShippingRateRequestItem {
   };
 }
 
+interface AdminProfile {
+  _id: string;
+  email: string;
+}
+
 // Normalize API_BASE_URL to ensure it always ends with /api
 const getBaseUrl = () => {
   let url = import.meta.env.VITE_API_URL || "/api";
@@ -685,6 +690,17 @@ export const api = {
       body: JSON.stringify({ email, password }),
     });
     return res.json();
+  },
+
+  getAdminProfile: async (): Promise<AdminProfile> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 401) throw new UnauthorizedError();
+    if (!res.ok) throw new Error('Gagal memverifikasi sesi admin');
+    return res.json() as Promise<AdminProfile>;
   },
 
   // Product Page Settings

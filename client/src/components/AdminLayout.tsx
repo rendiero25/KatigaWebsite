@@ -50,6 +50,7 @@ import { Separator } from '@/components/ui/separator'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useNotifications } from '../hooks/useApi'
+import api, { UnauthorizedError } from '../services/api'
 import NotificationBell from './NotificationBell'
 
 interface Props {
@@ -177,6 +178,7 @@ export default function AdminLayout({ children, title }: Props) {
   const navigate = useNavigate()
   const adminEmail = localStorage.getItem('adminEmail') || 'Admin'
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('admin')
+  const [checkingSession, setCheckingSession] = useState(true)
 
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {}
@@ -189,8 +191,28 @@ export default function AdminLayout({ children, title }: Props) {
   })
 
   useEffect(() => {
-    if (!localStorage.getItem('adminToken')) {
+    const token = localStorage.getItem('adminToken')
+    if (!token) {
       navigate('/admin/login')
+      return
+    }
+
+    let active = true
+
+    void api.getAdminProfile()
+      .catch((error: unknown) => {
+        if (!(error instanceof UnauthorizedError)) return
+
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminEmail')
+        navigate('/admin/login', { replace: true })
+      })
+      .finally(() => {
+        if (active) setCheckingSession(false)
+      })
+
+    return () => {
+      active = false
     }
   }, [navigate])
 
@@ -202,6 +224,14 @@ export default function AdminLayout({ children, title }: Props) {
 
   const toggleMenu = (label: string) => {
     setExpandedMenus(prev => ({ ...prev, [label]: !prev[label] }))
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
   }
 
   const menuClassName =
