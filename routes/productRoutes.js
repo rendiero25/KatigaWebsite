@@ -3,9 +3,35 @@ const router = express.Router();
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { cloudinary } = upload;
 
 const ProductCategory = require('../models/ProductCategory');
 const Promotion = require('../models/Promotion');
+
+const parseUploadedImages = (value) => {
+  if (!value) return [];
+
+  const images = JSON.parse(value);
+  if (!Array.isArray(images) || !images.every((image) => typeof image === 'string' && image.startsWith('https://res.cloudinary.com/'))) {
+    throw new Error('Invalid uploaded image URLs');
+  }
+
+  return images;
+};
+
+router.post('/upload-signature', auth, (req, res) => {
+  const { CLOUDINARY_CLOUD_NAME: cloudName, CLOUDINARY_API_KEY: apiKey, CLOUDINARY_API_SECRET: apiSecret } = process.env;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    return res.status(500).json({ message: 'Cloudinary upload is not configured' });
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const folder = 'katiga';
+  const signature = cloudinary.utils.api_sign_request({ folder, timestamp }, apiSecret);
+
+  res.json({ apiKey, cloudName, folder, signature, timestamp });
+});
 
 // @route   GET /api/products
 // @desc    Get all products
@@ -87,6 +113,10 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
+    if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     const product = await Product.findById(req.params.id).populate('category');
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
@@ -116,17 +146,12 @@ router.get('/:id', async (req, res) => {
 // @desc    Create a product
 // @access  Private
 router.post('/', auth, upload.any(), async (req, res) => {
-  console.log('POST /api/products hit');
-  console.log('Body:', req.body);
-  console.log('Files:', req.files); // Debug log
   try {
     const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants, stock } = req.body;
 
     let imageFiles = req.files || [];
-    const imagePaths = imageFiles.map(file => file.path);
+    const imagePaths = [...imageFiles.map(file => file.path), ...parseUploadedImages(req.body.uploadedImages)];
     const primaryImage = imagePaths.length > 0 ? imagePaths[0] : '';
-
-    console.log('Using image paths:', imagePaths);
 
     let parsedVariants = variants ? JSON.parse(variants) : [];
     parsedVariants = parsedVariants.map(v => {
@@ -159,7 +184,6 @@ router.post('/', auth, upload.any(), async (req, res) => {
       variants: parsedVariants
     });
     await product.save();
-    console.log('Product saved:', product);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error in POST /api/products:', error);
@@ -171,8 +195,6 @@ router.post('/', auth, upload.any(), async (req, res) => {
 // @desc    Update a product
 // @access  Private
 router.put('/:id', auth, upload.any(), async (req, res) => {
-  console.log('PUT /api/products/:id hit');
-  console.log('Files:', req.files);
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -211,7 +233,7 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
     }
 
     let imageFiles = req.files || [];
-    const newImagePaths = imageFiles.map(file => file.path);
+    const newImagePaths = [...imageFiles.map(file => file.path), ...parseUploadedImages(req.body.uploadedImages)];
 
     const finalImages = [...currentImages, ...newImagePaths];
     product.images = finalImages;

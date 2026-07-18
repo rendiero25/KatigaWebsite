@@ -23,6 +23,14 @@ interface ProductVariant {
   dimensionHeight: string;
 }
 
+interface UploadSignature {
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+  signature: string;
+  timestamp: number;
+}
+
 const categoryId = (category: Product['category']): string =>
   typeof category === 'string' ? category : category?._id ?? '';
 
@@ -70,6 +78,31 @@ const emptyForm = {
   isFeatured: false,
 };
 
+interface ProductDraft {
+  formData: typeof emptyForm;
+  variants: ProductVariant[];
+}
+
+const PRODUCT_DRAFT_KEY = 'product-new-draft';
+
+function getProductDraft(): ProductDraft | null {
+  const storedDraft = sessionStorage.getItem(PRODUCT_DRAFT_KEY);
+  if (!storedDraft) return null;
+
+  try {
+    const draft = JSON.parse(storedDraft) as Partial<ProductDraft>;
+    if (!draft.formData || !Array.isArray(draft.variants)) return null;
+
+    return {
+      formData: { ...emptyForm, ...draft.formData },
+      variants: draft.variants,
+    };
+  } catch {
+    sessionStorage.removeItem(PRODUCT_DRAFT_KEY);
+    return null;
+  }
+}
+
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,12 +111,15 @@ export default function AdminProducts() {
   const [searchParams, setSearchParams] = useSearchParams();
   const showForm = searchParams.get("view") === "form";
   const editId = searchParams.get("id");
+  const [initialDraft] = useState<ProductDraft | null>(() => (
+    showForm && !editId ? getProductDraft() : null
+  ));
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState({ ...emptyForm });
+  const [formData, setFormData] = useState(() => initialDraft?.formData ?? { ...emptyForm });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>(() => initialDraft?.variants ?? []);
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [openPickerIdx, setOpenPickerIdx] = useState<number | null>(null);
@@ -185,45 +221,82 @@ export default function AdminProducts() {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const uploadImages = async (): Promise<string[]> => {
+    if (imageFiles.length === 0) return [];
+
+    const signatureResponse = await fetch(`${API_URL}/products/upload-signature`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!signatureResponse.ok) {
+      throw new Error('Gagal menyiapkan upload gambar');
+    }
+
+    const signature = (await signatureResponse.json()) as UploadSignature;
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`;
+
+    return Promise.all(imageFiles.map(async (file) => {
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('api_key', signature.apiKey);
+      uploadData.append('folder', signature.folder);
+      uploadData.append('signature', signature.signature);
+      uploadData.append('timestamp', String(signature.timestamp));
+
+      const uploadResponse = await fetch(uploadUrl, { method: 'POST', body: uploadData });
+      const result = (await uploadResponse.json()) as { secure_url?: string; error?: { message?: string } };
+
+      if (!uploadResponse.ok || !result.secure_url) {
+        throw new Error(result.error?.message ?? `Gagal mengunggah ${file.name}`);
+      }
+
+      return result.secure_url;
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
-    const data = new FormData();
-    data.append("name", formData.name);
-    data.append("description", formData.description);
-    data.append("category", formData.category);
-    data.append("price", formData.price);
-    data.append("weightGrams", formData.weightGrams);
-    data.append("dimensionLength", formData.dimensionLength);
-    data.append("dimensionWidth", formData.dimensionWidth);
-    data.append("dimensionHeight", formData.dimensionHeight);
-    data.append("link", formData.link);
-    data.append("linkTokopedia", formData.linkTokopedia);
-    data.append("linkShopee", formData.linkShopee);
-    data.append("isFeatured", String(formData.isFeatured));
-    data.append("stock", formData.stock);
-    imageFiles.forEach((file) => data.append("images", file));
-    existingImages.forEach((img) => data.append("keptImages", img));
-    data.append(
-      "variants",
-      JSON.stringify(
-        variants.map((v) => ({
-          name: v.name,
-          image: v.image || '',
-          price: v.price !== "" ? Number(v.price) : formData.price,
-          weightGrams: v.weightGrams !== "" ? Number(v.weightGrams) : Number(formData.weightGrams) || 0,
-          stock: v.stock !== "" ? Number(v.stock) : Number(formData.stock) || 0,
-          dimensions: {
-            length: v.dimensionLength !== "" ? Number(v.dimensionLength) : Number(formData.dimensionLength) || 1,
-            width: v.dimensionWidth !== "" ? Number(v.dimensionWidth) : Number(formData.dimensionWidth) || 1,
-            height: v.dimensionHeight !== "" ? Number(v.dimensionHeight) : Number(formData.dimensionHeight) || 1,
-          },
-        }))
-      )
-    );
-
     try {
+      const uploadedImages = await uploadImages();
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("description", formData.description);
+      data.append("category", formData.category);
+      data.append("price", formData.price);
+      data.append("weightGrams", formData.weightGrams);
+      data.append("dimensionLength", formData.dimensionLength);
+      data.append("dimensionWidth", formData.dimensionWidth);
+      data.append("dimensionHeight", formData.dimensionHeight);
+      data.append("link", formData.link);
+      data.append("linkTokopedia", formData.linkTokopedia);
+      data.append("linkShopee", formData.linkShopee);
+      data.append("isFeatured", String(formData.isFeatured));
+      data.append("stock", formData.stock);
+      data.append("uploadedImages", JSON.stringify(uploadedImages));
+      existingImages.forEach((img) => data.append("keptImages", img));
+      data.append(
+        "variants",
+        JSON.stringify(
+          variants.map((v) => ({
+            name: v.name,
+            image: v.image.startsWith('__new__')
+              ? uploadedImages[parseInt(v.image.replace('__new__', ''), 10)] || ''
+              : v.image,
+            price: v.price !== "" ? Number(v.price) : formData.price,
+            weightGrams: v.weightGrams !== "" ? Number(v.weightGrams) : Number(formData.weightGrams) || 0,
+            stock: v.stock !== "" ? Number(v.stock) : Number(formData.stock) || 0,
+            dimensions: {
+              length: v.dimensionLength !== "" ? Number(v.dimensionLength) : Number(formData.dimensionLength) || 1,
+              width: v.dimensionWidth !== "" ? Number(v.dimensionWidth) : Number(formData.dimensionWidth) || 1,
+              height: v.dimensionHeight !== "" ? Number(v.dimensionHeight) : Number(formData.dimensionHeight) || 1,
+            },
+          }))
+        )
+      );
+
       const url = editingProduct ? `${API_URL}/products/${editingProduct._id}` : `${API_URL}/products`;
       const res = await fetch(url, {
         method: editingProduct ? "PUT" : "POST",
@@ -289,6 +362,29 @@ export default function AdminProducts() {
     setSearchParams({ view: "form", id: product._id });
   };
 
+  const handleSaveDraft = () => {
+    const draftVariants = variants.map((variant) => ({
+      ...variant,
+      image: variant.image.startsWith('__new__') ? '' : variant.image,
+    }));
+
+    sessionStorage.setItem(PRODUCT_DRAFT_KEY, JSON.stringify({ formData, variants: draftVariants }));
+    toast.success(imageFiles.length > 0
+      ? 'Draft disimpan. Pilih ulang gambar saat melanjutkan.'
+      : 'Draft disimpan di browser ini.');
+  };
+
+  const handleAddProduct = () => {
+    const draft = getProductDraft();
+    setFormData(draft?.formData ?? { ...emptyForm });
+    setVariants(draft?.variants ?? []);
+    setImageFiles([]);
+    setImagePreviews([]);
+    setExistingImages([]);
+    setEditingProduct(null);
+    setSearchParams({ view: "form" });
+  };
+
   const resetForm = () => {
     imagePreviews.forEach((p) => URL.revokeObjectURL(p));
     setFormData({ ...emptyForm });
@@ -299,6 +395,7 @@ export default function AdminProducts() {
     setEditingProduct(null);
     setOpenPickerIdx(null);
     setPendingVariantUploadIdx(null);
+    if (!editingProduct) sessionStorage.removeItem(PRODUCT_DRAFT_KEY);
     setSearchParams({});
   };
 
@@ -318,7 +415,7 @@ export default function AdminProducts() {
           <p className="text-gray-500 text-sm">
             {loading ? "Memuat..." : `${products.length} produk`}
           </p>
-          <Button onClick={() => setSearchParams({ view: "form" })}>
+          <Button onClick={handleAddProduct}>
             + Tambah Produk
           </Button>
         </div>
@@ -421,6 +518,11 @@ export default function AdminProducts() {
             <Button variant="outline" onClick={resetForm} size="sm">
               Batal
             </Button>
+            {!editingProduct && (
+              <Button type="button" variant="secondary" onClick={handleSaveDraft} disabled={saving} size="sm">
+                Simpan Draft
+              </Button>
+            )}
             <Button onClick={handleSubmit} disabled={saving} size="sm"
               className="min-w-[90px]">
               {saving ? "Menyimpan…" : "Simpan"}

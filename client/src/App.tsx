@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -58,9 +58,29 @@ const UlasanSaya = lazy(() => import('./pages/UlasanSaya'));
 const Notifikasi = lazy(() => import('./pages/Notifikasi'));
 const AdminNotifikasi = lazy(() => import('./pages/admin/Notifikasi'));
 
+const LEGAL_PAGE_PATHS = new Set([
+  '/syarat-ketentuan',
+  '/kebijakan-privasi',
+  '/kebijakan-pengembalian',
+  '/faq',
+]);
+
+function LegalPageScrollReset() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (LEGAL_PAGE_PATHS.has(pathname)) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <LegalPageScrollReset />
       <Toaster position="top-center" richColors closeButton />
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F9F7F2]"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <Routes>
