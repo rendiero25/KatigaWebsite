@@ -19,6 +19,20 @@ const parseUploadedImages = (value) => {
   return images;
 };
 
+const resolveCoverImage = (coverImage, newImagePaths) => {
+  if (!coverImage) return '';
+
+  const newImageMatch = /^__new__(\d+)$/.exec(coverImage);
+  if (!newImageMatch) return coverImage;
+
+  return newImagePaths[Number(newImageMatch[1])] || '';
+};
+
+const makeCoverFirst = (images, coverImage) => {
+  if (!coverImage || !images.includes(coverImage)) return images;
+  return [coverImage, ...images.filter((image) => image !== coverImage)];
+};
+
 // @route   POST /api/products/upload-signature
 // @desc    Create a signed Cloudinary upload payload for an authenticated admin
 // @access  Private
@@ -150,7 +164,7 @@ router.get('/:id', async (req, res) => {
 // @access  Private
 router.post('/', auth, upload.any(), async (req, res) => {
   try {
-    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants, stock } = req.body;
+    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, variants, stock, coverImage } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: 'Nama produk wajib diisi' });
@@ -162,7 +176,11 @@ router.post('/', auth, upload.any(), async (req, res) => {
 
     let imageFiles = req.files || [];
     const imagePaths = [...imageFiles.map(file => file.path), ...parseUploadedImages(req.body.uploadedImages)];
-    const primaryImage = imagePaths.length > 0 ? imagePaths[0] : '';
+    const orderedImagePaths = makeCoverFirst(
+      imagePaths,
+      resolveCoverImage(coverImage, imagePaths)
+    );
+    const primaryImage = orderedImagePaths.length > 0 ? orderedImagePaths[0] : '';
 
     let parsedVariants = variants ? JSON.parse(variants) : [];
     parsedVariants = parsedVariants.map(v => {
@@ -191,7 +209,7 @@ router.post('/', auth, upload.any(), async (req, res) => {
       isFeatured: isFeatured === 'true',
       stock: Number(stock) || 0,
       image: primaryImage,
-      images: imagePaths,
+      images: orderedImagePaths,
       variants: parsedVariants
     });
     await product.save();
@@ -212,7 +230,7 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, keptImages, variants, stock } = req.body;
+    const { name, description, category, price, priceNumeric, weightGrams, dimensionLength, dimensionWidth, dimensionHeight, link, linkTokopedia, linkShopee, isFeatured, keptImages, variants, stock, coverImage } = req.body;
 
     if (category !== undefined && !/^[0-9a-fA-F]{24}$/.test(category)) {
       return res.status(400).json({ message: 'Kategori produk wajib dipilih' });
@@ -250,7 +268,10 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
     let imageFiles = req.files || [];
     const newImagePaths = [...imageFiles.map(file => file.path), ...parseUploadedImages(req.body.uploadedImages)];
 
-    const finalImages = [...currentImages, ...newImagePaths];
+    const finalImages = makeCoverFirst(
+      [...currentImages, ...newImagePaths],
+      resolveCoverImage(coverImage, newImagePaths)
+    );
     product.images = finalImages;
 
     if (finalImages.length > 0) {

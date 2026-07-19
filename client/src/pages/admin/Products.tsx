@@ -43,6 +43,7 @@ interface Product {
   description?: string;
   category: string | { _id: string; name: string };
   price: string;
+  priceNumeric?: number;
   weightGrams: number;
   dimensions?: { length: number; width: number; height: number };
   link?: string;
@@ -60,6 +61,7 @@ interface Product {
     dimensions: { length: number; width: number; height: number };
   }[];
   stock?: number;
+  createdAt?: string;
 }
 
 const emptyForm = {
@@ -82,6 +84,9 @@ interface ProductDraft {
   formData: typeof emptyForm;
   variants: ProductVariant[];
 }
+
+type ProductSort = 'latest' | 'oldest' | 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc';
+type FeaturedFilter = 'all' | 'featured' | 'regular';
 
 const PRODUCT_DRAFT_KEY = 'product-new-draft';
 
@@ -107,6 +112,9 @@ export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [featuredFilter, setFeaturedFilter] = useState<FeaturedFilter>('all');
+  const [sort, setSort] = useState<ProductSort>('latest');
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const showForm = searchParams.get("view") === "form";
@@ -119,6 +127,7 @@ export default function AdminProducts() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [variants, setVariants] = useState<ProductVariant[]>(() => initialDraft?.variants ?? []);
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -173,6 +182,7 @@ export default function AdminProducts() {
         });
         const imgs = product.images?.length ? product.images : product.image ? [product.image] : [];
         setExistingImages(imgs);
+        setCoverImage(imgs[0] ?? null);
         setVariants(
           (product.variants || []).map((v) => ({
             name: v.name,
@@ -203,6 +213,7 @@ export default function AdminProducts() {
     const futureIndex = imageFiles.length;
     setImageFiles((prev) => [...prev, file]);
     setImagePreviews((prev) => [...prev, preview]);
+    if (!coverImage) setCoverImage(`__new__${futureIndex}`);
     setVariants((prev) =>
       prev.map((v, i) => (i === variantIdx ? { ...v, image: `__new__${futureIndex}` } : v))
     );
@@ -210,15 +221,53 @@ export default function AdminProducts() {
 
   const addImageFiles = (files: File[]) => {
     const images = files.filter((f) => f.type.startsWith("image/"));
+    if (images.length === 0) return;
+
+    const firstNewImageIndex = imageFiles.length;
     setImageFiles((prev) => [...prev, ...images]);
     const previews = images.map((f) => URL.createObjectURL(f));
     setImagePreviews((prev) => [...prev, ...previews]);
+    if (!coverImage) setCoverImage(`__new__${firstNewImageIndex}`);
   };
 
   const removeNewImage = (index: number) => {
     URL.revokeObjectURL(imagePreviews[index]);
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setVariants((prev) => prev.map((variant) => {
+      if (!variant.image.startsWith('__new__')) return variant;
+
+      const imageIndex = parseInt(variant.image.replace('__new__', ''), 10);
+      if (imageIndex === index) return { ...variant, image: '' };
+      if (imageIndex > index) return { ...variant, image: `__new__${imageIndex - 1}` };
+      return variant;
+    }));
+    setCoverImage((currentCover) => {
+      const currentIndex = currentCover?.startsWith('__new__')
+        ? parseInt(currentCover.replace('__new__', ''), 10)
+        : null;
+
+      if (currentIndex === index) {
+        if (existingImages.length > 0) return existingImages[0];
+        return imageFiles.length > 1 ? '__new__0' : null;
+      }
+
+      if (currentIndex !== null && currentIndex > index) return `__new__${currentIndex - 1}`;
+      return currentCover;
+    });
+  };
+
+  const removeExistingImage = (image: string) => {
+    setExistingImages((prev) => prev.filter((currentImage) => currentImage !== image));
+    setVariants((prev) => prev.map((variant) => (
+      variant.image === image ? { ...variant, image: '' } : variant
+    )));
+    setCoverImage((currentCover) => {
+      if (currentCover !== image) return currentCover;
+
+      const nextExistingImage = existingImages.find((currentImage) => currentImage !== image);
+      return nextExistingImage ?? (imageFiles.length > 0 ? '__new__0' : null);
+    });
   };
 
   const uploadImages = async (): Promise<string[]> => {
@@ -276,6 +325,7 @@ export default function AdminProducts() {
       data.append("isFeatured", String(formData.isFeatured));
       data.append("stock", formData.stock);
       data.append("uploadedImages", JSON.stringify(uploadedImages));
+      data.append("coverImage", coverImage || '');
       existingImages.forEach((img) => data.append("keptImages", img));
       data.append(
         "variants",
@@ -347,6 +397,7 @@ export default function AdminProducts() {
     });
     const imgs = product.images?.length ? product.images : product.image ? [product.image] : [];
     setExistingImages(imgs);
+    setCoverImage(imgs[0] ?? null);
     setVariants(
       (product.variants || []).map((v) => ({
         name: v.name,
@@ -381,6 +432,7 @@ export default function AdminProducts() {
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
+    setCoverImage(null);
     setEditingProduct(null);
     setSearchParams({ view: "form" });
   };
@@ -391,6 +443,7 @@ export default function AdminProducts() {
     setImageFiles([]);
     setImagePreviews([]);
     setExistingImages([]);
+    setCoverImage(null);
     setVariants([]);
     setEditingProduct(null);
     setOpenPickerIdx(null);
@@ -402,10 +455,47 @@ export default function AdminProducts() {
   const set = (key: keyof typeof emptyForm, value: string | boolean) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
 
+  const setMainDimension = (
+    key: 'dimensionLength' | 'dimensionWidth' | 'dimensionHeight',
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    setVariants((prev) => prev.map((variant) => ({ ...variant, [key]: value })));
+  };
+
   const setVariant = (i: number, key: keyof ProductVariant, value: string) =>
     setVariants((prev) => prev.map((v, idx) => (idx === i ? { ...v, [key]: value } : v)));
 
   const totalImages = existingImages.length + imageFiles.length;
+
+  const visibleProducts = [...products]
+    .filter((product) => {
+      const matchesCategory = categoryFilter === 'all' || categoryId(product.category) === categoryFilter;
+      const matchesFeatured = featuredFilter === 'all'
+        || (featuredFilter === 'featured' ? product.isFeatured : !product.isFeatured);
+
+      return matchesCategory && matchesFeatured;
+    })
+    .sort((firstProduct, secondProduct) => {
+      const firstPrice = firstProduct.priceNumeric ?? (Number(firstProduct.price.replace(/[^\d]/g, '')) || 0);
+      const secondPrice = secondProduct.priceNumeric ?? (Number(secondProduct.price.replace(/[^\d]/g, '')) || 0);
+
+      switch (sort) {
+        case 'oldest':
+          return (Date.parse(firstProduct.createdAt ?? '') || 0) - (Date.parse(secondProduct.createdAt ?? '') || 0);
+        case 'name-asc':
+          return firstProduct.name.localeCompare(secondProduct.name, 'id');
+        case 'name-desc':
+          return secondProduct.name.localeCompare(firstProduct.name, 'id');
+        case 'price-asc':
+          return firstPrice - secondPrice;
+        case 'price-desc':
+          return secondPrice - firstPrice;
+        case 'latest':
+        default:
+          return (Date.parse(secondProduct.createdAt ?? '') || 0) - (Date.parse(firstProduct.createdAt ?? '') || 0);
+      }
+    });
 
   /* ─── LIST VIEW ─── */
   if (!showForm) {
@@ -413,17 +503,74 @@ export default function AdminProducts() {
       <AdminLayout title="Kelola Produk">
         <div className="flex items-center justify-between mb-6">
           <p className="text-gray-500 text-sm">
-            {loading ? "Memuat..." : `${products.length} produk`}
+            {loading ? "Memuat..." : `${visibleProducts.length} dari ${products.length} produk`}
           </p>
           <Button onClick={handleAddProduct}>
             + Tambah Produk
           </Button>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <label className="space-y-1 text-xs font-medium text-gray-500">
+            Kategori
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="block h-9 min-w-44 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="all">Semua kategori</option>
+              {categories.map((category) => (
+                <option key={category._id} value={category._id}>{category.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-1 text-xs font-medium text-gray-500">
+            Status
+            <select
+              value={featuredFilter}
+              onChange={(event) => setFeaturedFilter(event.target.value as FeaturedFilter)}
+              className="block h-9 min-w-36 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="all">Semua status</option>
+              <option value="featured">Featured</option>
+              <option value="regular">Reguler</option>
+            </select>
+          </label>
+          <label className="space-y-1 text-xs font-medium text-gray-500">
+            Urutkan
+            <select
+              value={sort}
+              onChange={(event) => setSort(event.target.value as ProductSort)}
+              className="block h-9 min-w-44 rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="latest">Terbaru</option>
+              <option value="oldest">Terlama</option>
+              <option value="name-asc">Nama A-Z</option>
+              <option value="name-desc">Nama Z-A</option>
+              <option value="price-asc">Harga terendah</option>
+              <option value="price-desc">Harga tertinggi</option>
+            </select>
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setCategoryFilter('all');
+              setFeaturedFilter('all');
+              setSort('latest');
+            }}
+          >
+            Reset
+          </Button>
+        </div>
+
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 w-16">No</th>
                 <th className="px-6 py-4">Produk</th>
                 <th className="px-6 py-4">Kategori</th>
                 <th className="px-6 py-4">Harga</th>
@@ -433,8 +580,9 @@ export default function AdminProducts() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {products.map((product) => (
+              {visibleProducts.map((product, index) => (
                 <tr key={product._id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-gray-400">{index + 1}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-11 h-11 rounded-lg bg-gray-100 overflow-hidden shrink-0">
@@ -469,6 +617,14 @@ export default function AdminProducts() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        type="button"
+                        onClick={() => window.open(`/produk/${product._id}`, '_blank', 'noopener,noreferrer')}
+                      >
+                        Lihat
+                      </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(product)}
                         className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 text-xs h-7 px-2">
                         Edit
@@ -480,15 +636,16 @@ export default function AdminProducts() {
                   </td>
                 </tr>
               ))}
-              {!loading && products.length === 0 && (
+              {!loading && visibleProducts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center text-gray-400 text-sm">
-                    Belum ada produk. Tambahkan produk pertama.
+                  <td colSpan={7} className="px-6 py-16 text-center text-gray-400 text-sm">
+                    {products.length === 0 ? 'Belum ada produk. Tambahkan produk pertama.' : 'Tidak ada produk yang sesuai filter.'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -595,13 +752,13 @@ export default function AdminProducts() {
                   <Label className="text-xs text-gray-500">Dimensi (cm) — P × L × T</Label>
                   <div className="grid grid-cols-3 gap-2">
                     <Input type="number" min="1" value={formData.dimensionLength}
-                      onChange={(e) => set("dimensionLength", e.target.value)}
+                      onChange={(e) => setMainDimension('dimensionLength', e.target.value)}
                       placeholder="Panjang" className="h-9 text-sm" />
                     <Input type="number" min="1" value={formData.dimensionWidth}
-                      onChange={(e) => set("dimensionWidth", e.target.value)}
+                      onChange={(e) => setMainDimension('dimensionWidth', e.target.value)}
                       placeholder="Lebar" className="h-9 text-sm" />
                     <Input type="number" min="1" value={formData.dimensionHeight}
-                      onChange={(e) => set("dimensionHeight", e.target.value)}
+                      onChange={(e) => setMainDimension('dimensionHeight', e.target.value)}
                       placeholder="Tinggi" className="h-9 text-sm" />
                   </div>
                 </div>
@@ -613,7 +770,7 @@ export default function AdminProducts() {
               <CardHeader className="pb-3 pt-4 px-5">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-gray-700">Foto Produk</CardTitle>
-                  <span className="text-xs text-gray-400">{totalImages} gambar · pertama jadi thumbnail</span>
+                  <span className="text-xs text-gray-400">{totalImages} gambar · pilih bintang untuk cover</span>
                 </div>
               </CardHeader>
               <CardContent className="px-5 pb-5 space-y-4">
@@ -641,11 +798,26 @@ export default function AdminProducts() {
                     {existingImages.map((img, i) => (
                       <div key={`ex-${i}`} className="relative group w-24 h-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                         <img src={api.getImageUrl(img)} alt="" className="w-full h-full object-cover" />
-                        {i === 0 && existingImages.length > 0 && (
+                        {coverImage === img && (
                           <span className="absolute top-1 left-1 text-[10px] bg-indigo-600 text-white px-1 rounded font-medium">Cover</span>
                         )}
+                        <button
+                          type="button"
+                          title="Jadikan foto cover"
+                          aria-label="Jadikan foto cover"
+                          onClick={() => setCoverImage(img)}
+                          className={`absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full transition ${
+                            coverImage === img
+                              ? 'bg-amber-400 text-white shadow-sm'
+                              : 'bg-white/90 text-gray-500 opacity-0 group-hover:opacity-100 hover:bg-amber-100 hover:text-amber-600'
+                          }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill={coverImage === img ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.3l-5.6 2.94 1.07-6.24L2.94 9.58l6.26-.91L12 3Z" />
+                          </svg>
+                        </button>
                         <button type="button"
-                          onClick={() => setExistingImages((prev) => prev.filter((_, idx) => idx !== i))}
+                          onClick={() => removeExistingImage(img)}
                           className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -656,9 +828,24 @@ export default function AdminProducts() {
                     {imagePreviews.map((src, i) => (
                       <div key={`new-${i}`} className="relative group w-24 h-24 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                         <img src={src} alt="" className="w-full h-full object-cover" />
-                        {existingImages.length === 0 && i === 0 && (
+                        {coverImage === `__new__${i}` && (
                           <span className="absolute top-1 left-1 text-[10px] bg-indigo-600 text-white px-1 rounded font-medium">Cover</span>
                         )}
+                        <button
+                          type="button"
+                          title="Jadikan foto cover"
+                          aria-label="Jadikan foto cover"
+                          onClick={() => setCoverImage(`__new__${i}`)}
+                          className={`absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full transition ${
+                            coverImage === `__new__${i}`
+                              ? 'bg-amber-400 text-white shadow-sm'
+                              : 'bg-white/90 text-gray-500 opacity-0 group-hover:opacity-100 hover:bg-amber-100 hover:text-amber-600'
+                          }`}
+                        >
+                          <svg className="h-3.5 w-3.5" fill={coverImage === `__new__${i}` ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m12 3 2.8 5.67 6.26.91-4.53 4.42 1.07 6.24L12 17.3l-5.6 2.94 1.07-6.24L2.94 9.58l6.26-.91L12 3Z" />
+                          </svg>
+                        </button>
                         <button type="button" onClick={() => removeNewImage(i)}
                           className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                           <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -679,7 +866,7 @@ export default function AdminProducts() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-gray-700">Varian Produk</CardTitle>
                   <Button type="button" variant="secondary" size="sm"
-                    onClick={() => setVariants((prev) => [...prev, { name: "", image: "", price: "", weightGrams: "", stock: formData.stock, dimensionLength: "", dimensionWidth: "", dimensionHeight: "" }])}
+                    onClick={() => setVariants((prev) => [...prev, { name: "", image: "", price: "", weightGrams: "", stock: formData.stock, dimensionLength: formData.dimensionLength, dimensionWidth: formData.dimensionWidth, dimensionHeight: formData.dimensionHeight }])}
                     className="h-7 text-xs">
                     + Tambah
                   </Button>
