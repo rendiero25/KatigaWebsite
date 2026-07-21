@@ -244,6 +244,7 @@ export default function Products() {
               </div>
             ) : (
               <motion.div
+                key={currentPage}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
