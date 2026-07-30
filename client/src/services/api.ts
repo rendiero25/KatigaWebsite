@@ -53,13 +53,13 @@ export const api = {
     return res.json();
   },
 
-  // Shop the Look
-  getShopTheLook: async () => {
-    const res = await fetch(`${API_BASE_URL}/shop-the-look`);
-    if (!res.ok) throw new Error('Gagal memuat data Shop the Look');
+  getBestSellers: async (limit = 4) => {
+    const res = await fetch(`${API_BASE_URL}/products/best-sellers?limit=${limit}`);
+    if (!res.ok) throw new Error('Gagal memuat produk terlaris');
     return res.json();
   },
 
+  // Shop the Look
   // Partners
   getPartners: async () => {
     const res = await fetch(`${API_BASE_URL}/partners`);

@@ -4,7 +4,7 @@ import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
 import CategoriesSection from '../components/CategoriesSection';
 import PromosiSection from '../components/PromosiSection';
-import ShopTheLookSection from '../components/ShopTheLookSection';
+import ProductSpotlightSection from '../components/ProductSpotlightSection';
 import ProductsSection from '../components/ProductsSection';
 import ManufacturingSection from '../components/ManufacturingSection';
 import AdvantagesSection from '../components/AdvantagesSection';
@@ -36,7 +36,7 @@ export default function Home() {
         </motion.div>
 
         <motion.div {...reveal}>
-          <ShopTheLookSection />
+          <ProductSpotlightSection />
         </motion.div>
 
         <motion.div {...reveal}>

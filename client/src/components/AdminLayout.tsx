@@ -91,7 +91,6 @@ const menuGroups: MenuGroup[] = [
         label: 'Home',
         children: [
           { path: '/admin/hero', label: 'Hero Section' },
-          { path: '/admin/shop-the-look', label: 'Shop the Look' },
           { path: '/admin/partners', label: 'Partners' },
           { path: '/admin/advantages', label: 'Keunggulan' },
           { path: '/admin/manufacturing', label: 'Manufacturing' },

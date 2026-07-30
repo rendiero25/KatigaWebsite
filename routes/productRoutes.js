@@ -7,6 +7,37 @@ const { cloudinary } = upload;
 
 const ProductCategory = require('../models/ProductCategory');
 const Promotion = require('../models/Promotion');
+const Order = require('../models/Order');
+
+const attachActivePromotions = async (products) => {
+  const now = new Date();
+  const activePromos = await Promotion.find({
+    isVisible: true,
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+  });
+
+  const promoByProduct = {};
+  const promoByCategory = {};
+  for (const promo of activePromos) {
+    if (promo.type === 'products') {
+      for (const pid of promo.productIds) {
+        promoByProduct[pid.toString()] = { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent };
+      }
+    } else if (promo.type === 'category' && promo.categoryId) {
+      promoByCategory[promo.categoryId.toString()] = { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent };
+    }
+  }
+
+  return products.map((p) => {
+    const obj = p.toObject();
+    obj.activePromotion =
+      promoByProduct[p._id.toString()] ||
+      promoByCategory[p.category?._id?.toString() ?? ''] ||
+      null;
+    return obj;
+  });
+};
 
 const parseUploadedImages = (value) => {
   if (!value) return [];
@@ -91,35 +122,56 @@ router.get('/', async (req, res) => {
     if (productLimit > 0) productsQuery = productsQuery.limit(productLimit);
     const products = await productsQuery;
 
-    const now = new Date();
-    const activePromos = await Promotion.find({
-      isVisible: true,
-      startDate: { $lte: now },
-      endDate: { $gte: now },
-    });
+    res.json(await attachActivePromotions(products));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-    const promoByProduct = {};
-    const promoByCategory = {};
-    for (const promo of activePromos) {
-      if (promo.type === 'products') {
-        for (const pid of promo.productIds) {
-          promoByProduct[pid.toString()] = { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent };
-        }
-      } else if (promo.type === 'category' && promo.categoryId) {
-        promoByCategory[promo.categoryId.toString()] = { _id: promo._id, name: promo.name, discountPercent: promo.discountPercent };
-      }
+// @route   GET /api/products/best-sellers
+// @desc    Products ranked by paid quantity sold; falls back to featured products
+//          when there are no paid orders yet.
+// @access  Public
+// NOTE: must stay above GET /:id, otherwise "best-sellers" is read as an id.
+router.get('/best-sellers', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '4'), 10) || 4, 1), 12);
+
+    const ranked = await Order.aggregate([
+      { $match: { paymentStatus: 'paid' } },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.product', quantity: { $sum: '$items.quantity' } } },
+      { $sort: { quantity: -1 } },
+      { $limit: limit },
+    ]);
+
+    const rankedIds = ranked.map((row) => row._id).filter(Boolean);
+    let products = rankedIds.length
+      ? await Product.find({ _id: { $in: rankedIds } }).populate('category')
+      : [];
+
+    // Keep the aggregation's ordering — find() does not preserve $in order.
+    const soldByProduct = new Map(ranked.map((row) => [String(row._id), row.quantity]));
+    products.sort(
+      (a, b) => (soldByProduct.get(String(b._id)) ?? 0) - (soldByProduct.get(String(a._id)) ?? 0)
+    );
+
+    if (products.length < limit) {
+      const already = new Set(products.map((p) => String(p._id)));
+      const filler = await Product.find({ _id: { $nin: [...already] } })
+        .sort({ isFeatured: -1, createdAt: -1 })
+        .limit(limit - products.length)
+        .populate('category');
+      products = [...products, ...filler];
     }
 
-    const result = products.map(p => {
-      const obj = p.toObject();
-      obj.activePromotion =
-        promoByProduct[p._id.toString()] ||
-        promoByCategory[p.category?._id?.toString() ?? ''] ||
-        null;
-      return obj;
-    });
-
-    res.json(result);
+    const result = await attachActivePromotions(products);
+    res.json(
+      result.map((product) => ({
+        ...product,
+        soldQuantity: soldByProduct.get(String(product._id)) ?? 0,
+      }))
+    );
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

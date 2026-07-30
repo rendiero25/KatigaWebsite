@@ -298,13 +298,13 @@ export function useHero() {
   return { data, loading };
 }
 
-export function useShopTheLook() {
-  const [data, setData] = useState<any>(null);
+export function useBestSellers(limit = 4) {
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getShopTheLook().then(setData).catch(() => setData(null)).finally(() => setLoading(false));
-  }, []);
+    api.getBestSellers(limit).then(setData).catch(() => setData([])).finally(() => setLoading(false));
+  }, [limit]);
 
   return { data, loading };
 }
