@@ -113,14 +113,15 @@ const buildLiveCartItem = (
 };
 
 export function useCartCount() {
-  const [count, setCount] = useState(() => {
+  const [count, setCount] = useState(() =>
+    localStorage.getItem('customerToken') ? getCartCount() : 0
+  );
+  useEffect(() => {
+    // clearCart() dispatches 'cartUpdated', so it must never run during render —
+    // a mounted listener would then setState mid-render (React warns about this).
     if (!localStorage.getItem('customerToken')) {
       clearCart();
-      return 0;
     }
-    return getCartCount();
-  });
-  useEffect(() => {
     const handler = () => setCount(getCartCount());
     window.addEventListener('cartUpdated', handler);
     return () => window.removeEventListener('cartUpdated', handler);
