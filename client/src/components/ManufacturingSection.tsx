@@ -1,92 +1,44 @@
-import { useManufacturing } from "../hooks/useApi";
-import api from "../services/api";
+import { Link } from 'react-router-dom';
+
+import { useManufacturing } from '../hooks/useApi';
+import api from '../services/api';
+
+interface ManufacturingData {
+  tagline?: string;
+  backgroundImage?: string;
+}
 
 export default function ManufacturingSection() {
-  const { data: manufacturing, loading } = useManufacturing();
+  const { data, loading } = useManufacturing();
+  const manufacturing = data as ManufacturingData | null;
 
   if (loading) {
-    return (
-      <section className="pt-10 pb-20 lg:pt-14 lg:pb-28 relative overflow-hidden bg-[#2C331F]">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="h-8 w-64 bg-white/10 mx-auto rounded mb-8 animate-pulse"></div>
-          <div className="h-4 w-full bg-white/10 mx-auto rounded animate-pulse"></div>
-        </div>
-      </section>
-    );
+    return <section className="h-[480px] bg-[#F9F7F2] animate-pulse" />;
   }
 
-  // Backup/Default content if api fails or data empty
-  const tagline =
-    manufacturing?.tagline || "Kualitas yang Kami Jaga dari Hulu ke Hilir";
-  const description =
-    manufacturing?.description ||
-    "Sebagai produsen langsung (direct manufacturer), kami mengawasi setiap detik proses pembuatan. Mulai dari pemintalan benang (Spinning), penjahitan (Sewing), hingga inspeksi ketat (Inspection) untuk memastikan hanya kelembutan terbaik yang menyentuh kulit bayi Anda.";
-  const features =
-    manufacturing?.features?.length > 0
-      ? manufacturing.features
-      : [
-          { title: "Benang\nberkualitas tinggi", icon: "" },
-          { title: "Penjahitan presisi\noleh tenaga ahli", icon: "" },
-          { title: "Kontrol kualitas\nberlapis", icon: "" },
-        ];
+  const tagline = manufacturing?.tagline || 'Kualitas yang Kami Jaga dari Hulu ke Hilir';
 
   return (
-    <section className="pt-10 pb-20 lg:pt-14 lg:pb-28 relative overflow-hidden bg-[#2C331F]">
-      {/* Background Image */}
+    <section className="h-[480px] relative overflow-hidden">
       {manufacturing?.backgroundImage ? (
-        <div className="absolute inset-0 z-0">
-          <img
-            src={api.getImageUrl(manufacturing.backgroundImage)}
-            alt="Manufacturing Background"
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <img
+          src={api.getImageUrl(manufacturing.backgroundImage)}
+          alt="Tentang Kami"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
       ) : (
-        <div className="absolute inset-0 bg-linear-to-b from-[#1a1f12] to-[#2C331F] opacity-90"></div>
+        <div className="absolute inset-0 bg-[#F9F7F2]" />
       )}
-
-      {/* Content */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto text-center mb-16">
-          <p className="text-lg font-bold text-white mb-4">{tagline}</p>
-          <h2 className="text-2xl sm:text-4xl font-normal text-white leading-relaxed">
-            {description}
-          </h2>
-        </div>
-
-        {/* Features Icons */}
-        <div className="grid sm:grid-cols-3 gap-12 max-w-4xl mx-auto">
-          {features.map((feature: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-            <div key={index} className="text-center group">
-              <div className="w-20 mx-auto mb-6 flex flex-wrap items-end justify-center">
-                {feature.icon ? (
-                  <img
-                    src={api.getImageUrl(feature.icon)}
-                    alt={feature.title}
-                    className="h-20 object-cover"
-                    onError={(e) => {
-                      // Fallback if image fails
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                ) : (
-                  // Generic fallback icon if no icon uploaded
-                  <svg
-                    className="w-16 h-16 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" />
-                  </svg>
-                )}
-              </div>
-
-              <h3 className="text-white font-bold text-xl leading-tight whitespace-pre-line">
-                {feature.title}
-              </h3>
-            </div>
-          ))}
-        </div>
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="relative h-full flex flex-col items-center justify-center text-center px-4 gap-6">
+        <span className="uppercase tracking-[0.18em] text-[13px] text-white/70">Tentang Kami</span>
+        <h2 className="text-2xl md:text-3xl text-white max-w-3xl">{tagline}</h2>
+        <Link
+          to="/tentang-kami"
+          className="border border-white text-white uppercase tracking-[0.18em] text-[13px] px-8 py-4 hover:bg-white hover:text-[#1E1E1E] transition"
+        >
+          Baca Cerita Kami
+        </Link>
       </div>
     </section>
   );

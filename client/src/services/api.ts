@@ -53,6 +53,13 @@ export const api = {
     return res.json();
   },
 
+  // Shop the Look
+  getShopTheLook: async () => {
+    const res = await fetch(`${API_BASE_URL}/shop-the-look`);
+    if (!res.ok) throw new Error('Gagal memuat data Shop the Look');
+    return res.json();
+  },
+
   // Partners
   getPartners: async () => {
     const res = await fetch(`${API_BASE_URL}/partners`);

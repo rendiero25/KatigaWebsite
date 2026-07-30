@@ -65,6 +65,7 @@ app.use('/uploads', cors({ origin: '*', credentials: false }), express.static(pa
 // Import Routes
 const siteSettingsRoutes = require('./routes/siteSettingsRoutes');
 const heroRoutes = require('./routes/heroRoutes');
+const shopTheLookRoutes = require('./routes/shopTheLookRoutes');
 const partnerRoutes = require('./routes/partnerRoutes');
 const advantageRoutes = require('./routes/advantageRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -84,6 +85,7 @@ const shippingSettingsRoutes = require('./routes/shippingSettingsRoutes');
 // Use Routes
 app.use('/api/site-settings', siteSettingsRoutes);
 app.use('/api/hero', heroRoutes);
+app.use('/api/shop-the-look', shopTheLookRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/advantages', advantageRoutes);
 app.use('/api/products', productRoutes);

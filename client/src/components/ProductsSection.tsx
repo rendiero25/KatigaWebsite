@@ -1,35 +1,51 @@
-import { useState } from "react";
-import { useProducts } from "../hooks/useApi";
-import api from "../services/api";
-import StarRating from './StarRating';
-import { Link } from "react-router-dom";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { Link } from 'react-router-dom';
 
-import "swiper/css";
-import "swiper/css/navigation";
+import { useProducts } from '../hooks/useApi';
+import api from '../services/api';
+
+interface ProductVariant {
+  _id: string;
+  name: string;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  image: string;
+  price: string;
+  priceNumeric: number;
+  isFeatured: boolean;
+  variants?: ProductVariant[];
+  activePromotion?: { discountPercent: number } | null;
+}
+
+const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+
+// priceNumeric sering 0 sementara `price` menyimpan angka sebagai string ("88400").
+const resolvePrice = (product: Product): number => {
+  if (product.priceNumeric > 0) return product.priceNumeric;
+  const parsed = Number(String(product.price ?? '').replace(/[^\d]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 export default function ProductsSection() {
-  const { data: products, loading } = useProducts();
-  const [prevEl, setPrevEl] = useState<HTMLElement | null>(null);
-  const [nextEl, setNextEl] = useState<HTMLElement | null>(null);
+  const { data, loading } = useProducts();
+  const products = data as Product[];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filtered = products?.filter((p: any) => p.isFeatured) ?? [];
-  const featuredProducts = (filtered.length > 0 ? filtered : (products ?? [])).slice(0, 10);
+  const filtered = products?.filter((p) => p.isFeatured) ?? [];
+  const featuredProducts = (filtered.length > 0 ? filtered : (products ?? [])).slice(0, 6);
 
   if (loading) {
     return (
-      <section className="pt-10 bg-white">
+      <section className="pt-10 pb-20 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-            {[1, 2, 3].map((i) => (
+          <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-12 animate-pulse" />
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-12">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="w-full aspect-[3/4] rounded-2xl bg-gray-200 mb-6" />
-                <div className="h-6 bg-gray-200 rounded w-3/4 mb-3" />
-                <div className="h-4 bg-gray-200 rounded w-full mb-2" />
-                <div className="h-4 bg-gray-200 rounded w-2/3" />
+                <div className="w-full aspect-square bg-gray-200 mb-4" />
+                <div className="h-3 bg-gray-200 rounded w-2/3 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-1/3" />
               </div>
             ))}
           </div>
@@ -39,100 +55,64 @@ export default function ProductsSection() {
   }
 
   return (
-    <section className="pt-10 bg-white">
+    <section className="pt-10 pb-20 bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-        <div className="w-full overflow-hidden">
-          <Swiper
-            modules={[Navigation]}
-            slidesPerView={1}
-            navigation={{ prevEl, nextEl }}
-            spaceBetween={24}
-            breakpoints={{
-              640: { slidesPerView: 2, spaceBetween: 24 },
-              1024: { slidesPerView: 3, spaceBetween: 32 },
-            }}
-          >
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {featuredProducts.map((product: any) => (
-              <SwiperSlide key={product._id}>
-                <div className="group flex flex-col h-full min-h-[650px]">
-                  {/* Image */}
-                  <div className="w-full aspect-[3/4] rounded-2xl bg-gray-100 mb-6 relative overflow-hidden">
-                    <img
-                      src={api.getImageUrl(product.image)}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400";
-                      }}
-                    />
-                    <Link
-                      to={`/produk/${product._id}`}
-                      className="absolute bottom-4 right-4 w-10 h-10 bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-gray-800 opacity-0 group-hover:opacity-100 transition duration-300 hover:bg-white"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </div>
+        <h2 className="text-center text-2xl md:text-3xl mb-12">Produk Terbaru</h2>
 
-                  {/* Content */}
-                  <div className="flex-1 flex flex-col items-start">
-                    <h3 className="text-2xl font-bold text-black mb-2 leading-tight">
-                      {product.name}
-                    </h3>
-                    {product.reviewCount > 0 && (
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <StarRating value={product.ratingAvg ?? 0} size="sm" />
-                        <span className="text-xs text-black/50">({product.reviewCount})</span>
-                      </div>
-                    )}
-                    {product.activePromotion && product.priceNumeric > 0 && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-base font-bold text-red-600">
-                          {`Rp ${Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}`}
-                        </span>
-                        <span className="text-sm text-gray-400 line-through">
-                          {`Rp ${product.priceNumeric.toLocaleString('id-ID')}`}
-                        </span>
-                        <span className="px-2 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded-full">
-                          -{product.activePromotion.discountPercent}%
-                        </span>
-                      </div>
-                    )}
-                    <p className="text-lg text-black/80 line-clamp-2 mb-4 leading-relaxed">
-                      {product.description}
-                    </p>
-                    <div className="mt-auto">
-                      <Link
-                        to={`/produk/${product._id}`}
-                        className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition block mb-1"
-                      >
-                        Lihat Selengkapnya
-                      </Link>
-                    </div>
-                  </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-12">
+          {featuredProducts.map((product) => {
+            const basePrice = resolvePrice(product);
+            const discount = product.activePromotion?.discountPercent ?? 0;
+            const finalPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
+            return (
+              <Link key={product._id} to={`/produk/${product._id}`} className="group block">
+                <div className="w-full aspect-square bg-[#F9F7F2] overflow-hidden mb-4">
+                  <img
+                    src={api.getImageUrl(product.image)}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400';
+                    }}
+                  />
                 </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                <h3 className="uppercase text-[13px] text-[#1E1E1E] mb-1">{product.name}</h3>
+                {basePrice > 0 && (
+                  <p className="text-[13px] mb-2 flex flex-wrap items-baseline gap-2">
+                    <span className="text-[#6F6F71]">{formatRp(finalPrice)}</span>
+                    {discount > 0 && (
+                      <>
+                        <span className="text-[#6F6F71]/50 line-through">{formatRp(basePrice)}</span>
+                        <span className="text-[#AE4B4B]">-{discount}%</span>
+                      </>
+                    )}
+                  </p>
+                )}
+                {product.variants && product.variants.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {product.variants.slice(0, 4).map((variant) => (
+                      <span
+                        key={variant._id}
+                        className="border border-[#E9E9EA] text-[11px] px-2 py-1 text-[#6F6F71]"
+                      >
+                        {variant.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </div>
 
-          {/* Navigation arrows */}
-          <div className="flex justify-center gap-2 mt-8">
-            <button
-              ref={(node) => setPrevEl(node)}
-              className="cursor-pointer w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-primary hover:border-0 hover:text-white transition disabled:opacity-50"
-            >
-              <FaChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              ref={(node) => setNextEl(node)}
-              className="cursor-pointer w-12 h-12 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-primary hover:border-0 hover:text-white transition disabled:opacity-50"
-            >
-              <FaChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="flex justify-center mt-16">
+          <Link
+            to="/produk"
+            className="border border-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] px-8 py-4 hover:bg-[#1E1E1E] hover:text-white transition"
+          >
+            Lihat Semua
+          </Link>
         </div>
       </div>
     </section>

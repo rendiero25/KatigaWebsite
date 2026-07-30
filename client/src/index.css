@@ -1,14 +1,32 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300..700&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @theme {
-  --font-primary: "Outfit", sans-serif;
+  --font-primary: "Nunito Sans", sans-serif;
 
   --color-primary: #4f68af;
   --color-black: #1e1e1e;
-  --color-primary-dark: #3730a3;
+  --color-primary-dark: #2b3a67;
   --color-secondary: #ec4899;
   --color-accent: #10b981;
+
+  /* Redesign tokens — LPH-inspired neutral-dominant scale */
+  --color-ink: #6f6f71;
+  --color-ink-strong: #1e1e1e;
+  --color-line: #e9e9ea;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f9f7f2;
+
+  --text-h1: clamp(1.5rem, 1.15rem + 1.1vw, 2.25rem);
+  --text-h2: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
+  --text-h3: clamp(1.125rem, 1.03rem + 0.4vw, 1.375rem);
+
+  --tracking-heading: 0.05em;
+  --tracking-button: 0.18em;
+  --tracking-nav: 0.12em;
+
+  --radius: 0rem;
+  --shadow-sm: 0 2px 8px rgb(0 0 0 / 0.05);
 
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -56,8 +74,42 @@ html {
 
 body {
   font-family: var(--font-primary);
-  color: var(--color-gray-900);
-  line-height: 1.6;
+  color: var(--color-ink);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+/* Public heading language: light weight, uppercase, wide tracking */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--color-ink-strong);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-heading);
+}
+
+/* Admin panel opts out of the public brand language */
+.admin-shell {
+  --radius: 0.5rem;
+  color: #111827;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.admin-shell :is(h1, h2, h3, h4, h5, h6) {
+  color: inherit;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.admin-shell :is(button, input, select, textarea) {
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 @layer base {
@@ -68,20 +120,6 @@ body {
   input[type="reset"]:not(:disabled) {
     @apply cursor-pointer;
   }
-}
-
-/* Custom Utilities */
-.gradient-text {
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Animations */

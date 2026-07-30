@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { FiMenu, FiX, FiUser, FiPackage, FiLogOut } from "react-icons/fi";
-import { FaShoppingCart } from "react-icons/fa";
+import { FiMenu, FiX, FiUser, FiPackage, FiLogOut, FiShoppingCart } from "react-icons/fi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSiteSettings, useCartCount, useNotifications } from "../hooks/useApi";
 import { clearCart } from "../utils/cart";
@@ -20,21 +19,23 @@ interface Customer {
   avatar?: string;
 }
 
+const NAV_LINKS = [
+  { to: "/", label: "Beranda" },
+  { to: "/tentang-kami", label: "Tentang Kami" },
+  { to: "/produk", label: "Produk" },
+  { to: "/katalog", label: "Katalog" },
+  { to: "/berita", label: "Berita" },
+  { to: "/kontak", label: "Kontak" },
+];
+
 export default function Header() {
   const { data: settings } = useSiteSettings();
   const cartCount = useCartCount();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('customer');
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     const syncAuth = () => {
@@ -67,94 +68,63 @@ export default function Header() {
       .toUpperCase();
 
   const profileMenuItemClass =
-    "rounded-lg cursor-pointer gap-2.5 !text-gray-700 transition-colors hover:!text-indigo-600 focus:bg-transparent data-highlighted:bg-transparent focus:!text-indigo-600 data-highlighted:!text-indigo-600 hover:[&_svg]:!text-indigo-600 focus:[&_svg]:!text-indigo-600 data-highlighted:[&_svg]:!text-indigo-600 focus:**:!text-indigo-600 data-highlighted:**:!text-indigo-600";
+    "rounded-lg cursor-pointer gap-2.5 !text-gray-700 transition-colors hover:!text-primary focus:bg-transparent data-highlighted:bg-transparent focus:!text-primary data-highlighted:!text-primary hover:[&_svg]:!text-primary focus:[&_svg]:!text-primary data-highlighted:[&_svg]:!text-primary focus:**:!text-primary data-highlighted:**:!text-primary";
   const profileMenuIconClass = "w-4 h-4 shrink-0 transition-colors";
   const profileMenuLabelClass = "text-sm font-medium";
 
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === "/"
-        ? "bg-white text-black"
-        : "text-white hover:text-gray-300";
+  const isActive = (path: string) =>
+    path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path || location.pathname.startsWith(path + "/");
+
+  const handleCartClick = () => {
+    if (!localStorage.getItem("customerToken")) {
+      navigate("/masuk?redirect=/keranjang");
+    } else {
+      navigate("/keranjang");
     }
-    return location.pathname === path || location.pathname.startsWith(path + "/")
-      ? "bg-white text-black"
-      : "text-white hover:text-gray-300";
   };
 
-  const isAboutPage = location.pathname === "/tentang-kami";
-  const isProductPage = location.pathname === "/produk";
-  const isKatalogPage = location.pathname === "/katalog";
-  const isNewsPage = location.pathname === "/berita";
-  const isContactPage = location.pathname === "/kontak";
-  const isProductDetailPage = location.pathname.startsWith("/produk/");
-  const isCartPage = location.pathname === "/keranjang";
-  const isCheckoutPage = location.pathname === "/checkout";
-
   return (
-    <header
-      className={`top-0 z-50 transition-colors duration-300 ${
-        isKatalogPage
-          ? isScrolled
-            ? "fixed w-full bg-white/80 backdrop-blur-md shadow-sm"
-            : "absolute w-full bg-transparent"
-          : `sticky ${
-              isScrolled ||
-              isAboutPage ||
-              isProductPage ||
-              isNewsPage ||
-              isContactPage ||
-              isProductDetailPage ||
-              isCartPage ||
-              isCheckoutPage
-                ? "bg-white/80 backdrop-blur-md"
-                : "bg-[#F9F7F2]"
-            }`
-      }`}
-    >
-      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-        <div className="flex items-center justify-between h-20 py-12">
+    <header className="sticky top-0 z-50 bg-white border-b border-[#E9E9EA] h-20">
+      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 h-full">
+        <div className="flex items-center justify-between h-full">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="">
+            <div className="h-10 flex items-center">
               {settings?.logo ? (
                 <img
                   src={api.getImageUrl(settings.logo)}
                   alt="Logo"
-                  className="w-full h-full object-cover"
+                  className="h-10 w-auto max-w-40 object-contain"
                 />
               ) : (
-                <div className="w-full h-full bg-linear-gradient-to-br from-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                <div className="w-10 h-10 bg-[#4F68AF] flex items-center justify-center text-white font-bold text-xs">
                   KK
                 </div>
               )}
             </div>
           </Link>
 
-          {/* Navigation — black capsule */}
-          <nav className="hidden xl:flex items-center bg-black rounded-full px-1.5 py-1.5 gap-2 shadow-lg">
-            <Link to="/" className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/")}`}>
-              Beranda
-            </Link>
-            <Link to="/tentang-kami" className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/tentang-kami")}`}>
-              Tentang Kami
-            </Link>
-            <Link to="/produk" className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/produk")}`}>
-              Produk
-            </Link>
-            <Link to="/katalog" className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/katalog")}`}>
-              Katalog
-            </Link>
-            <Link to="/berita" className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/berita")}`}>
-              Berita
-            </Link>
-            <Link to="/kontak" className={`text-md font-medium transition px-3 py-1.5 rounded-full ${isActive("/kontak")}`}>
-              Kontak
-            </Link>
+          {/* Navigation */}
+          <nav className="hidden xl:flex items-center gap-7">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`text-[13px] uppercase tracking-[0.12em] transition-colors pb-0.5 ${
+                  isActive(link.to)
+                    ? "text-[#1E1E1E] underline underline-offset-4 decoration-1"
+                    : "text-[#6F6F71] hover:text-[#1E1E1E]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {/* Notifications */}
             {customer && (
               <NotificationBell
@@ -168,31 +138,26 @@ export default function Header() {
 
             {/* Cart */}
             <button
-              onClick={() => {
-                if (!localStorage.getItem("customerToken")) {
-                  navigate("/masuk?redirect=/keranjang");
-                } else {
-                  navigate("/keranjang");
-                }
-              }}
-              className="relative flex items-center justify-center text-gray-800 hover:text-primary transition cursor-pointer"
+              onClick={handleCartClick}
+              className="relative flex items-center justify-center text-[#6F6F71] hover:text-[#1E1E1E] transition-colors cursor-pointer"
+              aria-label="Keranjang"
             >
-              <FaShoppingCart className="w-5 h-5" />
+              <FiShoppingCart className="w-5 h-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <sup className="absolute -top-1 -right-2 text-[10px] font-bold text-primary">
                   {cartCount > 9 ? "9+" : cartCount}
-                </span>
+                </sup>
               )}
             </button>
 
             {/* Auth — desktop */}
-            <div className="hidden sm:flex items-center gap-2 ml-2">
+            <div className="hidden sm:flex items-center gap-3 ml-1">
               {customer ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
                     <Avatar className="size-9 [&::after]:hidden ring-2 ring-primary/20 rounded-full">
                       {customer.avatar && <AvatarImage src={api.getImageUrl(customer.avatar)} alt={customer.name} />}
-                      <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
+                      <AvatarFallback className="bg-[#4F68AF] text-white text-xs font-semibold">
                         {initials(customer.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -200,7 +165,7 @@ export default function Header() {
                   <DropdownMenuContent
                     align="end"
                     sideOffset={8}
-                    className="w-52 rounded-xl shadow-xl ring-1 ring-gray-100 p-1.5"
+                    className="w-52 rounded-none shadow-xl ring-1 ring-gray-100 p-1.5"
                   >
                     <div className="px-3 py-2 mb-1">
                       <p className="text-sm font-semibold text-gray-900 truncate">{customer.name}</p>
@@ -235,13 +200,13 @@ export default function Header() {
                 <>
                   <Link
                     to="/masuk"
-                    className="text-sm font-medium text-gray-700 hover:text-primary transition px-3 py-1.5 rounded-full hover:bg-gray-100"
+                    className="text-[13px] uppercase tracking-[0.12em] text-[#6F6F71] hover:text-[#1E1E1E] transition-colors"
                   >
                     Masuk
                   </Link>
                   <Link
                     to="/daftar"
-                    className="text-sm font-medium text-white px-4 py-1.5 rounded-full bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                    className="bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] transition-colors"
                   >
                     Daftar
                   </Link>
@@ -251,121 +216,113 @@ export default function Header() {
 
             {/* Hamburger */}
             <button
-              className="xl:hidden text-2xl text-gray-800 focus:outline-none ml-2"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle menu"
+              className="xl:hidden text-2xl text-[#1E1E1E] focus:outline-none ml-1"
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Buka menu"
             >
-              {isMobileMenuOpen ? <FiX /> : <FiMenu />}
+              <FiMenu />
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Mobile menu */}
-        {isMobileMenuOpen && (
-          <div className="xl:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md shadow-xl border-t border-gray-100 py-6 px-6 flex flex-col gap-4">
-            <Link
-              to="/"
-              className={`text-lg font-medium transition ${location.pathname === "/" ? "text-indigo-600" : "text-gray-800 hover:text-indigo-600"}`}
+      {/* Mobile drawer */}
+      <div
+        className={`xl:hidden fixed inset-0 z-50 transition-opacity duration-300 ${
+          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div
+          className="absolute inset-0 bg-black/20"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+        <div
+          className={`absolute top-0 right-0 h-full w-4/5 max-w-sm bg-white flex flex-col transition-transform duration-300 ${
+            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-end h-20 px-6 border-b border-[#E9E9EA]">
+            <button
+              className="text-2xl text-[#1E1E1E] focus:outline-none"
               onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Tutup menu"
             >
-              Beranda
-            </Link>
-            <Link
-              to="/tentang-kami"
-              className={`text-lg font-medium transition ${location.pathname === "/tentang-kami" ? "text-indigo-600" : "text-gray-800 hover:text-indigo-600"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Tentang Kami
-            </Link>
-            <Link
-              to="/produk"
-              className={`text-lg font-medium transition ${location.pathname === "/produk" ? "text-indigo-600" : "text-gray-800 hover:text-indigo-600"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Produk
-            </Link>
-            <Link
-              to="/katalog"
-              className={`text-lg font-medium transition ${location.pathname === "/katalog" ? "text-indigo-600" : "text-gray-800 hover:text-indigo-600"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Katalog
-            </Link>
-            <Link
-              to="/berita"
-              className={`text-lg font-medium transition ${location.pathname === "/berita" ? "text-indigo-600" : "text-gray-800 hover:text-indigo-600"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Berita
-            </Link>
-            <Link
-              to="/kontak"
-              className={`text-lg font-medium transition ${location.pathname === "/kontak" ? "text-indigo-600" : "text-gray-800 hover:text-indigo-600"}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Kontak
-            </Link>
+              <FiX />
+            </button>
+          </div>
 
-            {/* Mobile auth */}
+          <div className="flex flex-col gap-6 px-6 py-8 overflow-y-auto">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-[13px] uppercase tracking-[0.12em] transition-colors ${
+                  isActive(link.to) ? "text-[#1E1E1E]" : "text-[#6F6F71] hover:text-[#1E1E1E]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+
             {customer ? (
-              <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
-                <div className="flex items-center gap-3 px-1 pb-1">
+              <div className="border-t border-[#E9E9EA] pt-6 flex flex-col gap-5">
+                <div className="flex items-center gap-3 pb-1">
                   <Avatar className="size-9 shrink-0 [&::after]:hidden">
                     {customer.avatar && <AvatarImage src={api.getImageUrl(customer.avatar)} alt={customer.name} />}
-                    <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
+                    <AvatarFallback className="bg-[#4F68AF] text-white text-xs font-semibold">
                       {initials(customer.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{customer.name}</p>
-                    <p className="text-xs text-gray-400">Pelanggan</p>
+                    <p className="text-sm font-semibold text-[#1E1E1E]">{customer.name}</p>
+                    <p className="text-xs text-[#6F6F71]">Pelanggan</p>
                   </div>
                 </div>
                 <Link
                   to="/profil"
-                  className="flex items-center gap-2.5 text-gray-700 hover:text-indigo-600 transition"
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.12em] text-[#6F6F71] hover:text-[#1E1E1E] transition-colors"
                 >
                   <FiUser className="w-4 h-4 shrink-0" />
-                  <span className="text-base font-medium">Dashboard</span>
+                  Dashboard
                 </Link>
                 <Link
                   to="/pesanan"
-                  className="flex items-center gap-2.5 text-gray-700 hover:text-indigo-600 transition"
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.12em] text-[#6F6F71] hover:text-[#1E1E1E] transition-colors"
                 >
                   <FiPackage className="w-4 h-4 shrink-0" />
-                  <span className="text-base font-medium">Pesanan</span>
+                  Pesanan
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2.5 text-red-500 hover:text-red-600 transition"
+                  className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.12em] text-red-500 hover:text-red-600 transition-colors"
                 >
                   <FiLogOut className="w-4 h-4 shrink-0" />
-                  <span className="text-base font-medium">Keluar</span>
+                  Keluar
                 </button>
               </div>
             ) : (
-              <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
+              <div className="border-t border-[#E9E9EA] pt-6 flex flex-col gap-3">
                 <Link
                   to="/masuk"
-                  className="text-center py-3 border border-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-50 transition"
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-center py-3 border border-[#6F6F71] text-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] hover:bg-[#F9F7F2] transition-colors"
                 >
                   Masuk
                 </Link>
                 <Link
                   to="/daftar"
-                  className="text-center py-3 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white rounded-lg font-semibold hover:shadow-md transition"
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-center py-3 bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] hover:bg-[#2B3A67] transition-colors"
                 >
                   Daftar
                 </Link>
               </div>
             )}
-
           </div>
-        )}
+        </div>
       </div>
     </header>
   );

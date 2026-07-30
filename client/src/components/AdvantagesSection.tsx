@@ -1,64 +1,57 @@
-import { useAdvantages, useAdvantagesSection } from '../hooks/useApi';
+import type { IconType } from 'react-icons';
+import { FiAward, FiHeart, FiShield, FiTruck } from 'react-icons/fi';
+
+import { useAdvantages } from '../hooks/useApi';
+import api from '../services/api';
+
+interface Advantage {
+  _id: string;
+  title: string;
+  icon?: string;
+}
+
+const FALLBACK_ICONS: IconType[] = [FiShield, FiTruck, FiAward, FiHeart];
 
 export default function AdvantagesSection() {
-  const { data: advantages, loading: loadingList } = useAdvantages();
-  const { data: sectionContent, loading: loadingContent } = useAdvantagesSection();
-
-  const loading = loadingList || loadingContent;
+  const { data, loading } = useAdvantages();
+  const advantages = (data as Advantage[])?.slice(0, 4) ?? [];
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+      <section className="h-36 bg-white grid grid-cols-2 md:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="flex flex-col items-center justify-center gap-3 animate-pulse">
+            <div className="w-8 h-8 bg-gray-200 rounded-full" />
+            <div className="h-3 bg-gray-200 rounded w-2/3" />
           </div>
-        </div>
+        ))}
       </section>
     );
   }
 
   return (
-    <section className="pt-10 pb-20 bg-white overflow-hidden">
+    <section className="bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-
-        {/* Intro Text */}
-        <div className="w-full">
-          <p className="text-lg font-bold text-black mb-4">{sectionContent?.subtitle || 'Tumbuh Bersama 4 Juta Bayi di Indonesia.'}</p>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-normal text-black leading-tight">
-            {sectionContent?.content || 'PT Kusuma Kencana Khatulistiwa hadir untuk menjawab kekhawatiran orang tua akan kenyamanan dan keamanan si kecil.'}
-          </h2>
-        </div>
-
-        <div className="flex flex-col lg:flex-row items-stretch">
-          {/* Left Side - Vertical Title */}
-          <div className="hidden lg:flex w-80 shrink-0 self-stretch overflow-hidden items-start justify-start">
-            <div className="[writing-mode:vertical-rl] text-[58px] xl:text-9xl font-black text-black leading-none tracking-tighter opacity-90 rotate-180 overflow-hidden text-left self-start">
-              <span className="uppercase">{sectionContent?.title || 'KEUNGGULAN KAMI'}</span>
-            </div>
-          </div>
-
-          {/* Right Side - Advantages List */}
-          <div className="flex-1 lg:pl-20 flex flex-col justify-end">
-            {advantages?.map((advantage: any, index: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-              <div key={advantage._id} className={`group py-8 ${index > 0 ? 'border-t border-gray-100' : ''}`}>
-                <div className="flex items-baseline gap-6">
-                  <span className="text-2xl font-normal text-black/30 shrink-0 w-8">
-                    {advantage.number || `0${index + 1}`}
-                  </span>
-                  <div>
-                    <h4 className="text-2xl md:text-3xl font-bold text-black mb-2 leading-tight">
-                      {advantage.title}
-                    </h4>
-                    <p className="text-black/70 leading-relaxed text-base md:text-lg">
-                      {advantage.description}
-                    </p>
-                  </div>
-                </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 h-36">
+          {advantages.map((advantage, index) => {
+            const Icon = FALLBACK_ICONS[index % FALLBACK_ICONS.length];
+            return (
+              <div key={advantage._id} className="flex flex-col items-center justify-center gap-3 text-center px-2">
+                {advantage.icon ? (
+                  <img
+                    src={api.getImageUrl(advantage.icon)}
+                    alt={advantage.title}
+                    className="w-8 h-8 object-contain"
+                  />
+                ) : (
+                  <Icon className="w-8 h-8 text-[#4F68AF]" strokeWidth={1} />
+                )}
+                <span className="uppercase text-[13px] tracking-[0.12em] text-[#6F6F71]">
+                  {advantage.title}
+                </span>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>

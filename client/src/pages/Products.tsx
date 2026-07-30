@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { ChevronDownIcon } from "lucide-react";
 import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -58,6 +58,20 @@ export default function Products() {
   };
 
   const { data: categories } = useCategories();
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get("category");
+
+  // Kartu kategori di homepage menautkan ?category=<slug>; backend memfilter by nama,
+  // jadi slug diterjemahkan ke nama begitu daftar kategori tersedia.
+  useEffect(() => {
+    if (!categoryParam || !Array.isArray(categories) || categories.length === 0) return;
+    const match = categories.find(
+      (cat: { slug?: string; name?: string }) =>
+        cat.slug === categoryParam || cat.name === categoryParam
+    );
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (match?.name) setActiveCategory(match.name);
+  }, [categoryParam, categories]);
 
   useEffect(() => {
     api.getProductPageSettings()

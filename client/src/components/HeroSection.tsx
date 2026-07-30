@@ -1,94 +1,132 @@
-import { useHero } from '../hooks/useApi';
-import api from '../services/api';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+import { useHero } from '../hooks/useApi';
+
+import api from '../services/api';
+
+interface HeroSlide {
+  media: string;
+  mediaType: 'image' | 'video';
+  title: string;
+  subtitle: string;
+  buttonName: string;
+  buttonLink: string;
+}
+
+const SLIDE_INTERVAL_MS = 6000;
 
 export default function HeroSection() {
   const { data: hero, loading } = useHero();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const slides: HeroSlide[] = Array.isArray(hero?.slides) ? hero.slides : [];
+  const safeIndex = slides.length > 0 ? activeIndex % slides.length : 0;
+
+  useEffect(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    if (slides.length <= 1 || isPaused) {
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % slides.length);
+    }, SLIDE_INTERVAL_MS);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [slides.length, isPaused]);
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-[#F9F7F2] animate-pulse flex items-center justify-center">
-        {/* Loading State matching bg color */}
-      </section>
+      <section className="h-[calc(100vh-80px)] min-h-[560px] bg-[#F9F7F2] animate-pulse" />
     );
   }
 
+  if (slides.length === 0) {
+    return <section className="h-[calc(100vh-80px)] min-h-[560px] bg-[#F9F7F2]" />;
+  }
+
+  const activeSlide = slides[safeIndex];
+
   return (
-    <section className="relative bg-[#F9F7F2] overflow-hidden min-h-screen flex flex-col justify-between items-center"> 
-      {/* 
-         pt-32 to push content down below header location (visually). 
-         The header itself is likely fixed or sticky, but this ensures spacing.
-      */}
+    <section
+      className="relative h-[calc(100vh-80px)] min-h-[560px] overflow-hidden bg-[#F9F7F2]"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {slides.map((slide, index) => (
+        <div
+          key={index}
+          className={`absolute inset-0 transition-opacity duration-700 ${
+            index === safeIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          }`}
+        >
+          {slide.mediaType === 'video' ? (
+            <video
+              src={api.getImageUrl(slide.media)}
+              className="w-full h-full object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ) : (
+            <img
+              src={api.getImageUrl(slide.media)}
+              alt={slide.title || 'Hero'}
+              className="w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/10" />
+        </div>
+      ))}
 
-      {/* Decorative Sparkles (Absolute Positioned) */}
-      <svg className="absolute top-40 left-10 md:left-32 w-8 h-8 text-black animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-         <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-      </svg>
-      <svg className="absolute bottom-1/3 left-20 w-6 h-6 text-black/60 animate-pulse delay-700" viewBox="0 0 24 24" fill="currentColor">
-         <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-      </svg>
-      <svg className="absolute top-32 right-20 md:right-40 w-4 h-4 text-black/40 animate-pulse delay-300" viewBox="0 0 24 24" fill="currentColor">
-         <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-      </svg>
-      <svg className="absolute bottom-1/2 right-32 w-6 h-6 text-black/70 animate-pulse delay-500" viewBox="0 0 24 24" fill="currentColor">
-         <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-      </svg>
-
-
-      {/* Styles for "Gradient Primary" requested by user.
-          "di atas foto ada gradient-primary dari atas ke bawah"
-          Interpretation: A gradient overlay ON TOP of the photo, going from [Color] to Transparent.
-          Matching the image: It fades from the Background Color (#F9F7F2) to Transparent, 
-          making the image look like it's emerging from the fog.
-      */}
-
-      {/* Hero Text Content */}
-      <div className="absolute z-20 container mx-auto px-4 text-center mt-10 pt-5">
-        {/* Subtitle */}
-        <p className="text-xl md:text-2xl text-[#1e1e1e] mb-2">
-          {hero?.subtitle || 'Bersertifikat SNI, OEKO-TEX®, dan K3L.'}
-        </p>
-
-        {/* Main Title */}
-        <h1 className="text-3xl md:text-5xl leading-tight font-normal text-[#1e1e1e] max-w-7xl mx-auto mb-10">
-          {hero?.title || 'Menghadirkan perlengkapan tidur bayi\ndan handuk keluarga berkualitas premium sejak tahun 2001.'}
-        </h1>
-
-        {/* CTA Button */}
-        {hero?.buttonName && (
-          <div className="mb-20">
-            <Link 
-              to={hero?.buttonLink || '/produk'}
-              className="inline-flex items-center px-10 py-4 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-medium rounded-full shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-sm tracking-wide"
-            >
-              {hero.buttonName}
-            </Link>
-          </div>
+      <div className="absolute z-20 bottom-10 left-4 sm:left-10 lg:left-20 xl:left-30 right-4 sm:right-10 max-w-2xl">
+        {activeSlide.title && (
+          <h1 className="text-xl md:text-[2rem] font-normal uppercase tracking-[0.05em] leading-tight text-white mb-4">
+            {activeSlide.title}
+          </h1>
+        )}
+        {activeSlide.subtitle && (
+          <p className="text-sm text-white/80 leading-relaxed mb-8">
+            {activeSlide.subtitle}
+          </p>
+        )}
+        {activeSlide.buttonName && (
+          <Link
+            to={activeSlide.buttonLink || '/produk'}
+            className="inline-flex items-center uppercase tracking-[0.18em] text-[13px] px-8 py-4 border border-white text-white hover:bg-white hover:text-[#1E1E1E] transition-colors duration-300"
+          >
+            {activeSlide.buttonName}
+          </Link>
         )}
       </div>
 
-      {/* Hero Image Container at Bottom */}
-      <div className="relative w-full h-screen z-10">
-         {/* The Image */}
-         <div className="w-full h-full">
-             <img 
-               src={api.getImageUrl(hero?.image)}
-               alt="Hero Family"
-               className="w-full h-full object-cover object-top"
-               style={{
-                  maxHeight: 'fit-content',
-                  minHeight: '400px'
-               }}
-               onError={(e) => {
-                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=1600';
-               }}
+      {slides.length > 1 && (
+        <div className="absolute z-20 bottom-10 right-4 sm:right-10 lg:right-20 xl:right-30 flex gap-2">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              aria-label={`Slide ${index + 1}`}
+              onClick={() => setActiveIndex(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+                index === safeIndex ? 'bg-white' : 'bg-white/40'
+              }`}
             />
-         </div>
-
-         {/* Gradient Overlay - "Gradient Primary dari Atas ke Bawah" matches the background */}
-         <div className="absolute inset-0 bg-gradient-to-b from-[#F9F7F2] via-[#F9F7F2]/60 to-transparent pointer-events-none h-1/2"></div>
-      </div>
-
+          ))}
+        </div>
+      )}
     </section>
   );
 }
