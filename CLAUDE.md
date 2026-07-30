@@ -52,7 +52,12 @@ JWT_SECRET=...
 PORT=8000
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
 ```
+
+The three `CLOUDINARY_*` keys are required — `middleware/upload.js` configures the Cloudinary SDK at import time, so every upload route fails without them.
 
 Create `client/.env` for the frontend:
 ```
@@ -63,17 +68,22 @@ VITE_API_URL=http://localhost:8000
 
 ### Backend (root level, CommonJS)
 
-- **`server.js`** — Express entry point. Registers all routes under `/api/*`, serves `uploads/` as public static. In production (`NODE_ENV=production`) serves `client/dist/` as the React SPA with a `*` fallback.
+- **`server.js`** — Express entry point. Registers all routes under `/api/*`. Still mounts `uploads/` as public static (`app.use('/uploads', …)`), but this is legacy: uploads now go to Cloudinary and no document in the database references a `/uploads/` path. In production (`NODE_ENV=production`) serves `client/dist/` as the React SPA with a `*` fallback.
 - **`config/db.js`** — Mongoose connection using `MONGODB_URI`.
 - **`middleware/auth.js`** — JWT verification middleware; attaches `req.admin` on success. Applied to all write routes.
-- **`middleware/upload.js`** — Multer disk storage to `uploads/`. Accepts images, PDFs, and videos up to 50 MB. Files are named `{fieldname}-{timestamp}-{random}.{ext}`.
+- **`middleware/upload.js`** — Multer with `multer-storage-cloudinary` (`CloudinaryStorage`) — files are streamed straight to **Cloudinary**, never written to disk. Configures `cloudinary.v2` from the `CLOUDINARY_*` env vars. Exports the multer instance as the default export and the configured `cloudinary` client as `.cloudinary`.
+  - Accepted: `jpeg`, `jpg`, `png`, `gif`, `webp`, `pdf`, `mp4`, `webm` — enforced twice, by a `fileFilter` regex (extension **and** mimetype must both match) and by Cloudinary's own `allowed_formats`.
+  - Size limit: 50 MB.
+  - Every asset lands in the `katiga` folder. `resource_type` is derived from the extension: `raw` for PDFs, `video` for `mp4`/`webm`, `image` for everything else.
+  - No `public_id` is set, so Cloudinary assigns a random one — the original filename is **not** preserved.
+  - Each entry in `req.file` / `req.files` carries `path` (the absolute `https://res.cloudinary.com/…` URL — this is what routes persist) and `filename` (the Cloudinary public_id, e.g. `katiga/rkkfwiukelwfnt5yzw10`). The raw Cloudinary response is also spread onto the entry, so `secure_url` is available as an alias of `path`.
 - **`routes/`** — One file per resource (18 routes). Public GET, private POST/PUT/DELETE (protected by `auth` middleware).
 - **`models/`** — Mongoose schemas, one per collection. `Admin` hashes passwords via a `pre('save')` hook and exposes `matchPassword()`.
 - **`seeds/seedData.js`** — Populates all collections with initial data; creates the first admin account.
 
 ### Frontend (`client/`, ESM + TypeScript)
 
-- **`client/src/services/api.ts`** — Single source of truth for all API calls. `VITE_API_URL` is normalised to always end with `/api`. `api.getImageUrl()` strips `/api` from the base URL to build image paths pointing to `/uploads/`.
+- **`client/src/services/api.ts`** — Single source of truth for all API calls. `VITE_API_URL` is normalised to always end with `/api`. `api.getImageUrl()` returns any value starting with `http` untouched (the normal case — stored media are absolute Cloudinary URLs) and only falls back to stripping `/api` from the base URL for legacy relative paths.
 - **`client/src/hooks/useApi.ts`** — Custom hooks that wrap every `api.*` call with `useState`/`useEffect`. Pages should use these hooks, not call `api.*` directly.
 - **`client/src/App.tsx`** — All routes defined here. Public pages use Indonesian URL slugs (`/tentang-kami`, `/produk`, `/berita`, `/kontak`). Admin pages are all under `/admin/*` with no route-level auth guard — the guard is handled server-side.
 - **`client/src/pages/admin/`** — One admin page per CMS section (Dashboard, Products, Hero, Partners, …). They call the API with a `Bearer` token stored in `localStorage`.
@@ -91,9 +101,12 @@ Each CMS section follows this consistent pattern:
 
 ### Image handling
 
-- Uploaded files land in `uploads/` at the project root and are stored as paths like `/uploads/{filename}` in MongoDB.
-- `api.getImageUrl(path)` converts a stored path to an absolute URL by prepending the server origin. Never construct image URLs manually — always use this helper.
+- Uploads go to **Cloudinary**, under the `katiga` folder. Nothing is written to the project's `uploads/` directory.
+- Routes persist `req.file.path` / `file.path` verbatim, so **every media field in MongoDB holds an absolute URL** like `https://res.cloudinary.com/{cloud}/image/upload/v{version}/katiga/{public_id}.{ext}`. Verified against the live database: no collection contains a `/uploads/` path.
+- `api.getImageUrl(path)` returns `/placeholder.jpg` for empty values, passes anything starting with `http` through unchanged, and otherwise prepends the server origin. Never construct image URLs manually — always use this helper.
+- **Legacy:** `uploads/` at the project root still holds ~144 files from the pre-Cloudinary era, and `server.js` plus the `/uploads/(.*)` route in `vercel.json` still serve them. No live document points at them. `seeds/seedData.js` is also still written against the old scheme — it seeds relative `/uploads/{filename}` paths, so running the seed reintroduces broken image references.
 - `multer` uses `upload.any()` on product routes to handle variable field names; `keptImages` in PUT body tracks which existing images to retain.
+- Deleting a record does **not** delete its Cloudinary asset — no route calls `cloudinary.uploader.destroy()`. Orphaned assets accumulate.
 
 ### Auth
 
