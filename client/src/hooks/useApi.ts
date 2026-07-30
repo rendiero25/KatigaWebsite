@@ -432,6 +432,17 @@ export function useNewsSection() {
   return { data, loading };
 }
 
+export function useAboutContent() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getAboutContent().then(setData).catch(() => setData(null)).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
 export function useCertificationTech() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
