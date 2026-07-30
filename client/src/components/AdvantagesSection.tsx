@@ -32,11 +32,15 @@ export default function AdvantagesSection() {
   return (
     <section className="bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-        <div className="grid grid-cols-2 md:grid-cols-4 h-36">
+        {/* flex + justify-center supaya baris tetap terpusat saat item kurang dari 4 */}
+        <div className="flex flex-wrap justify-center min-h-36">
           {advantages.map((advantage, index) => {
             const Icon = FALLBACK_ICONS[index % FALLBACK_ICONS.length];
             return (
-              <div key={advantage._id} className="flex flex-col items-center justify-center gap-3 text-center px-2">
+              <div
+                key={advantage._id}
+                className="w-1/2 md:w-1/4 min-h-36 flex flex-col items-center justify-center gap-3 text-center px-2"
+              >
                 {advantage.icon ? (
                   <img
                     src={api.getImageUrl(advantage.icon)}

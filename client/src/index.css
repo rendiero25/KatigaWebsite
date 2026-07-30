@@ -79,37 +79,41 @@ body {
   line-height: 1.65;
 }
 
-/* Public heading language: light weight, uppercase, wide tracking */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--color-ink-strong);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-heading);
-}
+/* Must live in @layer base: unlayered rules outrank Tailwind's utilities layer,
+   which would make every text color utility on a heading lose. */
+@layer base {
+  /* Public heading language: light weight, uppercase, wide tracking */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-ink-strong);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-heading);
+  }
 
-/* Admin panel opts out of the public brand language */
-.admin-shell {
-  --radius: 0.5rem;
-  color: #111827;
-  font-size: 1rem;
-  line-height: 1.5;
-}
+  /* Admin panel opts out of the public brand language */
+  .admin-shell {
+    --radius: 0.5rem;
+    color: #111827;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
 
-.admin-shell :is(h1, h2, h3, h4, h5, h6) {
-  color: inherit;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: normal;
-}
+  .admin-shell :is(h1, h2, h3, h4, h5, h6) {
+    color: inherit;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+  }
 
-.admin-shell :is(button, input, select, textarea) {
-  text-transform: none;
-  letter-spacing: normal;
+  .admin-shell :is(button, input, select, textarea) {
+    text-transform: none;
+    letter-spacing: normal;
+  }
 }
 
 @layer base {

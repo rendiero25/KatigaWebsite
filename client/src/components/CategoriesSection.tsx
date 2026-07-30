@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { useCategories } from '../hooks/useApi';
+import { useCategories, useProducts } from '../hooks/useApi';
 
 import api from '../services/api';
 
@@ -13,7 +13,28 @@ interface Category {
   featured?: boolean;
 }
 
+interface CategoryProduct {
+  _id: string;
+  image?: string;
+  images?: string[];
+  category?: { _id: string; name?: string } | string | null;
+}
+
 const MAX_CATEGORIES = 3;
+
+// Kalau admin belum mengunggah foto kategori, pinjam foto produk pertama
+// dari kategori tersebut supaya kartunya tidak kosong.
+function buildFallbackImages(products: CategoryProduct[]): Record<string, string> {
+  const byCategory: Record<string, string> = {};
+  for (const product of products) {
+    const categoryId =
+      typeof product.category === 'string' ? product.category : product.category?._id;
+    if (!categoryId || byCategory[categoryId]) continue;
+    const image = product.image || product.images?.[0];
+    if (image) byCategory[categoryId] = image;
+  }
+  return byCategory;
+}
 
 function pickCategories(categories: Category[]): Category[] {
   const sorted = [...categories].sort((a, b) => {
@@ -32,8 +53,12 @@ function pickCategories(categories: Category[]): Category[] {
 
 export default function CategoriesSection() {
   const { data, loading } = useCategories();
+  const { data: productData } = useProducts();
   const categories: Category[] = Array.isArray(data) ? data : [];
   const displayedCategories = pickCategories(categories);
+  const fallbackImages = buildFallbackImages(
+    Array.isArray(productData) ? (productData as CategoryProduct[]) : []
+  );
 
   if (loading) {
     return (
@@ -58,14 +83,18 @@ export default function CategoriesSection() {
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <div className="hidden md:grid md:grid-cols-3 gap-1 lg:gap-2">
           {displayedCategories.map((category) => (
-            <CategoryCard key={category._id} category={category} />
+            <CategoryCard
+              key={category._id}
+              category={category}
+              fallbackImage={fallbackImages[category._id]}
+            />
           ))}
         </div>
 
         <div className="flex md:hidden overflow-x-auto snap-x snap-mandatory gap-2 no-scrollbar -mx-4 px-4">
           {displayedCategories.map((category) => (
             <div key={category._id} className="min-w-[80%] snap-start">
-              <CategoryCard category={category} />
+              <CategoryCard category={category} fallbackImage={fallbackImages[category._id]} />
             </div>
           ))}
         </div>
@@ -74,8 +103,14 @@ export default function CategoriesSection() {
   );
 }
 
-function CategoryCard({ category }: { category: Category }) {
-  const hasImage = Boolean(category.image);
+interface CategoryCardProps {
+  category: Category;
+  fallbackImage?: string;
+}
+
+function CategoryCard({ category, fallbackImage }: CategoryCardProps) {
+  const imagePath = category.image || fallbackImage;
+  const hasImage = Boolean(imagePath);
 
   return (
     <Link
@@ -84,7 +119,7 @@ function CategoryCard({ category }: { category: Category }) {
     >
       {hasImage ? (
         <img
-          src={api.getImageUrl(category.image ?? '')}
+          src={api.getImageUrl(imagePath ?? '')}
           alt={category.name}
           className="object-cover w-full h-full transition duration-700 group-hover:scale-105"
         />
