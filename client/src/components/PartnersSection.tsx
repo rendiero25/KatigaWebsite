@@ -4,39 +4,38 @@ import api from '../services/api';
 export default function PartnersSection() {
   const { data: partners, loading } = usePartners();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <section className="bg-white py-16">
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+          <div className="h-3 bg-gray-200 rounded w-40 mx-auto mb-10 animate-pulse" />
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-8 items-center">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-10 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (!partners || partners.length === 0) return null;
 
   return (
-    <section className="bg-white py-8 w-full">
-      <div className="container mx-auto px-6">
-        <div className="flex flex-col xl:flex-row items-center justify-start xl:justify-center gap-8 md:gap-10">
-
-          {/* Text Section */}
-          <div className="w-full md:w-48 shrink-0 text-center md:text-left">
-            <h3 className="text-black text-lg leading-relaxed font-medium">
-              Trusted by several big<br className="md:block" /> company in Indonesia
-            </h3>
-          </div>
-
-          {/* Logos Scroll/Grid Section */}
-          <div className="flex-1 w-full min-w-0">
-            <div className="flex flex-wrap 2xl:flex-nowrap items-center justify-center xl:justify-between gap-x-8 gap-y-6 transition-all duration-500">
-              {partners.map((partner) => (
-                <div key={partner._id} className="h-10 md:h-14 flex items-center justify-center">
-                  <img
-                    src={api.getImageUrl(partner.logo)}
-                    alt={partner.name}
-                    className="h-full w-auto max-w-[120px] md:max-w-[160px] object-contain transition-all duration-300"
-                    onError={(e) => {
-                       (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          
+    <section className="bg-white py-16">
+      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+        <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] text-center mb-10">
+          Dipercaya Oleh
+        </p>
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-8 items-center">
+          {partners.map((partner) => (
+            <img
+              key={partner._id}
+              src={api.getImageUrl(partner.logo)}
+              alt={partner.name}
+              className="max-h-10 w-auto object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition mx-auto"
+            />
+          ))}
         </div>
       </div>
     </section>
