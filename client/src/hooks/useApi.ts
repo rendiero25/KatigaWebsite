@@ -346,10 +346,23 @@ export function useProducts(params?: { category?: string; featured?: boolean }) 
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const latestRequestIdRef = useRef(0);
+
   useEffect(() => {
+    // Filter changes fire overlapping requests; without this guard a slower
+    // earlier response can land last and overwrite the filtered result.
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    api.getProducts(params).then(setData).finally(() => setLoading(false));
+    api.getProducts(params)
+      .then((result) => {
+        if (latestRequestIdRef.current === requestId) setData(result);
+      })
+      .finally(() => {
+        if (latestRequestIdRef.current === requestId) setLoading(false);
+      });
   }, [params?.category, params?.featured]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { data, loading };
@@ -427,6 +440,17 @@ export function useNewsSection() {
 
   useEffect(() => {
     api.getNewsSection().then(setData).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
+export function useProductPageSettings() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getProductPageSettings().then(setData).catch(() => setData(null)).finally(() => setLoading(false));
   }, []);
 
   return { data, loading };

@@ -1,65 +1,47 @@
-import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { motion } from "motion/react";
-import { ChevronDownIcon } from "lucide-react";
-import { FaSearch, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { useProducts, useCategories, useWishlist } from "../hooks/useApi";
-import api from "../services/api";
-import WishlistButton from "../components/WishlistButton";
-import StarRating from '../components/StarRating';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import PartnersSection from "../components/PartnersSection";
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-const PRODUCTS_PER_PAGE = 15;
+import { useProducts, useCategories, useWishlist, useProductPageSettings } from '../hooks/useApi';
 
-function formatSold(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}jt terjual`;
-  if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}rb terjual`;
-  return `${n} terjual`;
-}
+import api from '../services/api';
 
-function formatPriceString(price: string): string {
-  const digits = price.replace(/[^0-9]/g, '');
-  const n = Number(digits);
-  if (digits && !isNaN(n) && n > 0) return `Rp ${n.toLocaleString('id-ID')}`;
-  return price.startsWith('Rp') ? price : `Rp ${price}`;
-}
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import ProductFilterBar from '../components/products/ProductFilterBar';
+import ProductGrid from '../components/products/ProductGrid';
+import ProductPagination from '../components/products/ProductPagination';
+import type { SortKey, FilterOption } from '../components/products/ProductFilterBar';
+import type { CatalogProduct } from '../components/products/ProductCard';
 
-const sortLabels: Record<"default" | "az" | "za", string> = {
-  default: "Urutan Default",
-  az: "Nama A–Z",
-  za: "Nama Z–A",
+const PRODUCTS_PER_PAGE = 12;
+
+type Availability = 'all' | 'in-stock' | 'out-of-stock';
+
+const resolvePrice = (product: CatalogProduct): number => {
+  if (product.priceNumeric > 0) return product.priceNumeric;
+  const parsed = Number(String(product.price ?? '').replace(/[^\d]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const isInStock = (product: CatalogProduct): boolean => {
+  if ((product.stock ?? 0) > 0) return true;
+  return (product.variants ?? []).some((variant) => (variant.stock ?? 0) > 0);
 };
 
 export default function Products() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [settings, setSettings] = useState<any>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"default" | "az" | "za">("default");
+  const { data: settings } = useProductPageSettings();
+  const { data: categories } = useCategories();
+  const { wishlistIds, add, remove } = useWishlist();
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+
+  const [activeCategory, setActiveCategory] = useState('');
+  const [activeVariants, setActiveVariants] = useState<string[]>([]);
+  const [availability, setAvailability] = useState<Availability>('all');
+  const [sort, setSort] = useState<SortKey>('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { wishlistIds, add, remove } = useWishlist();
-
-  const handleToggleWishlist = (productId: string, currentlyInWishlist: boolean) => {
-    if (currentlyInWishlist) {
-      remove(productId);
-    } else {
-      add(productId);
-    }
-  };
-
-  const { data: categories } = useCategories();
-  const [searchParams] = useSearchParams();
-  const categoryParam = searchParams.get("category");
+  const gridRef = useRef<HTMLDivElement>(null);
 
   // Kartu kategori di homepage menautkan ?category=<slug>; backend memfilter by nama,
   // jadi slug diterjemahkan ke nama begitu daftar kategori tersedia.
@@ -73,317 +55,132 @@ export default function Products() {
     if (match?.name) setActiveCategory(match.name);
   }, [categoryParam, categories]);
 
-  useEffect(() => {
-    api.getProductPageSettings()
-      .then(setSettings)
-      .catch((error) => console.error("Error fetching page data:", error));
-  }, []);
-
-  const { data: productskumakuma, loading: productsLoading } = useProducts({
+  const { data: productData, loading } = useProducts({
     category: activeCategory || undefined,
   });
+
+  const products = useMemo(
+    () => (Array.isArray(productData) ? (productData as CatalogProduct[]) : []),
+    [productData]
+  );
+
+  const categoryOptions: FilterOption[] = useMemo(
+    () =>
+      (Array.isArray(categories) ? categories : []).map((cat: { _id: string; name?: string }) => ({
+        value: cat.name ?? '',
+        label: cat.name ?? '',
+      })),
+    [categories]
+  );
+
+  const variantOptions: FilterOption[] = useMemo(() => {
+    const names = new Set<string>();
+    for (const product of products) {
+      for (const variant of product.variants ?? []) {
+        if (variant.name) names.add(variant.name);
+      }
+    }
+    return [...names].sort((a, b) => a.localeCompare(b)).map((name) => ({ value: name, label: name }));
+  }, [products]);
+
+  const visibleProducts = useMemo(() => {
+    const filtered = products.filter((product) => {
+      if (activeVariants.length > 0) {
+        const names = (product.variants ?? []).map((v) => v.name).filter(Boolean) as string[];
+        if (!activeVariants.some((name) => names.includes(name))) return false;
+      }
+      if (availability === 'in-stock' && !isInStock(product)) return false;
+      if (availability === 'out-of-stock' && isInStock(product)) return false;
+      return true;
+    });
+
+    const sorted = [...filtered];
+    if (sort === 'az') sorted.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === 'za') sorted.sort((a, b) => b.name.localeCompare(a.name));
+    else if (sort === 'price-asc') sorted.sort((a, b) => resolvePrice(a) - resolvePrice(b));
+    else if (sort === 'price-desc') sorted.sort((a, b) => resolvePrice(b) - resolvePrice(a));
+    return sorted;
+  }, [products, activeVariants, availability, sort]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
-  }, [activeCategory, searchQuery, sortBy]);
+  }, [activeCategory, activeVariants, availability, sort]);
 
-  const filteredProducts = (Array.isArray(productskumakuma) ? productskumakuma : [])
-    .filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase())) // eslint-disable-line @typescript-eslint/no-explicit-any
-    .sort((a: any, b: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (sortBy === "az") return a.name.localeCompare(b.name);
-      if (sortBy === "za") return b.name.localeCompare(a.name);
-      return 0;
-    });
-
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
-  const pagedProducts = filteredProducts.slice(
+  const totalPages = Math.ceil(visibleProducts.length / PRODUCTS_PER_PAGE);
+  const pagedProducts = visibleProducts.slice(
     (currentPage - 1) * PRODUCTS_PER_PAGE,
     currentPage * PRODUCTS_PER_PAGE
   );
 
-  const getPageNumbers = (): (number | "...")[] => {
-    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    if (currentPage <= 3) return [1, 2, 3, 4, "...", totalPages];
-    if (currentPage >= totalPages - 2) return [1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-    return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+  const handleToggleWishlist = (productId: string) => {
+    if (wishlistIds.has(productId)) remove(productId);
+    else add(productId);
   };
 
-  // Animation Variants
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+  const handleClearAll = () => {
+    setActiveCategory('');
+    setActiveVariants([]);
+    setAvailability('all');
+    setSort('newest');
   };
 
-  const fadeIn = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.6 } },
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="pt-6 pb-20 grow">
-        <div className="">
-          {/* Main Header Section */}
-          <div className="container mx-auto mb-20 overflow-hidden px-4 sm:px-10 lg:px-20 xl:px-30">
-            <motion.p
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-black font-medium text-lg mb-2"
-            >
-              {settings?.subtitle}
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-3xl md:text-5xl font-normal text-black leading-tight w-full"
-            >
-              {settings?.title}
-            </motion.h1>
-          </div>
+      <main className="grow">
+        <div className="border-b border-[#E9E9EA] py-6">
+          <h1 className="text-center text-2xl md:text-3xl">Produk</h1>
+        </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeIn}
-          >
-            <PartnersSection />
-          </motion.div>
-
-          {/* Banner Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="mt-20 mb-12 w-full h-64 md:h-[400px] overflow-hidden bg-gray-100"
-          >
+        <div className="w-full h-[320px] md:h-[440px] bg-[#F9F7F2] overflow-hidden">
+          {settings?.bannerImage && (
             <img
-              src={
-                settings?.bannerImage
-                  ? api.getImageUrl(settings?.bannerImage)
-                  : "https://images.unsplash.com/photo-1616486338812-3dadae4b4f9d?q=80&w=2070&auto=format&fit=crop"
-              }
-              alt="Product Banner"
+              src={api.getImageUrl(settings.bannerImage)}
+              alt=""
               className="w-full h-full object-cover"
             />
-          </motion.div>
+          )}
+        </div>
 
-          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            {/* Filter Bar */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-wrap gap-3 items-center mb-8"
-            >
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px] max-w-xs">
-                <input
-                  type="text"
-                  placeholder="Cari produk…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-                />
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
+        <ProductFilterBar
+          sort={sort}
+          onSortChange={setSort}
+          categories={categoryOptions}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          variants={variantOptions}
+          activeVariants={activeVariants}
+          onVariantsChange={setActiveVariants}
+          availability={availability}
+          onAvailabilityChange={setAvailability}
+          resultCount={visibleProducts.length}
+          onClearAll={handleClearAll}
+        />
 
-              {/* Category filter */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-2 pl-4 pr-4 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary">
-                  {activeCategory || "Semua Kategori"}
-                  <ChevronDownIcon className="w-3 h-3 text-gray-500" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => { setActiveCategory(""); setSearchQuery(""); }}>
-                      Semua Kategori
-                    </DropdownMenuItem>
-                    {categories.map((cat) => (
-                      <DropdownMenuItem key={cat._id} onClick={() => { setActiveCategory(cat.name); setSearchQuery(""); }}>
-                        {cat.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
+        <div ref={gridRef} className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 pt-12 pb-20">
+          <ProductGrid
+            products={pagedProducts}
+            loading={loading}
+            wishlistIds={wishlistIds}
+            onToggleWishlist={handleToggleWishlist}
+            onClearFilters={handleClearAll}
+          />
 
-              {/* Sort */}
-              <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-2 pl-4 pr-4 py-2 rounded-full border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary">
-                  {sortLabels[sortBy]}
-                  <ChevronDownIcon className="w-3 h-3 text-gray-500" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => setSortBy("default")}>Urutan Default</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("az")}>Nama A–Z</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortBy("za")}>Nama Z–A</DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Result count */}
-              {!productsLoading && (
-                <span className="ml-auto text-sm text-gray-400">
-                  {filteredProducts.length} produk
-                </span>
-              )}
-            </motion.div>
-
-            {/* Product Grid */}
-            {productsLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="animate-pulse"
-                  >
-                    <div className="bg-gray-200 aspect-square rounded-xl mb-3"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/3 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <motion.div
-                key={currentPage}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={{
-                  visible: {
-                    transition: {
-                      staggerChildren: 0.1,
-                    },
-                  },
-                }}
-                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8"
-              >
-                {pagedProducts.map((product: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                  <motion.div key={product._id} variants={fadeInUp}>
-                    <Link to={`/produk/${product._id}`} className="group flex flex-col h-full">
-                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
-                        <img
-                          src={api.getImageUrl(product.image)}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                        />
-                        <WishlistButton
-                          productId={product._id}
-                          inWishlist={wishlistIds.has(product._id)}
-                          onToggle={handleToggleWishlist}
-                          redirectTo={`/produk/${product._id}`}
-                        />
-                      </div>
-                      <div className="flex flex-col flex-1 pt-1">
-                        {product.category?.name && (
-                          <span className="text-xs font-medium text-primary/80 mb-1 block">
-                            {product.category.name}
-                          </span>
-                        )}
-                        <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2 leading-tight h-10 overflow-hidden">
-                          {product.name}
-                        </h3>
-                        {product.reviewCount > 0 && (
-                          <div className="flex items-center gap-1 mb-2">
-                            <StarRating value={product.ratingAvg ?? 0} size="sm" />
-                            <span className="text-xs text-gray-400">({product.reviewCount})</span>
-                          </div>
-                        )}
-                        {product.priceNumeric > 0 ? (
-                          product.activePromotion ? (
-                            <div className="mb-1">
-                              <div className="flex flex-wrap items-center gap-1">
-                                <span className="text-base font-bold text-gray-900">
-                                  Rp {Math.round(product.priceNumeric * (1 - product.activePromotion.discountPercent / 100)).toLocaleString('id-ID')}
-                                </span>
-                                <span className="px-1 py-0.5 bg-red-100 text-red-500 text-xs font-bold rounded">
-                                  -{product.activePromotion.discountPercent}%
-                                </span>
-                              </div>
-                              <span className="text-xs text-gray-400 line-through">
-                                Rp {product.priceNumeric.toLocaleString('id-ID')}
-                              </span>
-                            </div>
-                          ) : (
-                            <p className="text-base font-bold text-gray-900 mb-1">
-                              Rp {product.priceNumeric.toLocaleString('id-ID')}
-                            </p>
-                          )
-                        ) : product.price ? (
-                          <p className="text-base font-bold text-gray-900 mb-1">{formatPriceString(product.price)}</p>
-                        ) : null}
-                        {product.soldCount > 0 && (
-                          <p className="text-xs text-gray-400 mt-0.5">{formatSold(product.soldCount)}</p>
-                        )}
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5 }}
-                className="mt-16 flex justify-center items-center gap-2"
-              >
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="cursor-pointer p-2 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <FaChevronLeft className="w-4 h-4" />
-                </button>
-
-                {getPageNumbers().map((page, i) =>
-                  page === "..." ? (
-                    <span key={`ellipsis-${i}`} className="px-1 text-gray-400 select-none">
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page as number)}
-                      className={`cursor-pointer w-9 h-9 rounded-full text-sm font-medium transition ${
-                        currentPage === page
-                          ? "bg-primary text-white"
-                          : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
-
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="cursor-pointer p-2 text-gray-400 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <FaChevronRight className="w-4 h-4" />
-                </button>
-              </motion.div>
-            )}
-          </div>
+          <ProductPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </main>
+
       <Footer />
     </div>
   );

@@ -7,9 +7,23 @@ interface Props {
   onToggle: (productId: string, inWishlist: boolean) => void
   size?: 'sm' | 'md'
   redirectTo?: string
+  /** 'pill' keeps the white rounded background; 'bare' is the flat icon used by the redesigned catalogue. */
+  variant?: 'pill' | 'bare'
 }
 
-export default function WishlistButton({ productId, inWishlist, onToggle, size = 'sm', redirectTo }: Props) {
+const variantClasses: Record<'pill' | 'bare', string> = {
+  pill: 'w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white',
+  bare: 'w-8 h-8 drop-shadow-md',
+}
+
+export default function WishlistButton({
+  productId,
+  inWishlist,
+  onToggle,
+  size = 'sm',
+  redirectTo,
+  variant = 'pill',
+}: Props) {
   const navigate = useNavigate()
   const iconSize = size === 'sm' ? 14 : 16
 
@@ -27,11 +41,17 @@ export default function WishlistButton({ productId, inWishlist, onToggle, size =
     <button
       onClick={handleClick}
       aria-label={inWishlist ? 'Hapus dari wishlist' : 'Tambah ke wishlist'}
-      className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm transition hover:bg-white cursor-pointer"
+      className={`absolute top-3 right-3 z-10 flex items-center justify-center transition cursor-pointer ${variantClasses[variant]}`}
     >
       <Heart
         size={iconSize}
-        className={inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'}
+        className={
+          inWishlist
+            ? 'fill-red-500 text-red-500'
+            : variant === 'bare'
+              ? 'text-white'
+              : 'text-gray-400'
+        }
       />
     </button>
   )
