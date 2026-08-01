@@ -21,25 +21,27 @@ export default function ReviewCard({ review }: Props) {
 
   return (
     <>
-      <div className="py-5 border-b border-gray-100 last:border-0">
+      <div className="py-5 border-b border-[#E9E9EA] last:border-0">
         <div className="flex items-start gap-3">
           <Avatar className="size-9 shrink-0 [&::after]:hidden">
             {review.customer.avatar && (
               <AvatarImage src={api.getImageUrl(review.customer.avatar)} alt={review.customer.name} />
             )}
-            <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-xs font-semibold">
+            <AvatarFallback className="bg-[#4F68AF] text-white text-xs">
               {initials(review.customer.name)}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <p className="text-sm font-semibold text-gray-900 truncate">{review.customer.name}</p>
-              <p className="text-xs text-gray-400 shrink-0">{formatDate(review.createdAt)}</p>
+              <p className="uppercase text-[13px] text-[#1E1E1E] truncate">{review.customer.name}</p>
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#6F6F71] shrink-0">
+                {formatDate(review.createdAt)}
+              </p>
             </div>
             <StarRating value={review.rating} size="sm" />
             {review.comment && (
-              <p className="mt-2 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+              <p className="mt-2 text-sm text-[#6F6F71] leading-relaxed whitespace-pre-line">
                 {review.comment}
               </p>
             )}
@@ -50,7 +52,7 @@ export default function ReviewCard({ review }: Props) {
                     key={i}
                     type="button"
                     onClick={() => setLightboxSrc(api.getImageUrl(photo))}
-                    className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 hover:opacity-80 transition cursor-zoom-in"
+                    className="w-16 h-16 overflow-hidden border border-[#E9E9EA] hover:opacity-80 transition cursor-zoom-in"
                   >
                     <img
                       src={api.getImageUrl(photo)}
@@ -73,7 +75,7 @@ export default function ReviewCard({ review }: Props) {
           <img
             src={lightboxSrc}
             alt="Foto ulasan"
-            className="max-w-full max-h-[90vh] rounded-xl object-contain"
+            className="max-w-full max-h-[90vh] object-contain"
           />
         </div>
       )}

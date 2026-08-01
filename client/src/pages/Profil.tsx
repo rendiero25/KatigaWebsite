@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   awaiting_payment: { label: 'Menunggu Bayar', color: 'bg-amber-100 text-amber-700' },
   processing: { label: 'Diproses', color: 'bg-blue-100 text-blue-700' },
-  shipped: { label: 'Dikirim', color: 'bg-indigo-100 text-indigo-700' },
+  shipped: { label: 'Dikirim', color: 'bg-[#4F68AF]/10 text-[#4F68AF]' },
   delivered: { label: 'Selesai', color: 'bg-emerald-100 text-emerald-700' },
   cancelled: { label: 'Dibatalkan', color: 'bg-red-100 text-red-700' },
 }
@@ -56,13 +56,13 @@ export default function Profil() {
     return (
       <UserLayout title="Beranda">
         <div className="space-y-6 w-full">
-          <Skeleton className="h-14 w-full rounded-lg" />
+          <Skeleton className="h-14 w-full" />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
+            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-20" />)}
           </div>
           <div className="grid lg:grid-cols-5 gap-6">
-            <Skeleton className="lg:col-span-3 h-64 rounded-lg" />
-            <Skeleton className="lg:col-span-2 h-64 rounded-lg" />
+            <Skeleton className="lg:col-span-3 h-64" />
+            <Skeleton className="lg:col-span-2 h-64" />
           </div>
         </div>
       </UserLayout>
@@ -74,19 +74,19 @@ export default function Profil() {
       <div className="space-y-6 w-full">
         {/* Welcome */}
         <div className="mb-6">
-          <p className="text-xl font-semibold text-[#1F1F1F]">
+          <p className="text-xl text-[#1E1E1E]">
             Selamat datang, {customer?.name || 'Pelanggan'}
           </p>
-          <p className="text-sm text-[#9A9A9A] mt-1">Kelola pesanan dan akun kamu dari sini.</p>
+          <p className="text-sm text-[#6F6F71] mt-1">Kelola pesanan dan akun kamu dari sini.</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {stats.map((stat) => {
             const content = (
-              <div className="rounded-lg border border-[#E8E8E5] bg-white p-4">
-                <p className="text-xs text-[#9A9A9A] uppercase tracking-wide mb-1">{stat.label}</p>
-                <p className="text-2xl font-semibold text-[#1F1F1F]">{stat.value}</p>
+              <div className="border border-[#E9E9EA] p-6">
+                <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-2">{stat.label}</p>
+                <p className="text-2xl md:text-3xl text-[#1E1E1E]">{stat.value}</p>
               </div>
             )
             return stat.path ? (
@@ -100,22 +100,22 @@ export default function Profil() {
         {/* Bottom row */}
         <div className="grid lg:grid-cols-5 gap-6">
           {/* Recent orders */}
-          <div className="lg:col-span-3 rounded-lg border border-[#E8E8E5] bg-white">
-            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-              <span className="text-[15px] font-semibold text-[#1F1F1F]">Pesanan Terbaru</span>
-              <Link to="/pesanan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A]">
+          <div className="lg:col-span-3 border border-[#E9E9EA] bg-white">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#E9E9EA]">
+              <span className="text-sm text-[#1E1E1E]">Pesanan Terbaru</span>
+              <Link to="/pesanan" className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] hover:text-[#1E1E1E]">
                 Lihat semua
               </Link>
             </div>
-            <div className="px-4 pb-4">
+            <div className="px-6 pb-2">
               {recent.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <Package className="size-10 text-[#D0D0CC] mb-3" />
-                  <p className="text-sm font-medium text-[#4A4A4A]">Belum ada pesanan</p>
-                  <p className="text-xs text-[#9A9A9A] mt-1">Yuk mulai belanja produk pilihan kamu</p>
+                  <p className="text-sm text-[#4A4A4A]">Belum ada pesanan</p>
+                  <p className="text-xs text-[#6F6F71] mt-1">Yuk mulai belanja produk pilihan kamu</p>
                   <Link
                     to="/produk"
-                    className="mt-4 border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+                    className="mt-4 border border-[#E9E9EA] text-[#4A4A4A] text-sm px-4 py-2 hover:bg-[#F9F7F2] transition-colors"
                   >
                     Mulai Belanja
                   </Link>
@@ -131,15 +131,15 @@ export default function Profil() {
                       <Link
                         key={order._id}
                         to={`/pesanan/${order._id}`}
-                        className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer"
+                        className="flex items-center justify-between py-4 border-b border-[#E9E9EA] last:border-0 hover:bg-[#F9F7F2] transition-colors cursor-pointer -mx-6 px-6"
                       >
                         <div className="min-w-0">
-                          <p className="text-xs text-[#9A9A9A] font-mono">
+                          <p className="text-xs text-[#6F6F71] font-mono">
                             #{order._id.slice(-8).toUpperCase()}
                           </p>
-                          <p className="text-sm font-semibold text-[#1F1F1F]">{fmt(order.total)}</p>
+                          <p className="text-sm text-[#1E1E1E]">{fmt(order.total)}</p>
                         </div>
-                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ml-3 ${s.color}`}>
+                        <span className={`text-[11px] uppercase tracking-[0.08em] px-2 py-1 shrink-0 ml-3 ${s.color}`}>
                           {s.label}
                         </span>
                       </Link>
@@ -151,14 +151,14 @@ export default function Profil() {
           </div>
 
           {/* Profile summary */}
-          <div className="lg:col-span-2 rounded-lg border border-[#E8E8E5] bg-white">
-            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-              <span className="text-[15px] font-semibold text-[#1F1F1F]">Profil Saya</span>
-              <Link to="/profil/pengaturan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A]">
+          <div className="lg:col-span-2 border border-[#E9E9EA] bg-white">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#E9E9EA]">
+              <span className="text-sm text-[#1E1E1E]">Profil Saya</span>
+              <Link to="/profil/pengaturan" className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] hover:text-[#1E1E1E]">
                 Edit
               </Link>
             </div>
-            <div className="px-4 pb-4">
+            <div className="px-6 pb-2">
               {customer &&
                 [
                   { icon: User, label: customer.name },
@@ -167,8 +167,8 @@ export default function Profil() {
                 ].map((item, i) => {
                   const Icon = item.icon
                   return (
-                    <div key={i} className="flex items-center gap-2 py-2 border-b border-[#F0F0EC] last:border-0">
-                      <Icon className="size-3.5 text-[#9A9A9A] shrink-0" />
+                    <div key={i} className="flex items-center gap-2 py-3 border-b border-[#E9E9EA] last:border-0">
+                      <Icon className="size-3.5 text-[#6F6F71] shrink-0" />
                       <p className="text-sm text-[#4A4A4A] truncate">{item.label}</p>
                     </div>
                   )

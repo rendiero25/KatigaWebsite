@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import type { VoucherValidation } from '../types/ecommerce';
 import { useVoucher } from '../hooks/useApi';
 
@@ -36,17 +37,17 @@ export default function VoucherInput({ subtotal, onApply, onClear }: Props) {
   return (
     <div className="space-y-2">
       {voucher?.valid ? (
-        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+        <div className="flex items-center justify-between border border-[#E9E9EA] px-4 py-3">
           <div>
-            <p className="text-sm font-bold text-green-700">{code.toUpperCase()}</p>
-            <p className="text-xs text-green-600">Hemat {fmt(voucher.discountAmount ?? 0)}</p>
+            <p className="uppercase text-[13px] text-[#1E1E1E]">{code.toUpperCase()}</p>
+            <p className="text-[13px] text-[#6F6F71]">Hemat {fmt(voucher.discountAmount ?? 0)}</p>
           </div>
           <button
             onClick={handleClear}
-            className="text-green-700 hover:text-red-600 transition text-lg leading-none"
+            className="text-[#6F6F71] hover:text-[#AE4B4B] transition-colors cursor-pointer"
             aria-label="Hapus voucher"
           >
-            ✕
+            <X className="size-4" strokeWidth={1.5} />
           </button>
         </div>
       ) : (
@@ -57,18 +58,18 @@ export default function VoucherInput({ subtotal, onApply, onClear }: Props) {
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             onKeyDown={(e) => { if (e.key === 'Enter') handleApply(); }}
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm uppercase"
+            className="flex-1 border border-[#E9E9EA] px-4 py-3 text-sm uppercase focus:outline-none focus:border-[#1E1E1E]"
           />
           <button
             onClick={handleApply}
             disabled={applying || !code.trim()}
-            className="px-5 py-2.5 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white text-sm font-medium rounded-lg disabled:opacity-50 transition whitespace-nowrap"
+            className="px-6 py-3 bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] hover:bg-[#2B3A67] transition-colors disabled:opacity-50 whitespace-nowrap cursor-pointer"
           >
             {applying ? '...' : 'Pakai'}
           </button>
         </div>
       )}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-[13px] text-[#AE4B4B]">{error}</p>}
     </div>
   );
 }

@@ -7,8 +7,6 @@ import type { Order, CanReviewResponse, BiteshipTracking, Complaint } from '../t
 import api from '../services/api'
 import UserLayout from '../components/UserLayout'
 import ReviewForm from '../components/ReviewForm'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
@@ -30,13 +28,13 @@ const PAYMENT_METHOD_LABEL: Record<string, string> = {
   echannel: 'Mandiri Bill',
 }
 
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  awaiting_payment: { label: 'Menunggu Pembayaran', color: 'bg-amber-100 text-amber-700' },
-  processing:       { label: 'Diproses',             color: 'bg-blue-100 text-blue-700' },
-  packing:          { label: 'Sedang Dikemas',        color: 'bg-violet-100 text-violet-700' },
-  shipped:          { label: 'Dikirim',               color: 'bg-indigo-100 text-indigo-700' },
-  delivered:        { label: 'Selesai',               color: 'bg-emerald-100 text-emerald-700' },
-  cancelled:        { label: 'Dibatalkan',            color: 'bg-red-100 text-red-700' },
+const STATUS_LABEL: Record<string, { label: string; className: string }> = {
+  awaiting_payment: { label: 'Menunggu Pembayaran', className: 'border-[#6F6F71] text-[#6F6F71]' },
+  processing:       { label: 'Diproses',             className: 'border-[#4F68AF] text-[#4F68AF]' },
+  packing:          { label: 'Sedang Dikemas',       className: 'border-[#4F68AF] text-[#4F68AF]' },
+  shipped:          { label: 'Dikirim',              className: 'border-[#4F68AF] text-[#4F68AF]' },
+  delivered:        { label: 'Selesai',              className: 'border-[#1E1E1E] text-[#1E1E1E]' },
+  cancelled:        { label: 'Dibatalkan',           className: 'border-[#AE4B4B] text-[#AE4B4B]' },
 }
 
 const STEPS = ['Menunggu Bayar', 'Diproses', 'Dikemas', 'Dikirim', 'Selesai']
@@ -61,14 +59,14 @@ const COMPLAINT_STATUS_LABEL: Record<string, string> = {
   rejected: 'Ditolak',
 }
 
-const COMPLAINT_STATUS_COLOR: Record<string, string> = {
-  open: 'bg-amber-100 text-amber-700',
-  processing: 'bg-blue-100 text-blue-700',
-  awaiting_return_shipment: 'bg-purple-100 text-purple-700',
-  return_shipped: 'bg-indigo-100 text-indigo-700',
-  return_received: 'bg-cyan-100 text-cyan-700',
-  resolved: 'bg-emerald-100 text-emerald-700',
-  rejected: 'bg-red-100 text-red-700',
+const COMPLAINT_STATUS_CLASS: Record<string, string> = {
+  open: 'border-[#6F6F71] text-[#6F6F71]',
+  processing: 'border-[#4F68AF] text-[#4F68AF]',
+  awaiting_return_shipment: 'border-[#4F68AF] text-[#4F68AF]',
+  return_shipped: 'border-[#4F68AF] text-[#4F68AF]',
+  return_received: 'border-[#4F68AF] text-[#4F68AF]',
+  resolved: 'border-[#1E1E1E] text-[#1E1E1E]',
+  rejected: 'border-[#AE4B4B] text-[#AE4B4B]',
 }
 
 function useCountdown(targetMs: number | null) {
@@ -130,21 +128,21 @@ function ComplaintForm({ orderId, onSuccess, onClose }: ComplaintFormProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4">
-      <div className="bg-white w-full sm:max-w-md rounded-2xl p-6 shadow-xl">
-        <p className="text-[15px] font-semibold text-[#1F1F1F] mb-4">Buka Komplain</p>
+      <div className="bg-white w-full sm:max-w-md p-6">
+        <p className="uppercase tracking-[0.12em] text-[13px] text-[#1E1E1E] mb-4">Buka Komplain</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#4A4A4A] mb-1.5">Tipe</label>
+            <label className="block text-[12px] text-[#6F6F71] mb-1.5">Tipe</label>
             <div className="flex gap-2">
               {(['complaint', 'return'] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setType(t)}
-                  className={`flex-1 py-2 text-sm rounded-lg border transition-colors ${
+                  className={`flex-1 py-2 text-[13px] uppercase tracking-[0.08em] border transition-colors cursor-pointer ${
                     type === t
-                      ? 'border-[#1F1F1F] bg-[#1F1F1F] text-white'
-                      : 'border-[#E8E8E5] text-[#4A4A4A] hover:bg-[#F7F7F5]'
+                      ? 'border-[#1E1E1E] bg-[#1E1E1E] text-white'
+                      : 'border-[#E9E9EA] text-[#6F6F71] hover:border-[#1E1E1E]/40'
                   }`}
                 >
                   {t === 'complaint' ? 'Komplain' : 'Retur Barang'}
@@ -153,45 +151,58 @@ function ComplaintForm({ orderId, onSuccess, onClose }: ComplaintFormProps) {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#4A4A4A] mb-1.5">Alasan</label>
+            <label className="block text-[12px] text-[#6F6F71] mb-1.5">Alasan</label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={4}
               placeholder="Ceritakan masalah yang kamu alami (min. 10 karakter)..."
-              className="w-full border border-[#E8E8E5] rounded-lg px-3 py-2 text-sm text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#1F1F1F] resize-none"
+              className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E] resize-none"
               required
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#4A4A4A] mb-1.5">Foto Bukti (opsional, maks. 5)</label>
+            <label className="block text-[12px] text-[#6F6F71] mb-1.5">Foto Bukti (opsional, maks. 5)</label>
             <input
               type="file"
               accept="image/*"
               multiple
               onChange={(e) => setPhotos(e.target.files)}
-              className="text-sm text-[#4A4A4A]"
+              className="text-[13px] text-[#6F6F71]"
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] px-4 py-2.5 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
             >
               Batal
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               disabled={submitting}
-              className="flex-1"
+              className="flex-1 bg-[#4F68AF] text-white uppercase tracking-[0.12em] text-[12px] px-4 py-2.5 hover:bg-[#2B3A67] transition-colors disabled:opacity-60 cursor-pointer"
             >
               {submitting ? 'Mengirim...' : 'Kirim Komplain'}
-            </Button>
+            </button>
           </div>
         </form>
       </div>
+    </div>
+  )
+}
+
+interface SectionProps {
+  title: string
+  children: React.ReactNode
+}
+
+function Section({ title, children }: SectionProps) {
+  return (
+    <div className="border-t border-[#E9E9EA] pt-8 mt-8">
+      <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] mb-4">{title}</p>
+      {children}
     </div>
   )
 }
@@ -336,18 +347,19 @@ export default function PesananDetail() {
 
   if (loading) return (
     <UserLayout title="Detail Pesanan">
-      <div className="w-full space-y-4">
-        <div className="flex items-start justify-between mb-6">
-          <div className="space-y-1">
-            <Skeleton className="h-3 w-28 rounded" />
-            <Skeleton className="h-5 w-36 rounded" />
+      <div className="w-full animate-pulse">
+        <div className="flex items-start justify-between pb-6 border-b border-[#E9E9EA]">
+          <div className="space-y-2">
+            <div className="h-3 w-28 bg-gray-200" />
+            <div className="h-3 w-36 bg-gray-200" />
           </div>
-          <Skeleton className="h-5 w-20 rounded" />
+          <div className="h-5 w-20 bg-gray-200" />
         </div>
-        <Skeleton className="h-20 w-full rounded-lg" />
-        <Skeleton className="h-32 w-full rounded-lg" />
-        <Skeleton className="h-40 w-full rounded-lg" />
-        <Skeleton className="h-28 w-full rounded-lg" />
+        <div className="space-y-3 pt-8">
+          <div className="h-4 w-full bg-gray-200" />
+          <div className="h-4 w-full bg-gray-200" />
+          <div className="h-4 w-2/3 bg-gray-200" />
+        </div>
       </div>
     </UserLayout>
   )
@@ -355,11 +367,11 @@ export default function PesananDetail() {
   if (!order) return (
     <UserLayout title="Detail Pesanan">
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <p className="text-sm font-medium text-[#4A4A4A]">Pesanan tidak ditemukan</p>
-        <p className="text-xs text-[#9A9A9A] mt-1">Pesanan mungkin sudah dihapus atau tidak tersedia.</p>
+        <p className="text-[13px] text-[#1E1E1E]">Pesanan tidak ditemukan</p>
+        <p className="text-[13px] text-[#6F6F71] mt-1">Pesanan mungkin sudah dihapus atau tidak tersedia.</p>
         <Link
           to="/pesanan"
-          className="mt-4 border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+          className="mt-4 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] px-6 py-2.5 hover:bg-[#1E1E1E] hover:text-white transition-colors"
         >
           Kembali ke Pesanan
         </Link>
@@ -367,7 +379,7 @@ export default function PesananDetail() {
     </UserLayout>
   )
 
-  const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: 'bg-gray-100 text-gray-700' }
+  const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, className: 'border-[#6F6F71] text-[#6F6F71]' }
   const canRepay = order.paymentStatus === 'pending' && order.orderStatus === 'awaiting_payment' && order.midtransToken
   const canCancel = ['awaiting_payment', 'processing'].includes(order.orderStatus) && order.orderStatus !== 'cancelled'
   const canDownloadInvoice = order.paymentStatus === 'paid' || order.orderStatus === 'cancelled'
@@ -384,54 +396,58 @@ export default function PesananDetail() {
       })
     : null
 
+  const hasTrackingSection = !!order.biteshipOrderId && ['packing', 'shipped', 'delivered'].includes(order.orderStatus)
+
   return (
     <UserLayout title="Detail Pesanan">
       <div className="w-full">
-        <Link to="/pesanan" className="text-xs text-[#9A9A9A] hover:text-[#4A4A4A] mb-4 block transition-colors">
+        <Link to="/pesanan" className="text-[13px] text-[#6F6F71] hover:text-[#1E1E1E] mb-6 block transition-colors">
           ← Semua Pesanan
         </Link>
 
-        {/* Page header */}
-        <div className="flex items-start justify-between mb-6">
+        {/* Order header */}
+        <div className="flex items-start justify-between pb-2">
           <div>
-            <p className="text-xs text-[#9A9A9A] font-mono">#{order._id.slice(-8).toUpperCase()}</p>
-            <p className="text-lg font-semibold text-[#1F1F1F]">Detail Pesanan</p>
+            <p className="uppercase text-[13px] text-[#1E1E1E]">#{order._id.slice(-8).toUpperCase()}</p>
+            <p className="text-[13px] text-[#6F6F71] mt-1">
+              {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
           </div>
-          <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${s.color}`}>{s.label}</span>
+          <span className={`border text-[11px] uppercase tracking-[0.12em] px-2 py-1 shrink-0 ${s.className}`}>
+            {s.label}
+          </span>
         </div>
 
         {/* Countdown timer */}
         {countdown && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 mb-4 flex items-center justify-between">
+          <div className="border border-[#AE4B4B]/40 px-4 py-3 mt-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-amber-700">Selesaikan pembayaran sebelum waktu habis</p>
-              <p className="text-[11px] text-amber-600 mt-0.5">Pesanan akan otomatis dibatalkan jika melewati batas waktu</p>
+              <p className="text-[13px] text-[#AE4B4B]">Selesaikan pembayaran sebelum waktu habis</p>
+              <p className="text-[12px] text-[#AE4B4B]/70 mt-0.5">Pesanan akan otomatis dibatalkan jika melewati batas waktu</p>
             </div>
-            <p className="text-xl font-mono font-bold text-amber-700 shrink-0 ml-4">{countdown}</p>
+            <p className="text-lg font-mono text-[#AE4B4B] shrink-0 ml-4 tabular-nums">{countdown}</p>
           </div>
         )}
 
         {/* Status stepper */}
         {order.orderStatus !== 'cancelled' ? (
-          <div className="rounded-lg border border-[#E8E8E5] bg-white p-4 mb-4">
+          <div className="mt-6">
             <div className="flex items-end">
               {STEPS.map((step, i) => (
                 <div key={step} className="flex items-end flex-1 last:flex-none">
                   <div className="flex flex-col items-center">
                     <div
-                      className={`size-7 rounded-full flex items-center justify-center mb-1 text-xs font-medium ${
-                        i <= currentStep
-                          ? 'bg-[#1F1F1F] text-white'
-                          : 'border border-[#E8E8E5] text-[#9A9A9A]'
+                      className={`size-2.5 flex items-center justify-center mb-2 ${
+                        i <= currentStep ? 'bg-[#1E1E1E]' : 'border border-[#E9E9EA]'
                       }`}
                     >
-                      {i < currentStep ? <Check className="size-3.5" /> : i + 1}
+                      {i < currentStep && <Check className="size-2 text-white" strokeWidth={3} />}
                     </div>
-                    <span className="text-[10px] text-center leading-tight w-14 text-[#4A4A4A]">{step}</span>
+                    <span className="text-[11px] text-center leading-tight w-16 text-[#6F6F71]">{step}</span>
                   </div>
                   {i < STEPS.length - 1 && (
                     <div
-                      className={`flex-1 h-px mx-2 mb-5 ${i < currentStep ? 'bg-[#1F1F1F]' : 'bg-[#E8E8E5]'}`}
+                      className={`flex-1 h-px mx-2 mb-4 ${i < currentStep ? 'bg-[#1E1E1E]' : 'bg-[#E9E9EA]'}`}
                     />
                   )}
                 </div>
@@ -439,359 +455,307 @@ export default function PesananDetail() {
             </div>
           </div>
         ) : (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-sm font-medium text-red-700 text-center">
+          <div className="border border-[#AE4B4B]/40 px-4 py-3 mt-6 text-[13px] text-[#AE4B4B] text-center">
             Pesanan Dibatalkan
           </div>
         )}
 
-        <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
-          {/* Left column: status & shipping */}
-          <div className="space-y-4">
-            {/* Complaint status (if exists) */}
-            {complaint && complaint._id && (
-              <div className="rounded-lg border border-[#E8E8E5] bg-white px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="size-4 text-[#4A4A4A] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1F1F1F]">
-                      {complaint.type === 'return' ? 'Permintaan Retur' : 'Komplain'} dikirim
-                    </p>
-                    <p className="text-xs text-[#9A9A9A] truncate">{complaint.reason}</p>
-                  </div>
-                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ${
-                    COMPLAINT_STATUS_COLOR[complaint.status] ?? 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {COMPLAINT_STATUS_LABEL[complaint.status] ?? complaint.status}
-                  </span>
-                </div>
-
-                {complaint.type === 'return' && complaint.status === 'awaiting_return_shipment' && (
-                  <div className="mt-3 pt-3 border-t border-[#F0F0EC] space-y-2">
-                    <p className="text-xs text-[#4A4A4A]">Retur disetujui. Kirim barang balik lalu isi data resi di bawah ini.</p>
-                    <input
-                      type="text"
-                      value={shipCourier}
-                      onChange={(e) => setShipCourier(e.target.value)}
-                      placeholder="Nama kurir (mis. JNE)"
-                      className="w-full border border-[#E8E8E5] rounded-lg px-3 py-2 text-sm text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#1F1F1F]"
-                    />
-                    <input
-                      type="text"
-                      value={shipTrackingNumber}
-                      onChange={(e) => setShipTrackingNumber(e.target.value)}
-                      placeholder="Nomor resi"
-                      className="w-full border border-[#E8E8E5] rounded-lg px-3 py-2 text-sm text-[#1F1F1F] focus:outline-none focus:ring-1 focus:ring-[#1F1F1F]"
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleShipReturn}
-                      disabled={shipSubmitting || !shipCourier.trim() || !shipTrackingNumber.trim()}
-                      className="w-full"
-                    >
-                      {shipSubmitting ? 'Mengirim...' : 'Saya Sudah Mengirim Barang'}
-                    </Button>
-                  </div>
-                )}
-
-                {complaint.type === 'return' && ['return_shipped', 'return_received'].includes(complaint.status) && complaint.returnShipment && (
-                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
-                    <p className="text-xs text-[#9A9A9A]">
-                      Resi: {complaint.returnShipment.courier} — {complaint.returnShipment.trackingNumber}
-                    </p>
-                    <p className="text-xs text-[#9A9A9A] mt-0.5">Menunggu verifikasi admin.</p>
-                  </div>
-                )}
-
-                {complaint.status === 'resolved' && complaint.resolution?.type && (
-                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
-                    <p className="text-sm font-medium text-[#1F1F1F]">
-                      {complaint.resolution.type === 'refund' ? 'Dana Dikembalikan' : 'Barang Diganti'}
-                    </p>
-                    {complaint.resolution.note && (
-                      <p className="text-xs text-[#9A9A9A] mt-0.5">{complaint.resolution.note}</p>
-                    )}
-                  </div>
-                )}
-
-                {complaint.status === 'resolved' && !complaint.resolution?.type && complaint.adminNote && (
-                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
-                    <p className="text-sm font-medium text-[#1F1F1F]">Komplain Diselesaikan</p>
-                    <p className="text-xs text-[#9A9A9A] mt-0.5">{complaint.adminNote}</p>
-                  </div>
-                )}
-
-                {complaint.status === 'rejected' && complaint.adminNote && (
-                  <div className="mt-3 pt-3 border-t border-[#F0F0EC]">
-                    <p className="text-sm font-medium text-[#1F1F1F]">Alasan Penolakan</p>
-                    <p className="text-xs text-[#9A9A9A] mt-0.5">{complaint.adminNote}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Shipping info */}
-            <div className="rounded-lg border border-[#E8E8E5] bg-white">
-              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-                <p className="text-[15px] font-semibold text-[#1F1F1F]">Info Pengiriman</p>
-              </div>
-              <div className="px-4 pb-4 pt-3 space-y-1">
-                <p className="text-sm text-[#1F1F1F] font-medium">{order.shippingAddress.recipientName}</p>
-                <p className="text-sm text-[#4A4A4A]">{order.shippingAddress.phone}</p>
-                <p className="text-sm text-[#4A4A4A]">{order.shippingAddress.street}</p>
-                <p className="text-sm text-[#4A4A4A]">
-                  {order.shippingAddress.areaName}{order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ''}
+        {/* Complaint status */}
+        {complaint && complaint._id && (
+          <Section title="Komplain">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="size-4 text-[#6F6F71] shrink-0" strokeWidth={1.5} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] text-[#1E1E1E]">
+                  {complaint.type === 'return' ? 'Permintaan Retur' : 'Komplain'} dikirim
                 </p>
-                <div className="pt-2 border-t border-[#F0F0EC] mt-2">
-                  <p className="text-sm text-[#4A4A4A]">
-                    <span className="font-medium text-[#1F1F1F]">{order.shippingCourier.toUpperCase()}</span>
-                    {' — '}{order.shippingServiceName}
-                    {order.estimatedDays ? ` (${order.estimatedDays})` : ''}
-                  </p>
-                  {order.biteshipTrackingCode && ['shipped', 'delivered'].includes(order.orderStatus) && (
-                    <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-[#F5F5F3] rounded-lg">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-[#9A9A9A] uppercase tracking-wide">No. Resi</p>
-                        <p className="text-sm font-medium text-[#1F1F1F] font-mono truncate">{order.biteshipTrackingCode}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => navigator.clipboard.writeText(order.biteshipTrackingCode ?? '')}
-                        className="text-xs text-[#4A4A4A] border border-[#E8E8E5] px-2 py-1 rounded-md hover:bg-white transition-colors shrink-0"
-                      >
-                        Salin
-                      </button>
-                    </div>
-                  )}
-                </div>
-                {/* Tracking button */}
-                {order.biteshipOrderId && ['packing', 'shipped', 'delivered'].includes(order.orderStatus) && (
-                  <div className="pt-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={showTracking ? () => setShowTracking(false) : handleLoadTracking}
-                      className="flex items-center gap-1.5"
-                    >
-                      {trackingLoading
-                        ? <><RefreshCw className="size-3 animate-spin" /> Memuat...</>
-                        : <><Truck className="size-3" /> {showTracking ? 'Sembunyikan Tracking' : 'Cek Status Pengiriman'}</>
-                      }
-                    </Button>
-                    {showTracking && (
-                      <div className="mt-3 border border-[#E8E8E5] rounded-lg p-3">
-                        {trackingLoading && (
-                          <p className="text-xs text-[#9A9A9A]">Mengambil data tracking...</p>
-                        )}
-                        {trackingError && (
-                          <p className="text-xs text-red-600">{trackingError}</p>
-                        )}
-                        {!trackingLoading && !trackingError && tracking && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              {tracking.courier?.driver_photo_url && (
-                                <img
-                                  src={tracking.courier.driver_photo_url}
-                                  alt="Foto kurir"
-                                  className="size-8 rounded-full object-cover shrink-0"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
-                              )}
-                              <p className="text-xs font-semibold text-[#1F1F1F]">
-                                {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              {(tracking.courier?.history ?? []).slice().reverse().map((h, i) => (
-                                <div key={i} className="flex gap-2 text-xs">
-                                  <div className="flex flex-col items-center mt-0.5">
-                                    <div className={`size-2 rounded-full ${i === 0 ? 'bg-[#1F1F1F]' : 'bg-[#C8C8C4]'}`} />
-                                    {i < (tracking.courier?.history?.length ?? 0) - 1 && (
-                                      <div className="w-px flex-1 bg-[#E8E8E5] my-1" />
-                                    )}
-                                  </div>
-                                  <div className="pb-2">
-                                    <p className="text-[#1F1F1F] font-medium leading-tight">{h.note}</p>
-                                    <p className="text-[#9A9A9A] mt-0.5">
-                                      {new Date(h.updated_at).toLocaleString('id-ID', {
-                                        day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                                      })}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <p className="text-[13px] text-[#6F6F71] truncate">{complaint.reason}</p>
               </div>
+              <span className={`border text-[11px] uppercase tracking-[0.12em] px-2 py-1 shrink-0 ${
+                COMPLAINT_STATUS_CLASS[complaint.status] ?? 'border-[#6F6F71] text-[#6F6F71]'
+              }`}>
+                {COMPLAINT_STATUS_LABEL[complaint.status] ?? complaint.status}
+              </span>
             </div>
 
-            {canComplain && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowComplaintForm(true)}
-                className="w-full"
-              >
-                <MessageSquare className="size-4" />
-                Komplain
-              </Button>
-            )}
-            {canComplain && complaintDeadlineLabel && (
-              <p className="text-[11px] text-[#9A9A9A] text-center">
-                Kamu dapat mengajukan komplain hingga {complaintDeadlineLabel}
-              </p>
-            )}
-            {order.orderStatus === 'delivered' && complaintWindowExpired && complaint === null && (
-              <p className="text-[11px] text-[#9A9A9A] text-center">
-                Batas waktu komplain untuk pesanan ini sudah berakhir
-              </p>
+            {complaint.type === 'return' && complaint.status === 'awaiting_return_shipment' && (
+              <div className="mt-4 pt-4 border-t border-[#E9E9EA] space-y-2">
+                <p className="text-[13px] text-[#6F6F71]">Retur disetujui. Kirim barang balik lalu isi data resi di bawah ini.</p>
+                <input
+                  type="text"
+                  value={shipCourier}
+                  onChange={(e) => setShipCourier(e.target.value)}
+                  placeholder="Nama kurir (mis. JNE)"
+                  className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                />
+                <input
+                  type="text"
+                  value={shipTrackingNumber}
+                  onChange={(e) => setShipTrackingNumber(e.target.value)}
+                  placeholder="Nomor resi"
+                  className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                />
+                <button
+                  type="button"
+                  onClick={handleShipReturn}
+                  disabled={shipSubmitting || !shipCourier.trim() || !shipTrackingNumber.trim()}
+                  className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.12em] text-[12px] px-4 py-2.5 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {shipSubmitting ? 'Mengirim...' : 'Saya Sudah Mengirim Barang'}
+                </button>
+              </div>
             )}
 
-            {canCancel && (
-              <Button
-                variant="destructive"
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="w-full"
-              >
-                <XCircle className="size-4" />
-                {cancelling ? 'Membatalkan...' : 'Batalkan Pesanan'}
-              </Button>
+            {complaint.type === 'return' && ['return_shipped', 'return_received'].includes(complaint.status) && complaint.returnShipment && (
+              <div className="mt-4 pt-4 border-t border-[#E9E9EA]">
+                <p className="text-[13px] text-[#6F6F71]">
+                  Resi: {complaint.returnShipment.courier} — {complaint.returnShipment.trackingNumber}
+                </p>
+                <p className="text-[13px] text-[#6F6F71] mt-0.5">Menunggu verifikasi admin.</p>
+              </div>
+            )}
+
+            {complaint.status === 'resolved' && complaint.resolution?.type && (
+              <div className="mt-4 pt-4 border-t border-[#E9E9EA]">
+                <p className="text-[13px] text-[#1E1E1E]">
+                  {complaint.resolution.type === 'refund' ? 'Dana Dikembalikan' : 'Barang Diganti'}
+                </p>
+                {complaint.resolution.note && (
+                  <p className="text-[13px] text-[#6F6F71] mt-0.5">{complaint.resolution.note}</p>
+                )}
+              </div>
+            )}
+
+            {complaint.status === 'resolved' && !complaint.resolution?.type && complaint.adminNote && (
+              <div className="mt-4 pt-4 border-t border-[#E9E9EA]">
+                <p className="text-[13px] text-[#1E1E1E]">Komplain Diselesaikan</p>
+                <p className="text-[13px] text-[#6F6F71] mt-0.5">{complaint.adminNote}</p>
+              </div>
+            )}
+
+            {complaint.status === 'rejected' && complaint.adminNote && (
+              <div className="mt-4 pt-4 border-t border-[#E9E9EA]">
+                <p className="text-[13px] text-[#1E1E1E]">Alasan Penolakan</p>
+                <p className="text-[13px] text-[#6F6F71] mt-0.5">{complaint.adminNote}</p>
+              </div>
+            )}
+          </Section>
+        )}
+
+        {/* Shipping address */}
+        <Section title="Alamat Kirim">
+          <p className="text-[13px] text-[#1E1E1E]">{order.shippingAddress.recipientName}</p>
+          <p className="text-[13px] text-[#6F6F71] mt-1">{order.shippingAddress.phone}</p>
+          <p className="text-[13px] text-[#6F6F71]">{order.shippingAddress.street}</p>
+          <p className="text-[13px] text-[#6F6F71]">
+            {order.shippingAddress.areaName}{order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ''}
+          </p>
+          <div className="pt-3 mt-3 border-t border-[#E9E9EA]">
+            <p className="text-[13px] text-[#6F6F71]">
+              <span className="text-[#1E1E1E]">{order.shippingCourier.toUpperCase()}</span>
+              {' — '}{order.shippingServiceName}
+              {order.estimatedDays ? ` (${order.estimatedDays})` : ''}
+            </p>
+            {order.biteshipTrackingCode && ['shipped', 'delivered'].includes(order.orderStatus) && (
+              <div className="flex items-center gap-2 mt-3 px-3 py-2 border border-[#E9E9EA]">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-[#6F6F71] uppercase tracking-[0.1em]">No. Resi</p>
+                  <p className="text-[13px] text-[#1E1E1E] font-mono truncate">{order.biteshipTrackingCode}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(order.biteshipTrackingCode ?? '')}
+                  className="text-[12px] uppercase tracking-[0.08em] text-[#6F6F71] border border-[#E9E9EA] px-2 py-1 hover:text-[#1E1E1E] hover:border-[#1E1E1E]/40 transition-colors shrink-0 cursor-pointer"
+                >
+                  Salin
+                </button>
+              </div>
             )}
           </div>
+        </Section>
 
-          {/* Right column: items & cost */}
-          <div className="space-y-4">
-            {/* Items */}
-            <div className="rounded-lg border border-[#E8E8E5] bg-white">
-              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-                <p className="text-[15px] font-semibold text-[#1F1F1F]">Daftar Item</p>
-              </div>
-              <div>
-                {order.items.map((item, i) => {
-                  const key = item.product ? `${order._id}-${item.product}` : null
-                  const status = key ? reviewStatuses[key] : null
-                  const isLast = i === order.items.length - 1
-                  const isReviewingThis = !!item.product
-                    && reviewFormItem?.orderId === order._id
-                    && reviewFormItem?.productId === item.product
-                  return (
-                    <div key={i} className="border-b border-[#F0F0EC] last:border-0">
-                      <div className="flex items-center gap-3 px-4 py-3">
+        {/* Tracking */}
+        {hasTrackingSection && (
+          <Section title="Pelacakan">
+            <button
+              type="button"
+              onClick={showTracking ? () => setShowTracking(false) : handleLoadTracking}
+              className="flex items-center gap-1.5 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] px-4 py-2 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
+            >
+              {trackingLoading
+                ? <><RefreshCw className="size-3 animate-spin" /> Memuat...</>
+                : <><Truck className="size-3" /> {showTracking ? 'Sembunyikan Tracking' : 'Cek Status Pengiriman'}</>
+              }
+            </button>
+            {showTracking && (
+              <div className="mt-4 border border-[#E9E9EA] p-4">
+                {trackingLoading && (
+                  <p className="text-[13px] text-[#6F6F71]">Mengambil data tracking...</p>
+                )}
+                {trackingError && (
+                  <p className="text-[13px] text-[#AE4B4B]">{trackingError}</p>
+                )}
+                {!trackingLoading && !trackingError && tracking && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      {tracking.courier?.driver_photo_url && (
                         <img
-                          src={api.getImageUrl(item.image)}
-                          alt={item.name}
-                          className="size-10 rounded-md object-cover bg-[#F7F7F5] shrink-0"
+                          src={tracking.courier.driver_photo_url}
+                          alt="Foto kurir"
+                          className="size-8 object-cover shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
                         />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-[#1F1F1F] truncate">{item.name}</p>
-                          {item.variantName && (
-                            <p className="text-xs text-[#9A9A9A]">{item.variantName}</p>
-                          )}
-                          <p className="text-xs text-[#9A9A9A]">{item.quantity} × {fmt(item.priceNumeric)}</p>
-                          {order.orderStatus === 'delivered' && status?.canReview && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                setReviewFormItem((prev) =>
-                                  prev?.productId === item.product ? null : { productId: item.product, orderId: order._id, productName: item.name }
-                                )
-                              }
-                              className="mt-1.5"
-                            >
-                              Selesai
-                            </Button>
-                          )}
-                          {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
-                            <span className="mt-1 inline-block text-[11px] font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">
-                              Sudah Diulas
-                            </span>
-                          )}
+                      )}
+                      <p className="text-[13px] text-[#1E1E1E]">
+                        {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      {(tracking.courier?.history ?? []).slice().reverse().map((h, i) => (
+                        <div key={i} className="flex gap-2 text-[13px]">
+                          <div className="flex flex-col items-center mt-1">
+                            <div className={`size-1.5 ${i === 0 ? 'bg-[#1E1E1E]' : 'bg-[#E9E9EA]'}`} />
+                            {i < (tracking.courier?.history?.length ?? 0) - 1 && (
+                              <div className="w-px flex-1 bg-[#E9E9EA] my-1" />
+                            )}
+                          </div>
+                          <div className="pb-2">
+                            <p className="text-[#1E1E1E] leading-tight">{h.note}</p>
+                            <p className="text-[#6F6F71] mt-0.5">
+                              {new Date(h.updated_at).toLocaleString('id-ID', {
+                                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm font-semibold text-[#1F1F1F] shrink-0 ml-auto">{fmt(item.subtotal)}</p>
-                      </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Section>
+        )}
 
-                      {isReviewingThis && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                          className={`overflow-hidden border-t border-[#F0F0EC] bg-[#FAFAF9] ${isLast ? 'rounded-b-lg' : ''}`}
+        {/* Items */}
+        <Section title="Item">
+          <div>
+            {order.items.map((item, i) => {
+              const key = item.product ? `${order._id}-${item.product}` : null
+              const status = key ? reviewStatuses[key] : null
+              const isReviewingThis = !!item.product
+                && reviewFormItem?.orderId === order._id
+                && reviewFormItem?.productId === item.product
+              return (
+                <div key={i} className="border-b border-[#E9E9EA] last:border-0">
+                  <div className="flex items-center gap-4 py-4">
+                    <img
+                      src={api.getImageUrl(item.image)}
+                      alt={item.name}
+                      className="w-24 h-24 object-cover bg-[#F9F7F2] shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="uppercase text-[13px] text-[#1E1E1E] truncate">{item.name}</p>
+                      {item.variantName && (
+                        <p className="text-[13px] text-[#6F6F71] mt-1">{item.variantName}</p>
+                      )}
+                      <p className="text-[13px] text-[#6F6F71]">{item.quantity} × {fmt(item.priceNumeric)}</p>
+                      {order.orderStatus === 'delivered' && status?.canReview && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setReviewFormItem((prev) =>
+                              prev?.productId === item.product ? null : { productId: item.product, orderId: order._id, productName: item.name }
+                            )
+                          }
+                          className="mt-2 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.1em] text-[11px] px-3 py-1.5 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
                         >
-                          <ReviewForm
-                            productId={item.product}
-                            orderId={order._id}
-                            productName={item.name}
-                            onClose={() => setReviewFormItem(null)}
-                            onSuccess={() => {
-                              setReviewStatuses((prev) => ({
-                                ...prev,
-                                [`${order._id}-${item.product}`]: { canReview: false, alreadyReviewed: true },
-                              }))
-                              setReviewFormItem(null)
-                            }}
-                          />
-                        </motion.div>
+                          Beri Ulasan
+                        </button>
+                      )}
+                      {order.orderStatus === 'delivered' && status?.alreadyReviewed && (
+                        <span className="mt-2 inline-block border border-[#1E1E1E] text-[11px] uppercase tracking-[0.1em] text-[#1E1E1E] px-2 py-1">
+                          Sudah Diulas
+                        </span>
                       )}
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Cost summary */}
-            <div className="rounded-lg border border-[#E8E8E5] bg-white">
-              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[#F0F0EC]">
-                <p className="text-[15px] font-semibold text-[#1F1F1F]">Ringkasan Biaya</p>
-              </div>
-              <div className="py-1">
-                <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-                  <span>Subtotal produk</span>
-                  <span>{fmt(order.subtotal)}</span>
-                </div>
-                <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-                  <span>Ongkos kirim</span>
-                  <span>{fmt(order.shippingCost)}</span>
-                </div>
-                {(order.voucherDiscount ?? 0) > 0 && (
-                  <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-                    <span>Diskon voucher{order.voucherCode ? ` (${order.voucherCode})` : ''}</span>
-                    <span className="text-emerald-700">-{fmt(order.voucherDiscount ?? 0)}</span>
+                    <p className="text-[13px] text-[#1E1E1E] shrink-0 ml-auto">{fmt(item.subtotal)}</p>
                   </div>
-                )}
-                {order.midtransPaymentType && (
-                  <div className="flex items-center justify-between px-4 py-2 text-sm text-[#4A4A4A]">
-                    <span>Metode Pembayaran</span>
-                    <span className="text-[#1F1F1F] font-medium">
-                      {PAYMENT_METHOD_LABEL[order.midtransPaymentType] ?? order.midtransPaymentType}
-                    </span>
-                  </div>
-                )}
-                <div className="border-t border-[#F0F0EC] my-1" />
-                <div className="flex items-center justify-between px-4 py-3 text-[15px] font-semibold text-[#1F1F1F]">
-                  <span>Total</span>
-                  <span>{fmt(order.total)}</span>
-                </div>
-              </div>
-            </div>
 
+                  {isReviewingThis && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                      className="overflow-hidden border-t border-[#E9E9EA] bg-[#F9F7F2]"
+                    >
+                      <ReviewForm
+                        productId={item.product}
+                        orderId={order._id}
+                        productName={item.name}
+                        onClose={() => setReviewFormItem(null)}
+                        onSuccess={() => {
+                          setReviewStatuses((prev) => ({
+                            ...prev,
+                            [`${order._id}-${item.product}`]: { canReview: false, alreadyReviewed: true },
+                          }))
+                          setReviewFormItem(null)
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </Section>
+
+        {/* Cost summary */}
+        <Section title="Ringkasan Biaya">
+          <div>
+            <div className="flex items-center justify-between py-1.5 text-[13px] text-[#6F6F71]">
+              <span>Subtotal produk</span>
+              <span>{fmt(order.subtotal)}</span>
+            </div>
+            <div className="flex items-center justify-between py-1.5 text-[13px] text-[#6F6F71]">
+              <span>Ongkos kirim</span>
+              <span>{fmt(order.shippingCost)}</span>
+            </div>
+            {(order.voucherDiscount ?? 0) > 0 && (
+              <div className="flex items-center justify-between py-1.5 text-[13px] text-[#6F6F71]">
+                <span>Diskon voucher{order.voucherCode ? ` (${order.voucherCode})` : ''}</span>
+                <span>-{fmt(order.voucherDiscount ?? 0)}</span>
+              </div>
+            )}
+            {order.midtransPaymentType && (
+              <div className="flex items-center justify-between py-1.5 text-[13px] text-[#6F6F71]">
+                <span>Metode Pembayaran</span>
+                <span className="text-[#1E1E1E]">
+                  {PAYMENT_METHOD_LABEL[order.midtransPaymentType] ?? order.midtransPaymentType}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-3 mt-2 border-t border-[#E9E9EA] text-[13px] text-[#1E1E1E]">
+              <span>Total</span>
+              <span>{fmt(order.total)}</span>
+            </div>
+          </div>
+        </Section>
+
+        {/* Actions */}
+        <Section title="Aksi">
+          <div className="flex flex-col gap-3 sm:max-w-xs">
             {canRepay && (
-              <Button
+              <button
+                type="button"
                 onClick={handleRepay}
                 disabled={paying}
-                className="w-full"
+                className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.12em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] transition-colors disabled:opacity-60 cursor-pointer"
               >
                 {paying ? 'Memproses...' : 'Bayar Sekarang'}
-              </Button>
+              </button>
             )}
 
             {canDownloadInvoice && (
@@ -799,14 +763,47 @@ export default function PesananDetail() {
                 href={api.getOrderInvoiceUrl(order._id)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 border border-[#E8E8E5] text-[#4A4A4A] text-sm font-medium rounded-md px-4 py-2.5 hover:bg-[#F7F7F5] transition-colors"
+                className="w-full flex items-center justify-center gap-2 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[13px] px-6 py-3 hover:bg-[#1E1E1E] hover:text-white transition-colors"
               >
                 <FileText className="size-4" />
                 Download Invoice
               </a>
             )}
+
+            {canComplain && (
+              <button
+                type="button"
+                onClick={() => setShowComplaintForm(true)}
+                className="w-full flex items-center justify-center gap-2 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[13px] px-6 py-3 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
+              >
+                <MessageSquare className="size-4" />
+                Komplain
+              </button>
+            )}
+            {canComplain && complaintDeadlineLabel && (
+              <p className="text-[12px] text-[#6F6F71] text-center">
+                Kamu dapat mengajukan komplain hingga {complaintDeadlineLabel}
+              </p>
+            )}
+            {order.orderStatus === 'delivered' && complaintWindowExpired && complaint === null && (
+              <p className="text-[12px] text-[#6F6F71] text-center">
+                Batas waktu komplain untuk pesanan ini sudah berakhir
+              </p>
+            )}
+
+            {canCancel && (
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="w-full flex items-center justify-center gap-2 border border-[#AE4B4B] text-[#AE4B4B] uppercase tracking-[0.12em] text-[13px] px-6 py-3 hover:bg-[#AE4B4B] hover:text-white transition-colors disabled:opacity-60 cursor-pointer"
+              >
+                <XCircle className="size-4" />
+                {cancelling ? 'Membatalkan...' : 'Batalkan Pesanan'}
+              </button>
+            )}
           </div>
-        </div>
+        </Section>
       </div>
 
       {showComplaintForm && order && (

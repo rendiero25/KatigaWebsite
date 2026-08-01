@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 import type { CartItem, ShippingAddress, ShippingRate, VoucherValidation } from '../types/ecommerce';
 import { useLiveCart } from '../hooks/useApi';
 import { getCart, removeManyFromCart, normalizeCartItem } from '../utils/cart';
@@ -52,13 +52,13 @@ interface StepBadgeProps {
 function StepBadge({ number, done }: StepBadgeProps) {
   if (done) {
     return (
-      <span className="w-6 h-6 rounded-full flex items-center justify-center bg-primary shrink-0">
-        <CheckCircle2 className="size-4 text-white" />
+      <span className="w-5 h-5 flex items-center justify-center bg-[#1E1E1E] shrink-0">
+        <Check className="size-3 text-white" strokeWidth={2} />
       </span>
     );
   }
   return (
-    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-[#E8E8E5] text-[#9A9A9A]">
+    <span className="w-5 h-5 flex items-center justify-center text-[11px] shrink-0 border border-[#E9E9EA] text-[#6F6F71]">
       {number}
     </span>
   );
@@ -219,33 +219,35 @@ export default function Checkout() {
   }, [effectiveCart, selectedAddress, selectedRate, voucherDiscount, voucherCode, navigate, cartSyncing, cartReady]);
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-6 pb-20">
-        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-          <h1 className="text-2xl font-semibold text-[#1F1F1F] mb-8">Checkout</h1>
+      <main className="grow">
+        <div className="border-b border-[#E9E9EA] py-6">
+          <h1 className="text-center text-2xl md:text-3xl">Checkout</h1>
+        </div>
 
-          <div className="flex flex-col lg:flex-row gap-6">
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-10">
+          <div className="flex flex-col lg:flex-row gap-10">
             {/* Left — form */}
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-8">
               {(!cartHydrated || cartSyncing) && (
-                <div className="rounded-lg border border-[#D4DEFF] bg-[#F0F5FF] px-4 py-3 text-sm text-primary">
+                <div className="border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#6F6F71]">
                   Memperbarui harga, promo, dan data pengiriman terbaru...
                 </div>
               )}
               {cartSyncError && (
-                <div className="flex flex-col gap-2 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="flex flex-col gap-2 border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#AE4B4B]">
                   <p>{cartSyncError}</p>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-4">
                     <button
                       onClick={refreshCart}
-                      className="font-medium text-red-700 hover:underline"
+                      className="uppercase tracking-[0.12em] text-[12px] underline underline-offset-2 cursor-pointer"
                     >
                       Coba lagi
                     </button>
                     <button
                       onClick={() => navigate('/keranjang')}
-                      className="font-medium text-red-700 hover:underline"
+                      className="uppercase tracking-[0.12em] text-[12px] underline underline-offset-2 cursor-pointer"
                     >
                       Kembali ke keranjang
                     </button>
@@ -254,10 +256,10 @@ export default function Checkout() {
               )}
 
               {/* Step 1: Address */}
-              <div className="bg-white border border-[#E8E8E5] rounded-xl p-6">
+              <div className="border-b border-[#E9E9EA] pb-8">
                 <div className="flex items-center gap-2.5 mb-4">
                   <StepBadge number={1} done={!!selectedAddress} />
-                  <h2 className="text-sm font-semibold text-[#1F1F1F] uppercase tracking-wide">Alamat Pengiriman</h2>
+                  <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">Alamat Pengiriman</h2>
                 </div>
                 <AddressSelector
                   selected={selectedAddress}
@@ -269,24 +271,24 @@ export default function Checkout() {
                   }}
                 />
                 {selectedAddress && (
-                  <div className="mt-3 p-3 bg-[#F0F5FF] border border-[#D4DEFF] rounded-lg text-sm text-primary">
-                    <p className="font-semibold">{selectedAddress.recipientName} · {selectedAddress.phone}</p>
-                    <p className="text-xs text-primary/70 mt-0.5">{selectedAddress.street}, {selectedAddress.areaName}</p>
+                  <div className="mt-3 border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#1E1E1E]">
+                    <p>{selectedAddress.recipientName} · {selectedAddress.phone}</p>
+                    <p className="text-[13px] text-[#6F6F71] mt-0.5">{selectedAddress.street}, {selectedAddress.areaName}</p>
                   </div>
                 )}
               </div>
 
               {/* Step 2: Shipping */}
               {selectedAddress && (
-                <div className="bg-white border border-[#E8E8E5] rounded-xl p-6">
+                <div className="border-b border-[#E9E9EA] pb-8">
                   <div className="flex items-center gap-2.5 mb-4">
                     <StepBadge number={2} done={!!selectedRate} />
-                    <h2 className="text-sm font-semibold text-[#1F1F1F] uppercase tracking-wide">Metode Pengiriman</h2>
+                    <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">Metode Pengiriman</h2>
                   </div>
                   {!cartHydrated || cartSyncing ? (
-                    <p className="text-sm text-[#9A9A9A]">Menyiapkan data pengiriman terbaru...</p>
+                    <p className="text-[13px] text-[#6F6F71]">Menyiapkan data pengiriman terbaru...</p>
                   ) : cartSyncError ? (
-                    <p className="text-sm text-red-600">
+                    <p className="text-[13px] text-[#AE4B4B]">
                       Sinkronkan keranjang dulu sebelum memilih pengiriman.
                     </p>
                   ) : (
@@ -301,11 +303,11 @@ export default function Checkout() {
 
               {/* Step 3: Voucher */}
               {selectedRate && cartReady && (
-                <div className="bg-white border border-[#E8E8E5] rounded-xl p-6">
+                <div>
                   <div className="flex items-center gap-2.5 mb-4">
                     <StepBadge number={3} done={!!appliedVoucher} />
-                    <h2 className="text-sm font-semibold text-[#1F1F1F] uppercase tracking-wide">Kode Voucher</h2>
-                    <span className="text-xs text-[#9A9A9A] ml-1">(opsional)</span>
+                    <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">Kode Voucher</h2>
+                    <span className="text-[13px] text-[#6F6F71]">(opsional)</span>
                   </div>
                   <VoucherInput
                     subtotal={subtotal}
@@ -318,13 +320,13 @@ export default function Checkout() {
 
             {/* Right — summary */}
             <div className="lg:w-80 shrink-0">
-              <div className="bg-primary rounded-xl p-6 sticky top-24">
-                <h2 className="text-base font-semibold text-white mb-4">Ringkasan Pesanan</h2>
+              <div className="sticky top-24">
+                <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-4">Ringkasan Pesanan</p>
 
-                <div className="space-y-3 mb-4">
+                <div className="mb-4">
                   {effectiveCart.map((c) => (
-                    <div key={c.cartItemId} className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-md overflow-hidden bg-white/10 shrink-0">
+                    <div key={c.cartItemId} className="flex items-center gap-3 py-2.5 border-b border-[#E9E9EA] last:border-b-0">
+                      <div className="w-10 h-10 bg-[#F9F7F2] shrink-0 overflow-hidden">
                         {c.image ? (
                           <img
                             src={api.getImageUrl(c.image)}
@@ -332,30 +334,30 @@ export default function Checkout() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full bg-white/10" />
+                          <div className="w-full h-full bg-[#F9F7F2]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white/90 truncate leading-tight">{c.name}</p>
+                        <p className="uppercase text-[12px] text-[#1E1E1E] truncate leading-tight">{c.name}</p>
                         {c.variantName && (
-                          <p className="text-[11px] text-white/50 truncate">{c.variantName}</p>
+                          <p className="text-[12px] text-[#6F6F71] truncate">{c.variantName}</p>
                         )}
-                        <p className="text-[11px] text-white/50">×{c.quantity}</p>
+                        <p className="text-[12px] text-[#6F6F71]">×{c.quantity}</p>
                       </div>
-                      <span className="text-sm text-white/70 shrink-0 tabular-nums">
+                      <span className="text-[13px] text-[#1E1E1E] shrink-0 tabular-nums">
                         {cartReady ? fmt(c.priceNumeric * c.quantity) : '—'}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-white/15 pt-3 space-y-2 text-sm text-white/70">
+                <div className="border-t border-[#E9E9EA] pt-4 space-y-2 text-[13px] text-[#6F6F71]">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="tabular-nums">{cartReady ? fmt(subtotal) : '—'}</span>
                   </div>
                   {cartReady && voucherDiscount > 0 && (
-                    <div className="flex justify-between text-green-300">
+                    <div className="flex justify-between">
                       <span>Diskon voucher</span>
                       <span className="tabular-nums">− {fmt(voucherDiscount)}</span>
                     </div>
@@ -368,7 +370,7 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="border-t border-white/15 mt-3 pt-3 flex justify-between font-semibold text-white mb-5">
+                <div className="border-t border-[#E9E9EA] mt-3 pt-3 flex justify-between text-[13px] text-[#1E1E1E] mb-6">
                   <span>Total</span>
                   <span className="tabular-nums">{cartReady ? fmt(total) : '—'}</span>
                 </div>
@@ -376,13 +378,13 @@ export default function Checkout() {
                 <button
                   onClick={handlePay}
                   disabled={!selectedAddress || !selectedRate || paying || cartSyncing || !cartReady}
-                  className="w-full py-3 bg-white text-primary font-semibold rounded-md text-sm hover:bg-[#F7F9FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {!cartHydrated || cartSyncing ? 'Sinkronisasi...' : paying ? 'Memproses...' : 'Bayar Sekarang'}
                 </button>
 
                 {(!selectedAddress || !selectedRate || !cartReady) && (
-                  <p className="text-center text-xs text-white/50 mt-3">
+                  <p className="text-center text-[13px] text-[#6F6F71] mt-3">
                     {!selectedAddress
                       ? 'Pilih alamat pengiriman terlebih dahulu'
                       : !cartReady
@@ -396,6 +398,6 @@ export default function Checkout() {
         </div>
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

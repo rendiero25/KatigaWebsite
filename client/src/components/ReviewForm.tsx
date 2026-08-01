@@ -83,8 +83,8 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
         >
           <Check className="size-5 text-emerald-600" strokeWidth={2.5} />
         </motion.div>
-        <p className="text-sm font-medium text-[#1F1F1F]">Terima kasih atas ulasannya!</p>
-        <p className="text-xs text-[#9A9A9A]">Ulasanmu membantu pembeli lain menentukan pilihan</p>
+        <p className="text-[13px] uppercase text-[#1E1E1E]">Terima kasih atas ulasannya!</p>
+        <p className="text-[13px] text-[#6F6F71]">Ulasanmu membantu pembeli lain menentukan pilihan</p>
       </div>
     );
   }
@@ -93,13 +93,13 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
     <div className="px-4 py-5">
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[#1F1F1F]">Bagikan pengalamanmu</p>
-          <p className="text-xs text-[#9A9A9A] truncate mt-0.5">{productName}</p>
+          <p className="text-[13px] uppercase text-[#1E1E1E]">Bagikan pengalamanmu</p>
+          <p className="text-[13px] text-[#6F6F71] truncate mt-0.5">{productName}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 size-7 rounded-full flex items-center justify-center text-[#9A9A9A] hover:bg-[#EFEFEA] hover:text-[#4A4A4A] transition-colors"
+          className="shrink-0 size-7 flex items-center justify-center text-[#6F6F71] hover:bg-[#F9F7F2] hover:text-[#1E1E1E] transition-colors"
           aria-label="Tutup"
         >
           <X className="size-4" />
@@ -109,41 +109,41 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Star rating */}
         <div>
-          <p className="text-xs font-medium text-[#4A4A4A] mb-1.5">Rating</p>
+          <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-1.5">Rating</p>
           <div className="flex items-center gap-3">
             <StarRating value={rating} interactive onChange={setRating} size="lg" />
-            <span className="text-xs text-[#9A9A9A]">{rating > 0 ? RATING_HINT[rating] : ''}</span>
+            <span className="text-[13px] text-[#6F6F71]">{rating > 0 ? RATING_HINT[rating] : ''}</span>
           </div>
         </div>
 
         {/* Comment */}
         <div>
-          <p className="text-xs font-medium text-[#4A4A4A] mb-1.5">
-            Komentar <span className="text-[#B8B8B4] font-normal">(opsional)</span>
+          <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-1.5">
+            Komentar <span className="normal-case font-normal">(opsional)</span>
           </p>
           <Textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             maxLength={1000}
             placeholder="Ceritakan pengalamanmu dengan produk ini..."
-            className="resize-none h-24 bg-white border-[#E8E8E5] focus-visible:border-[#4F68AF] text-sm"
+            className="resize-none h-24 rounded-none bg-white border-[#E9E9EA] focus-visible:border-[#1E1E1E] text-sm px-4 py-3"
           />
-          <p className="text-[11px] text-[#B8B8B4] text-right mt-1">{comment.length}/1000</p>
+          <p className="text-[11px] text-[#6F6F71] text-right mt-1">{comment.length}/1000</p>
         </div>
 
         {/* Photo upload */}
         <div>
-          <p className="text-xs font-medium text-[#4A4A4A] mb-1.5">
-            Foto <span className="text-[#B8B8B4] font-normal">(opsional, maks 5)</span>
+          <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-1.5">
+            Foto <span className="normal-case font-normal">(opsional, maks 5)</span>
           </p>
           <div className="flex flex-wrap gap-2">
             {previews.map((src, i) => (
               <div key={i} className="relative size-16">
-                <img src={src} alt="" className="w-full h-full object-cover rounded-lg border border-[#E8E8E5]" />
+                <img src={src} alt="" className="w-full h-full object-cover border border-[#E9E9EA]" />
                 <button
                   type="button"
                   onClick={() => removePhoto(i)}
-                  className="absolute -top-1.5 -right-1.5 size-5 bg-[#1F1F1F] text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
+                  className="absolute -top-1.5 -right-1.5 size-5 bg-[#1E1E1E] text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
                 >
                   <X className="size-3" />
                 </button>
@@ -153,7 +153,7 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="size-16 rounded-lg border-2 border-dashed border-[#E0E0DA] flex flex-col items-center justify-center text-[#9A9A9A] hover:border-[#4F68AF] hover:text-[#4F68AF] transition-colors text-[11px] gap-1"
+                className="size-16 border-2 border-dashed border-[#E9E9EA] flex flex-col items-center justify-center text-[#6F6F71] hover:border-[#4F68AF] hover:text-[#4F68AF] transition-colors text-[11px] gap-1"
               >
                 <Camera className="size-4" />
                 <span>Foto</span>
@@ -171,7 +171,7 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
         </div>
 
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          <p className="text-xs text-red-600 bg-red-50 border border-red-100 px-3 py-2">
             {error}
           </p>
         )}
@@ -180,7 +180,7 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
           <Button
             type="button"
             variant="outline"
-            className="flex-1"
+            className="flex-1 rounded-none border-[#E9E9EA]"
             onClick={onClose}
             disabled={submitting}
           >
@@ -189,7 +189,7 @@ export default function ReviewForm({ onClose, onSuccess, productId, orderId, pro
           <Button
             type="submit"
             disabled={submitting || rating === 0}
-            className="flex-1 bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white border-0"
+            className="flex-1 rounded-none bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] hover:bg-[#2B3A67] disabled:opacity-50 border-0"
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : 'Kirim Ulasan'}
           </Button>

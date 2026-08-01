@@ -104,16 +104,16 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   };
 
   if (loading) {
-    return <p className="text-sm text-black/60 py-2">Mengambil tarif pengiriman...</p>;
+    return <p className="text-[13px] text-[#6F6F71] py-2">Mengambil tarif pengiriman...</p>;
   }
 
   if (errorMessage) {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-red-600">{errorMessage}</p>
+        <p className="text-[13px] text-[#AE4B4B]">{errorMessage}</p>
         <button
           onClick={fetchRates}
-          className="text-sm text-primary hover:underline"
+          className="text-[13px] text-[#1E1E1E] underline underline-offset-2 cursor-pointer"
         >
           Coba lagi
         </button>
@@ -124,11 +124,11 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   if (!rates.length && emptyReason) {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-black/60">{emptyMessage}</p>
+        <p className="text-[13px] text-[#6F6F71]">{emptyMessage}</p>
         {emptyReason === 'provider_empty' && (
           <button
             onClick={fetchRates}
-            className="text-sm text-primary hover:underline"
+            className="text-[13px] text-[#1E1E1E] underline underline-offset-2 cursor-pointer"
           >
             Coba lagi
           </button>
@@ -140,10 +140,10 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   if (!rates.length) {
     return (
       <div className="space-y-2">
-        <p className="text-sm text-black/60">Tidak ada kurir tersedia untuk tujuan ini.</p>
+        <p className="text-[13px] text-[#6F6F71]">Tidak ada kurir tersedia untuk tujuan ini.</p>
         <button
           onClick={fetchRates}
-          className="text-sm text-primary hover:underline"
+          className="text-[13px] text-[#1E1E1E] underline underline-offset-2 cursor-pointer"
         >
           Coba lagi
         </button>
@@ -152,29 +152,26 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
   }
 
   return (
-    <div className="space-y-2 max-h-[372px] overflow-y-auto pr-1">
+    <div className="max-h-[372px] overflow-y-auto pr-1">
       {rates.map((rate, i) => {
         const logo = getCourierLogoUrl(rate.courier_code);
+        const isSelected =
+          selected?.courier_code === rate.courier_code &&
+          selected?.courier_service_code === rate.courier_service_code;
         return (
           <label
             key={`${rate.courier_code}-${rate.courier_service_code}-${i}`}
-            className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition ${
-              selected?.courier_code === rate.courier_code &&
-              selected?.courier_service_code === rate.courier_service_code
-                ? 'border-primary bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
+            className={`flex items-center justify-between gap-4 px-3 py-3 border-b border-[#E9E9EA] cursor-pointer transition-colors last:border-b-0 ${
+              isSelected ? 'bg-[#F9F7F2]' : 'hover:bg-[#F9F7F2]'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <input
                 type="radio"
                 name="shippingRate"
-                checked={
-                  selected?.courier_code === rate.courier_code &&
-                  selected?.courier_service_code === rate.courier_service_code
-                }
+                checked={isSelected}
                 onChange={() => handleSelect(rate)}
-                className="accent-primary shrink-0"
+                className="accent-[#1E1E1E] shrink-0"
               />
               {logo && (
                 <img
@@ -184,13 +181,13 @@ export default function ShippingSelector({ address, cart, onSelect }: Props) {
                 />
               )}
               <div className="min-w-0">
-                <p className="font-medium text-sm text-black truncate">
+                <p className="text-[13px] text-[#1E1E1E] truncate">
                   {rate.courier_name} — {rate.courier_service_name}
                 </p>
-                <p className="text-xs text-black/60">{rate.duration}</p>
+                <p className="text-[13px] text-[#6F6F71]">{rate.duration}</p>
               </div>
             </div>
-            <span className="text-sm font-bold text-black shrink-0">{fmt(rate.price)}</span>
+            <span className="text-[13px] text-[#1E1E1E] shrink-0 tabular-nums">{fmt(rate.price)}</span>
           </label>
         );
       })}

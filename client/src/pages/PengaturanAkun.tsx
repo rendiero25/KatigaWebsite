@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { User, Phone, Mail, Save, CheckCircle, Lock, Eye, EyeOff, Camera, Loader2 } from 'lucide-react'
+import { User, Phone, Mail, CheckCircle, Lock, Eye, EyeOff, Camera, Loader2 } from 'lucide-react'
 import { FcGoogle } from 'react-icons/fc'
 import type { CustomerProfile } from '../types/ecommerce'
 import api from '../services/api'
 import UserLayout from '../components/UserLayout'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+
+const inputClass =
+  'w-full border border-[#E9E9EA] px-4 py-3 text-sm outline-none focus:border-[#1E1E1E] transition-colors'
+const labelClass = 'uppercase tracking-[0.12em] text-[11px] text-[#6F6F71]'
+const saveButtonClass =
+  'bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] disabled:opacity-50 transition-colors'
+const tabButtonClass = (active: boolean) =>
+  `uppercase tracking-[0.12em] text-[13px] px-4 py-3 border-b-2 transition-colors ${
+    active ? 'border-[#1E1E1E] text-[#1E1E1E]' : 'border-transparent text-[#6F6F71] hover:text-[#1E1E1E]'
+  }`
 
 function initials(name: string) {
   return name
@@ -27,6 +29,7 @@ export default function PengaturanAkun() {
   const [loading, setLoading] = useState(true)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [activeTab, setActiveTab] = useState<'profil' | 'password'>('profil')
 
   const [profileForm, setProfileForm] = useState({ name: '', phone: '' })
   const [profileSaving, setProfileSaving] = useState(false)
@@ -128,8 +131,8 @@ export default function PengaturanAkun() {
     return (
       <UserLayout title="Pengaturan">
         <div className="w-full space-y-4">
-          <Skeleton className="h-20 w-full rounded-lg" />
-          <Skeleton className="h-[28rem] w-full rounded-lg" />
+          <div className="h-24 w-full bg-gray-200 animate-pulse" />
+          <div className="h-96 w-full bg-gray-200 animate-pulse" />
         </div>
       </UserLayout>
     )
@@ -141,21 +144,26 @@ export default function PengaturanAkun() {
     <UserLayout title="Pengaturan">
       <div className="w-full space-y-4">
         {/* Profile summary strip */}
-        <div className="flex flex-col gap-4 rounded-lg border border-[#E8E8E5] bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 border border-[#E9E9EA] bg-white p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={avatarUploading}
-              className="group/av relative shrink-0 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed"
+              className="group/av relative shrink-0 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-[#4F68AF] disabled:cursor-not-allowed"
               aria-label="Ganti foto profil"
             >
-              <Avatar className="size-14 ring-2 ring-primary/15 [&::after]:hidden">
-                {customer?.avatar && <AvatarImage src={customer.avatar} alt={customer?.name ?? ''} />}
-                <AvatarFallback className="bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-base font-semibold text-white">
-                  {customer?.name ? initials(customer.name) : 'U'}
-                </AvatarFallback>
-              </Avatar>
+              <span className="flex size-14 items-center justify-center overflow-hidden rounded-full bg-[#F0EFE9] text-base text-[#1E1E1E]">
+                {customer?.avatar ? (
+                  <img
+                    src={api.getImageUrl(customer.avatar)}
+                    alt={customer?.name ?? ''}
+                    className="size-14 rounded-full object-cover"
+                  />
+                ) : (
+                  customer?.name ? initials(customer.name) : 'U'
+                )}
+              </span>
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 opacity-0 transition-opacity group-hover/av:opacity-100">
                 {avatarUploading
                   ? <Loader2 className="size-5 animate-spin text-white" />
@@ -168,103 +176,106 @@ export default function PengaturanAkun() {
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
               onChange={handleAvatarChange}
+              aria-label="Unggah foto profil"
             />
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold text-black">
+              <p className="truncate text-base text-[#1E1E1E]">
                 {customer?.name || 'Pelanggan'}
               </p>
-              <p className="truncate text-sm text-black/50">{customer?.email}</p>
+              <p className="truncate text-sm text-[#6F6F71]">{customer?.email}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <Badge className="border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+            <span className="uppercase tracking-[0.1em] text-[11px] text-emerald-700 border border-emerald-200 bg-emerald-50 px-3 py-1.5">
               Akun aktif
-            </Badge>
+            </span>
             {isGoogleOnly && (
-              <Badge variant="outline" className="gap-1 border-black/10 text-black/70">
+              <span className="flex items-center gap-1.5 uppercase tracking-[0.1em] text-[11px] text-[#1E1E1E] border border-[#E9E9EA] px-3 py-1.5">
                 <FcGoogle className="size-3.5" />
                 Google
-              </Badge>
+              </span>
             )}
           </div>
         </div>
 
         {/* Settings panel */}
-        <div className="overflow-hidden rounded-lg border border-[#E8E8E5] bg-white">
-          <Tabs defaultValue="profil" className="flex-col gap-0">
-            {/* TabsList above TabsContent */}
-            <div className="px-4 py-3 border-b border-[#F0F0EC]">
-              <TabsList className="h-9 w-full sm:w-auto">
-                <TabsTrigger value="profil" className="gap-2 px-4 text-sm">
-                  <User className="size-4" />
-                  Informasi Akun
-                </TabsTrigger>
-                <TabsTrigger value="password" className="gap-2 px-4 text-sm">
-                  <Lock className="size-4" />
-                  Ubah Password
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        <div className="border border-[#E9E9EA] bg-white">
+          <div className="flex border-b border-[#E9E9EA]">
+            <button
+              type="button"
+              onClick={() => setActiveTab('profil')}
+              className={tabButtonClass(activeTab === 'profil')}
+            >
+              Informasi Akun
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('password')}
+              className={tabButtonClass(activeTab === 'password')}
+            >
+              Ubah Password
+            </button>
+          </div>
 
-            <TabsContent value="profil" className="mt-0 p-5 sm:p-6">
+          {activeTab === 'profil' && (
+            <div className="p-5 sm:p-6">
               <div className="mb-6 max-w-xl">
-                <h2 className="text-base font-semibold text-black">Informasi Akun</h2>
-                <p className="mt-1 text-sm leading-relaxed text-black/50">
+                <h2 className="text-base text-[#1E1E1E]">Informasi Akun</h2>
+                <p className="mt-1 text-sm leading-relaxed text-[#6F6F71]">
                   Nama dan nomor HP dipakai untuk pesanan serta pengiriman.
                 </p>
               </div>
 
               <form onSubmit={handleProfileSave} className="w-full space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-sm text-black/70">Email</Label>
+                <div className="space-y-1">
+                  <label htmlFor="email" className={labelClass}>Email</label>
                   <div className="relative">
-                    <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-black/30" />
-                    <Input
+                    <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9A9A96]" />
+                    <input
+                      id="email"
                       value={customer?.email || ''}
                       disabled
-                      className="border-black/10 bg-[#F9F7F2] pl-10 text-black/60"
+                      className={`${inputClass} bg-[#F9F7F2] pl-10 text-[#6F6F71]`}
                     />
                   </div>
                   {isGoogleOnly && (
-                    <p className="text-xs text-black/40">
+                    <p className="text-xs text-[#9A9A96]">
                       Terhubung ke akun Google. Email tidak dapat diubah di sini.
                     </p>
                   )}
                 </div>
 
-                <Separator className="bg-black/5" />
-
                 <div className="grid gap-5 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm text-black/70">
+                  <div className="space-y-1">
+                    <label htmlFor="name" className={labelClass}>
                       Nama Lengkap
-                    </Label>
+                    </label>
                     <div className="relative">
-                      <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-black/30" />
-                      <Input
+                      <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9A9A96]" />
+                      <input
                         id="name"
                         value={profileForm.name}
                         onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))}
                         placeholder="Nama lengkap kamu"
                         required
-                        className="border-black/10 pl-10 focus-visible:border-primary"
+                        className={`${inputClass} pl-10`}
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm text-black/70">
+                  <div className="space-y-1">
+                    <label htmlFor="phone" className={labelClass}>
                       Nomor HP
-                    </Label>
+                    </label>
                     <div className="relative">
-                      <Phone className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-black/30" />
-                      <Input
+                      <Phone className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9A9A96]" />
+                      <input
                         id="phone"
                         type="tel"
                         value={profileForm.phone}
                         onChange={(e) => setProfileForm((p) => ({ ...p, phone: e.target.value }))}
                         placeholder="08xxxxxxxxxx"
-                        className="border-black/10 pl-10 focus-visible:border-primary"
+                        className={`${inputClass} pl-10`}
                       />
                     </div>
                   </div>
@@ -272,10 +283,10 @@ export default function PengaturanAkun() {
 
                 {profileMsg && (
                   <div
-                    className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
+                    className={`flex items-center gap-2 border px-4 py-3 text-sm ${
                       profileMsg.type === 'success'
-                        ? 'border border-emerald-100 bg-emerald-50 text-emerald-700'
-                        : 'border border-red-100 bg-red-50 text-red-600'
+                        ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                        : 'border-red-100 bg-red-50 text-red-600'
                     }`}
                     role="status"
                   >
@@ -284,24 +295,20 @@ export default function PengaturanAkun() {
                   </div>
                 )}
 
-                <div className="flex flex-col-reverse gap-3 border-t border-black/5 pt-5 sm:flex-row sm:justify-end">
-                  <Button
-                    type="submit"
-                    disabled={profileSaving}
-                    className="w-full sm:w-auto"
-                  >
-                    <Save className="mr-2 size-4" />
+                <div className="flex flex-col-reverse gap-3 border-t border-[#E9E9EA] pt-5 sm:flex-row sm:justify-end">
+                  <button type="submit" disabled={profileSaving} className={`${saveButtonClass} w-full sm:w-auto`}>
                     {profileSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
-                  </Button>
+                  </button>
                 </div>
               </form>
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="password" className="mt-0 p-5 sm:p-6">
-
+          {activeTab === 'password' && (
+            <div className="p-5 sm:p-6">
               <div className="mb-6 max-w-xl">
-                <h2 className="text-base font-semibold text-black">Ubah Password</h2>
-                <p className="mt-1 text-sm leading-relaxed text-black/50">
+                <h2 className="text-base text-[#1E1E1E]">Ubah Password</h2>
+                <p className="mt-1 text-sm leading-relaxed text-[#6F6F71]">
                   {isGoogleOnly
                     ? 'Atur password untuk mengaktifkan login dengan email dan password.'
                     : 'Masukkan password saat ini lalu buat password baru.'}
@@ -310,26 +317,27 @@ export default function PengaturanAkun() {
 
               <form onSubmit={handlePasswordSave} className="w-full space-y-5">
                 {!isGoogleOnly && (
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password" className="text-sm text-black/70">
+                  <div className="space-y-1">
+                    <label htmlFor="current-password" className={labelClass}>
                       Password Saat Ini
-                    </Label>
+                    </label>
                     <div className="relative">
-                      <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-black/30" />
-                      <Input
+                      <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9A9A96]" />
+                      <input
                         id="current-password"
                         type={showCurrent ? 'text' : 'password'}
                         value={pwForm.current}
                         onChange={(e) => setPwForm((p) => ({ ...p, current: e.target.value }))}
                         placeholder="Password lama kamu"
                         required
-                        className="border-black/10 pl-10 pr-10 focus-visible:border-primary"
+                        className={`${inputClass} pl-10 pr-10`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrent((v) => !v)}
-                        className="absolute top-1/2 right-3 -translate-y-1/2 text-black/30 hover:text-black/60"
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-[#9A9A96] hover:text-[#1E1E1E]"
                         tabIndex={-1}
+                        aria-label={showCurrent ? 'Sembunyikan password' : 'Tampilkan password'}
                       >
                         {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                       </button>
@@ -337,54 +345,54 @@ export default function PengaturanAkun() {
                   </div>
                 )}
 
-                <Separator className="bg-black/5" />
-
-                <div className="space-y-2">
-                  <Label htmlFor="new-password" className="text-sm text-black/70">
+                <div className="space-y-1">
+                  <label htmlFor="new-password" className={labelClass}>
                     Password Baru
-                  </Label>
+                  </label>
                   <div className="relative">
-                    <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-black/30" />
-                    <Input
+                    <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9A9A96]" />
+                    <input
                       id="new-password"
                       type={showNew ? 'text' : 'password'}
                       value={pwForm.newPw}
                       onChange={(e) => setPwForm((p) => ({ ...p, newPw: e.target.value }))}
                       placeholder="Min. 6 karakter"
                       required
-                      className="border-black/10 pl-10 pr-10 focus-visible:border-primary"
+                      className={`${inputClass} pl-10 pr-10`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowNew((v) => !v)}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-black/30 hover:text-black/60"
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-[#9A9A96] hover:text-[#1E1E1E]"
                       tabIndex={-1}
+                      aria-label={showNew ? 'Sembunyikan password' : 'Tampilkan password'}
                     >
                       {showNew ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-sm text-black/70">
+                <div className="space-y-1">
+                  <label htmlFor="confirm-password" className={labelClass}>
                     Konfirmasi Password Baru
-                  </Label>
+                  </label>
                   <div className="relative">
-                    <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-black/30" />
-                    <Input
+                    <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#9A9A96]" />
+                    <input
                       id="confirm-password"
                       type={showConfirm ? 'text' : 'password'}
                       value={pwForm.confirm}
                       onChange={(e) => setPwForm((p) => ({ ...p, confirm: e.target.value }))}
                       placeholder="Ulangi password baru"
                       required
-                      className="border-black/10 pl-10 pr-10 focus-visible:border-primary"
+                      className={`${inputClass} pl-10 pr-10`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirm((v) => !v)}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-black/30 hover:text-black/60"
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-[#9A9A96] hover:text-[#1E1E1E]"
                       tabIndex={-1}
+                      aria-label={showConfirm ? 'Sembunyikan password' : 'Tampilkan password'}
                     >
                       {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                     </button>
@@ -393,10 +401,10 @@ export default function PengaturanAkun() {
 
                 {pwMsg && (
                   <div
-                    className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${
+                    className={`flex items-center gap-2 border px-4 py-3 text-sm ${
                       pwMsg.type === 'success'
-                        ? 'border border-emerald-100 bg-emerald-50 text-emerald-700'
-                        : 'border border-red-100 bg-red-50 text-red-600'
+                        ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+                        : 'border-red-100 bg-red-50 text-red-600'
                     }`}
                     role="status"
                   >
@@ -405,19 +413,14 @@ export default function PengaturanAkun() {
                   </div>
                 )}
 
-                <div className="flex flex-col-reverse gap-3 border-t border-black/5 pt-5 sm:flex-row sm:justify-end">
-                  <Button
-                    type="submit"
-                    disabled={pwSaving}
-                    className="w-full sm:w-auto"
-                  >
-                    <Lock className="mr-2 size-4" />
+                <div className="flex flex-col-reverse gap-3 border-t border-[#E9E9EA] pt-5 sm:flex-row sm:justify-end">
+                  <button type="submit" disabled={pwSaving} className={`${saveButtonClass} w-full sm:w-auto`}>
                     {pwSaving ? 'Menyimpan...' : 'Simpan Password'}
-                  </Button>
+                  </button>
                 </div>
               </form>
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
         </div>
       </div>
     </UserLayout>

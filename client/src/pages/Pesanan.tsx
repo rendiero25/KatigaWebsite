@@ -4,7 +4,6 @@ import { Package } from 'lucide-react'
 import type { Order } from '../types/ecommerce'
 import api from '../services/api'
 import UserLayout from '../components/UserLayout'
-import { Skeleton } from '@/components/ui/skeleton'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
@@ -25,12 +24,12 @@ const TABS: Tab[] = [
   { value: 'cancelled',       label: 'Dibatalkan' },
 ]
 
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  awaiting_payment: { label: 'Menunggu Pembayaran', color: 'bg-amber-100 text-amber-700' },
-  processing:       { label: 'Diproses',            color: 'bg-blue-100 text-blue-700' },
-  shipped:          { label: 'Dikirim',              color: 'bg-indigo-100 text-indigo-700' },
-  delivered:        { label: 'Selesai',              color: 'bg-emerald-100 text-emerald-700' },
-  cancelled:        { label: 'Dibatalkan',           color: 'bg-red-100 text-red-700' },
+const STATUS_LABEL: Record<string, { label: string; className: string }> = {
+  awaiting_payment: { label: 'Menunggu Pembayaran', className: 'border-[#6F6F71] text-[#6F6F71]' },
+  processing:       { label: 'Diproses',            className: 'border-[#4F68AF] text-[#4F68AF]' },
+  shipped:          { label: 'Dikirim',              className: 'border-[#4F68AF] text-[#4F68AF]' },
+  delivered:        { label: 'Selesai',              className: 'border-[#1E1E1E] text-[#1E1E1E]' },
+  cancelled:        { label: 'Dibatalkan',           className: 'border-[#AE4B4B] text-[#AE4B4B]' },
 }
 
 export default function Pesanan() {
@@ -53,21 +52,26 @@ export default function Pesanan() {
   return (
     <UserLayout title="Pesanan Saya">
       {loading ? (
-        <div className="rounded-lg border border-[#E8E8E5] bg-white overflow-hidden">
+        <div className="animate-pulse">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="px-4 py-3 border-b border-[#F0F0EC] last:border-0">
-              <Skeleton className="h-14 w-full" />
+            <div key={i} className="flex items-center justify-between border-b border-[#E9E9EA] py-5">
+              <div className="space-y-2">
+                <div className="h-3 w-32 bg-gray-200" />
+                <div className="h-3 w-24 bg-gray-200" />
+                <div className="h-3 w-40 bg-gray-200" />
+              </div>
+              <div className="h-5 w-20 bg-gray-200" />
             </div>
           ))}
         </div>
       ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Package className="size-10 text-[#D0D0CC] mb-3" />
-          <p className="text-sm font-medium text-[#4A4A4A]">Belum ada pesanan</p>
-          <p className="text-xs text-[#9A9A9A] mt-1">Yuk mulai belanja dan temukan produk pilihan kamu</p>
+          <Package className="size-10 text-[#6F6F71]/40 mb-3" strokeWidth={1.5} />
+          <p className="text-[13px] text-[#1E1E1E]">Belum ada pesanan</p>
+          <p className="text-[13px] text-[#6F6F71] mt-1">Yuk mulai belanja dan temukan produk pilihan kamu</p>
           <Link
             to="/produk"
-            className="mt-4 border border-[#E8E8E5] text-[#4A4A4A] text-sm rounded-md px-4 py-2 hover:bg-[#F7F7F5] transition-colors"
+            className="mt-4 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] px-6 py-2.5 hover:bg-[#1E1E1E] hover:text-white transition-colors"
           >
             Mulai Belanja
           </Link>
@@ -75,17 +79,17 @@ export default function Pesanan() {
       ) : (
         <div className="w-full">
           {/* Tab navigation */}
-          <div className="flex gap-1 border-b border-[#F0F0EC] mb-4 -mx-1 overflow-x-auto">
+          <div className="flex gap-1 border-b border-[#E9E9EA] mb-2 overflow-x-auto">
             {TABS.map((tab) => (
               <button
                 key={tab.value}
                 type="button"
                 onClick={() => setActiveTab(tab.value)}
                 className={
-                  'px-3 py-2 text-sm whitespace-nowrap transition-colors ' +
+                  'px-3 py-2.5 uppercase tracking-[0.1em] text-[12px] whitespace-nowrap transition-colors cursor-pointer ' +
                   (activeTab === tab.value
-                    ? 'border-b-2 border-[#1F1F1F] text-[#1F1F1F] font-medium'
-                    : 'border-b-2 border-transparent text-[#9A9A9A] hover:text-[#4A4A4A]')
+                    ? 'border-b-2 border-[#1E1E1E] text-[#1E1E1E]'
+                    : 'border-b-2 border-transparent text-[#6F6F71] hover:text-[#1E1E1E]')
                 }
               >
                 {tab.label}
@@ -96,27 +100,27 @@ export default function Pesanan() {
           {/* Order list */}
           {filteredOrders.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Package className="size-10 text-[#D0D0CC] mb-3" />
-              <p className="text-sm font-medium text-[#4A4A4A]">Tidak ada pesanan dengan status ini</p>
+              <Package className="size-10 text-[#6F6F71]/40 mb-3" strokeWidth={1.5} />
+              <p className="text-[13px] text-[#6F6F71]">Tidak ada pesanan dengan status ini</p>
             </div>
           ) : (
-            <div className="rounded-lg border border-[#E8E8E5] bg-white overflow-hidden">
+            <div>
               {filteredOrders.map((order) => {
-                const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: 'bg-gray-100 text-gray-700' }
+                const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, className: 'border-[#6F6F71] text-[#6F6F71]' }
                 return (
                   <Link
                     key={order._id}
                     to={`/pesanan/${order._id}`}
-                    className="flex w-full items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors"
+                    className="flex w-full items-center justify-between gap-4 border-b border-[#E9E9EA] py-5 hover:bg-[#F9F7F2] transition-colors"
                   >
                     <div>
-                      <p className="text-xs text-[#9A9A9A] font-mono">#{order._id.slice(-8).toUpperCase()}</p>
-                      <p className="text-sm font-semibold text-[#1F1F1F] mt-0.5">{fmt(order.total)}</p>
-                      <p className="text-xs text-[#9A9A9A] mt-0.5">
+                      <p className="uppercase text-[13px] text-[#1E1E1E]">#{order._id.slice(-8).toUpperCase()}</p>
+                      <p className="text-[13px] text-[#6F6F71] mt-1">
                         {order.items.length} item · {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
+                      <p className="text-[13px] text-[#6F6F71] mt-0.5">{fmt(order.total)}</p>
                     </div>
-                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded shrink-0 ${s.color}`}>
+                    <span className={`border text-[11px] uppercase tracking-[0.12em] px-2 py-1 shrink-0 ${s.className}`}>
                       {s.label}
                     </span>
                   </Link>

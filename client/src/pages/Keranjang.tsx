@@ -8,7 +8,6 @@ import CartItemCard from '../components/CartItemCard';
 import RelatedProductsCarousel from '../components/RelatedProductsCarousel';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { Button } from '@/components/ui/button';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -99,77 +98,103 @@ export default function Keranjang() {
 
   if (!cartHydrated && displayCart.length === 0) {
     return (
-      <>
+      <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-20">
-          <p className="text-sm text-[#9A9A9A]">Menyinkronkan keranjang...</p>
+        <main className="grow">
+          <div className="border-b border-[#E9E9EA] py-6">
+            <h1 className="text-center text-2xl md:text-3xl">Keranjang</h1>
+          </div>
+          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-10 animate-pulse">
+            <div className="flex flex-col lg:flex-row gap-10">
+              <div className="flex-1 space-y-0">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex gap-4 items-start py-5 border-b border-[#E9E9EA]">
+                    <div className="w-24 h-24 bg-gray-100 shrink-0" />
+                    <div className="flex-1 space-y-2 pt-1">
+                      <div className="h-3 w-2/3 bg-gray-200" />
+                      <div className="h-3 w-1/3 bg-gray-100" />
+                      <div className="h-3 w-1/4 bg-gray-100" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="lg:w-80 shrink-0">
+                <div className="h-56 bg-gray-100" />
+              </div>
+            </div>
+          </div>
         </main>
         <Footer />
-      </>
+      </div>
     );
   }
 
   if (displayCart.length === 0) {
     return (
-      <>
+      <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="min-h-screen bg-[#F9F7F2] flex flex-col items-center justify-center px-4 py-20">
-          <ShoppingBag className="size-12 text-[#D0D0CC] mb-4" />
-          <p className="text-base font-semibold text-[#1F1F1F] mb-1">Keranjang masih kosong</p>
-          <p className="text-sm text-[#9A9A9A] mb-6">Temukan produk yang kamu suka.</p>
-          <Link
-            to="/produk"
-            className="px-6 py-2.5 bg-[#1F1F1F] text-white text-sm font-medium rounded-md hover:bg-[#2F2F2F] transition-colors"
-          >
-            Lihat Produk
-          </Link>
+        <main className="grow">
+          <div className="border-b border-[#E9E9EA] py-6">
+            <h1 className="text-center text-2xl md:text-3xl">Keranjang</h1>
+          </div>
+          <div className="flex flex-col items-center justify-center px-4 py-24">
+            <ShoppingBag className="size-10 text-[#D0D0CC] mb-4" strokeWidth={1.5} />
+            <p className="text-[13px] text-[#1E1E1E] mb-1">Keranjang masih kosong</p>
+            <p className="text-[13px] text-[#6F6F71] mb-6">Temukan produk yang kamu suka.</p>
+            <Link
+              to="/produk"
+              className="px-8 py-3 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] hover:bg-[#1E1E1E] hover:text-white transition-colors"
+            >
+              Lihat Produk
+            </Link>
+          </div>
         </main>
         <Footer />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="min-h-screen bg-[#F9F7F2] pt-6 pb-0">
-        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 pb-16">
-          <h1 className="text-2xl font-semibold text-[#1F1F1F] mb-6">Keranjang Belanja</h1>
+      <main className="grow">
+        <div className="border-b border-[#E9E9EA] py-6">
+          <h1 className="text-center text-2xl md:text-3xl">Keranjang</h1>
+        </div>
 
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-10">
           {cartSyncing && (
-            <div className="mb-4 rounded-lg border border-[#D4DEFF] bg-[#F0F5FF] px-4 py-3 text-sm text-primary">
+            <div className="mb-6 border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#6F6F71]">
               Memperbarui harga dan data pengiriman terbaru...
             </div>
           )}
           {cartSyncError && (
-            <div className="mb-4 flex flex-col gap-2 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6 flex flex-col gap-2 border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#AE4B4B] sm:flex-row sm:items-center sm:justify-between">
               <span>{cartSyncError}</span>
-              <Button
-                variant="link"
-                size="sm"
+              <button
                 onClick={refreshCart}
-                className="text-red-700 p-0 h-auto font-medium"
+                className="uppercase tracking-[0.12em] text-[12px] underline underline-offset-2 cursor-pointer"
               >
                 Coba lagi
-              </Button>
+              </button>
             </div>
           )}
 
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-10">
             {/* Item list */}
             <div className="flex-1 min-w-0">
-              <label className="flex items-center gap-3 bg-white border border-[#E8E8E5] rounded-xl px-4 py-3 mb-3 cursor-pointer select-none">
+              <label className="flex items-center gap-3 pb-4 border-b border-[#E9E9EA] cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={toggleAll}
-                  className="w-4 h-4 accent-primary shrink-0"
+                  className="w-4 h-4 accent-[#1E1E1E] shrink-0"
                 />
-                <span className="text-sm font-medium text-[#1F1F1F]">Pilih Semua</span>
-                <span className="text-sm text-[#9A9A9A] ml-auto">{displayCart.length} produk</span>
+                <span className="uppercase text-[13px] text-[#1E1E1E]">Pilih Semua</span>
+                <span className="text-[13px] text-[#6F6F71] ml-auto">{displayCart.length} produk</span>
               </label>
 
-              <div className="space-y-3">
+              <div>
                 {displayCart.map((item) => (
                   <CartItemCard
                     key={item.cartItemId}
@@ -184,39 +209,39 @@ export default function Keranjang() {
             </div>
 
             {/* Summary */}
-            <div className="lg:w-72 shrink-0">
-              <div className="bg-primary rounded-xl p-6 sticky top-24">
-                <h2 className="text-base font-semibold text-white mb-4">Ringkasan</h2>
+            <div className="lg:w-80 shrink-0">
+              <div className="sticky top-24">
+                <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-4">Ringkasan</p>
 
-                <div className="flex justify-between text-sm text-white/75 mb-1.5">
+                <div className="flex justify-between text-[13px] text-[#6F6F71] mb-2">
                   <span>Produk dipilih</span>
                   <span>{selectedCount} item</span>
                 </div>
-                <div className="flex justify-between text-sm text-white/50 mb-4">
+                <div className="flex justify-between text-[13px] text-[#6F6F71] mb-4">
                   <span>Ongkir</span>
                   <span>Dihitung saat checkout</span>
                 </div>
 
-                <div className="border-t border-white/15 pt-4 flex justify-between font-semibold text-white mb-5">
+                <div className="border-t border-[#E9E9EA] pt-4 flex justify-between text-[13px] text-[#1E1E1E] mb-6">
                   <span>Subtotal</span>
                   <span className="tabular-nums">{cartReady ? fmt(selectedTotal) : '—'}</span>
                 </div>
 
-                <Button
+                <button
                   onClick={handleCheckout}
                   disabled={selectedIds.size === 0 || cartSyncing || !cartReady}
-                  className="w-full py-3 bg-white text-primary font-semibold rounded-md text-sm hover:bg-[#F7F9FF] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {!cartHydrated || cartSyncing
                     ? 'Sinkronisasi...'
                     : selectedIds.size > 0
-                    ? `Checkout (${selectedIds.size} Produk)`
+                    ? `Lanjut ke Checkout (${selectedIds.size})`
                     : 'Pilih Produk'}
-                </Button>
+                </button>
 
                 <Link
                   to="/produk"
-                  className="block text-center text-sm text-white/60 mt-4 hover:text-white transition-colors"
+                  className="block text-center text-[13px] text-[#6F6F71] mt-4 hover:text-[#1E1E1E] transition-colors"
                 >
                   Lanjut Belanja
                 </Link>
@@ -233,6 +258,6 @@ export default function Keranjang() {
         )}
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

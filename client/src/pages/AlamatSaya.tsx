@@ -4,8 +4,6 @@ import type { BiteshipArea, SavedAddress } from '../types/ecommerce'
 import { useCustomerAddresses } from '../hooks/useApi'
 import api from '../services/api'
 import UserLayout from '../components/UserLayout'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 
 const emptyForm = {
   label: '',
@@ -22,7 +20,14 @@ const emptyForm = {
 }
 
 const inputCls =
-  'w-full px-3 py-2 border border-[#E8E8E5] rounded-md focus:outline-none focus:ring-2 focus:ring-[#1F1F1F] text-sm bg-white text-[#1F1F1F] placeholder:text-[#9A9A9A]'
+  'w-full border border-[#E9E9EA] px-4 py-3 text-sm outline-none focus:border-[#1E1E1E] transition-colors bg-white text-[#1E1E1E] placeholder:text-[#9A9A9A]'
+const labelCls = 'uppercase tracking-[0.12em] text-[11px] text-[#6F6F71]'
+const primaryBtnCls =
+  'bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] disabled:opacity-50 transition-colors'
+const outlineBtnCls =
+  'border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#1E1E1E] hover:text-white disabled:opacity-50 transition-colors'
+const linkBtnCls = 'text-[13px] text-[#6F6F71] hover:text-[#1E1E1E] underline transition-colors'
+const dangerLinkBtnCls = 'text-[13px] text-[#AE4B4B] hover:text-[#8f3a3a] underline transition-colors'
 
 interface AreaSearchProps {
   areaId: string
@@ -45,36 +50,34 @@ function AreaSearchField({
   return (
     <div className="relative">
       {areaId ? (
-        <div className="rounded-md border border-[#E8E8E5] bg-[#FAFAF9] p-3">
+        <div className="border border-[#E9E9EA] bg-[#FAFAF9] p-4">
           <div className="flex items-start justify-between gap-2">
-            <div className="space-y-0.5 text-sm">
-              <p className="text-xs font-medium text-emerald-700 mb-1.5">Area terpilih</p>
-              <p className="text-[#4A4A4A]">
-                <span className="text-[#9A9A9A] inline-block w-24">Kecamatan</span>
+            <div className="space-y-1 text-[13px]">
+              <p className={`${labelCls} mb-1.5`}>Area terpilih</p>
+              <p className="text-[#1E1E1E]">
+                <span className="text-[#6F6F71] inline-block w-24">Kecamatan</span>
                 {kecamatan}
               </p>
-              <p className="text-[#4A4A4A]">
-                <span className="text-[#9A9A9A] inline-block w-24">Kota</span>
+              <p className="text-[#1E1E1E]">
+                <span className="text-[#6F6F71] inline-block w-24">Kota</span>
                 {city}
               </p>
-              <p className="text-[#4A4A4A]">
-                <span className="text-[#9A9A9A] inline-block w-24">Provinsi</span>
+              <p className="text-[#1E1E1E]">
+                <span className="text-[#6F6F71] inline-block w-24">Provinsi</span>
                 {province}
               </p>
-              <p className="text-[#4A4A4A]">
-                <span className="text-[#9A9A9A] inline-block w-24">Kode Pos</span>
+              <p className="text-[#1E1E1E]">
+                <span className="text-[#6F6F71] inline-block w-24">Kode Pos</span>
                 {postalCode}
               </p>
             </div>
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="xs"
               onClick={onClear}
-              className="text-xs text-[#1F1F1F] underline shrink-0 hover:opacity-70 h-auto p-0"
+              className={`${linkBtnCls} shrink-0`}
             >
               Ganti
-            </Button>
+            </button>
           </div>
         </div>
       ) : (
@@ -87,11 +90,11 @@ function AreaSearchField({
             className={inputCls}
           />
           {areaResults.length > 0 && (
-            <ul className="absolute z-20 left-0 right-0 bg-white border border-[#E8E8E5] rounded-md mt-1 max-h-52 overflow-y-auto">
+            <ul className="absolute z-20 left-0 right-0 bg-white border border-[#E9E9EA] mt-1 max-h-52 overflow-y-auto">
               {areaResults.map((area) => (
                 <li
                   key={area.area_id}
-                  className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0EC] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer text-sm text-[#4A4A4A]"
+                  className="flex items-center justify-between px-4 py-3 border-b border-[#E9E9EA] last:border-0 hover:bg-[#FAFAF9] transition-colors cursor-pointer text-[13px] text-[#1E1E1E]"
                   onClick={() => onSelectArea(area)}
                 >
                   <span>
@@ -99,7 +102,7 @@ function AreaSearchField({
                     {area.administrative_division_level_2_name},{' '}
                     {area.administrative_division_level_1_name}
                   </span>
-                  <span className="text-xs text-[#9A9A9A] ml-2 shrink-0">{area.postal_code}</span>
+                  <span className="text-[11px] text-[#6F6F71] ml-2 shrink-0">{area.postal_code}</span>
                 </li>
               ))}
             </ul>
@@ -306,32 +309,31 @@ export default function AlamatSaya() {
 
   return (
     <UserLayout title="Alamat Saya">
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-6">
 
         {/* Top action row */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-[#4A4A4A]">Kelola alamat pengiriman tersimpan</p>
-          <Button
+        <div className="flex items-center justify-between border-b border-[#E9E9EA] pb-5">
+          <p className="text-[13px] text-[#6F6F71]">Kelola alamat pengiriman tersimpan</p>
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={() => {
               if (editingId) handleCancelEdit()
               setShowForm((v) => !v)
               setMsg(null)
             }}
+            className={outlineBtnCls}
           >
             {showForm ? 'Tutup Form' : 'Tambah Alamat'}
-          </Button>
+          </button>
         </div>
 
         {/* Feedback message */}
         {msg && (
           <div
-            className={`text-sm px-4 py-2.5 rounded-md ${
+            className={`text-[13px] border px-4 py-3 ${
               msg.type === 'success'
-                ? 'bg-emerald-50 text-emerald-700'
-                : 'bg-red-50 text-red-700'
+                ? 'border-[#1E1E1E] text-[#1E1E1E]'
+                : 'border-[#AE4B4B] text-[#AE4B4B]'
             }`}
           >
             {msg.text}
@@ -340,12 +342,13 @@ export default function AlamatSaya() {
 
         {/* Add address form */}
         {showForm && (
-          <div className="rounded-lg border border-[#E8E8E5] bg-white p-4 space-y-3">
-            <p className="text-[15px] font-semibold text-[#1F1F1F]">Tambah Alamat Baru</p>
+          <div className="border border-[#E9E9EA] p-6 space-y-4">
+            <p className="text-[13px] uppercase tracking-[0.12em] text-[#1E1E1E]">Tambah Alamat Baru</p>
 
-            <div>
-              <label className="text-sm text-[#9A9A9A] mb-1 block">Label (contoh: Rumah, Kantor)</label>
+            <div className="space-y-1">
+              <label htmlFor="add-label" className={labelCls}>Label (contoh: Rumah, Kantor)</label>
               <input
+                id="add-label"
                 type="text"
                 placeholder="Rumah"
                 value={form.label}
@@ -354,9 +357,10 @@ export default function AlamatSaya() {
               />
             </div>
 
-            <div>
-              <label className="text-sm text-[#9A9A9A] mb-1 block">Nama penerima *</label>
+            <div className="space-y-1">
+              <label htmlFor="add-recipient" className={labelCls}>Nama penerima *</label>
               <input
+                id="add-recipient"
                 type="text"
                 placeholder="Nama lengkap"
                 value={form.recipientName}
@@ -365,9 +369,10 @@ export default function AlamatSaya() {
               />
             </div>
 
-            <div>
-              <label className="text-sm text-[#9A9A9A] mb-1 block">Nomor HP penerima *</label>
+            <div className="space-y-1">
+              <label htmlFor="add-phone" className={labelCls}>Nomor HP penerima *</label>
               <input
+                id="add-phone"
                 type="tel"
                 placeholder="08xx-xxxx-xxxx"
                 value={form.phone}
@@ -376,9 +381,10 @@ export default function AlamatSaya() {
               />
             </div>
 
-            <div>
-              <label className="text-sm text-[#9A9A9A] mb-1 block">Alamat lengkap (jalan, nomor, RT/RW) *</label>
+            <div className="space-y-1">
+              <label htmlFor="add-street" className={labelCls}>Alamat lengkap (jalan, nomor, RT/RW) *</label>
               <input
+                id="add-street"
                 type="text"
                 placeholder="Jl. Contoh No. 1, RT 01/RW 02"
                 value={form.street}
@@ -387,59 +393,64 @@ export default function AlamatSaya() {
               />
             </div>
 
-            <div>
-              <label className="text-sm text-[#9A9A9A] mb-1 block">Kecamatan / Kelurahan *</label>
-              <AreaSearchField
-                areaId={form.areaId}
-                areaKeyword={areaKeyword}
-                areaResults={areaResults}
-                kecamatan={form.kecamatan}
-                city={form.city}
-                province={form.province}
-                postalCode={form.postalCode}
-                onKeywordChange={handleAreaSearch}
-                onSelectArea={selectArea}
-                onClear={clearArea}
-              />
+            <div className="space-y-1">
+              <label htmlFor="add-area" className={labelCls}>Kecamatan / Kelurahan *</label>
+              <div id="add-area">
+                <AreaSearchField
+                  areaId={form.areaId}
+                  areaKeyword={areaKeyword}
+                  areaResults={areaResults}
+                  kecamatan={form.kecamatan}
+                  city={form.city}
+                  province={form.province}
+                  postalCode={form.postalCode}
+                  onKeywordChange={handleAreaSearch}
+                  onSelectArea={selectArea}
+                  onClear={clearArea}
+                />
+              </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-[#4A4A4A] cursor-pointer">
+            <label className="flex items-center gap-2 text-[13px] text-[#6F6F71] cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.isDefault}
                 onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))}
-                className="accent-[#1F1F1F]"
+                className="accent-[#1E1E1E]"
               />
               Jadikan alamat utama
             </label>
 
-            <div className="flex gap-2 pt-1">
-              <Button
+            <div className="flex gap-3 pt-1">
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 onClick={() => { setShowForm(false); setForm(emptyForm); setAreaKeyword('') }}
+                className={outlineBtnCls}
               >
                 Batal
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                size="sm"
                 onClick={handleSave}
                 disabled={saving || !form.recipientName || !form.phone || !form.street || !form.areaId}
+                className={primaryBtnCls}
               >
                 {saving ? 'Menyimpan...' : 'Simpan Alamat'}
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
         {/* Loading skeletons */}
         {loading && (
-          <div className="space-y-3">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
+          <div>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border-b border-[#E9E9EA] py-5 space-y-2">
+                <div className="h-3 bg-gray-200 animate-pulse w-24" />
+                <div className="h-3 bg-gray-200 animate-pulse w-1/3" />
+                <div className="h-3 bg-gray-200 animate-pulse w-2/3" />
+              </div>
+            ))}
           </div>
         )}
 
@@ -447,33 +458,32 @@ export default function AlamatSaya() {
         {!loading && addresses.length === 0 && !showForm && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <MapPin className="size-10 text-[#D0D0CC] mb-3" />
-            <p className="text-sm font-medium text-[#4A4A4A]">Belum ada alamat tersimpan</p>
-            <p className="text-xs text-[#9A9A9A] mt-1">Tambahkan alamat pengiriman untuk mempercepat checkout</p>
-            <Button
+            <p className="text-[13px] text-[#1E1E1E]">Belum ada alamat tersimpan</p>
+            <p className="text-[13px] text-[#6F6F71] mt-1">Tambahkan alamat pengiriman untuk mempercepat checkout</p>
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() => { setShowForm(true); setMsg(null) }}
-              className="mt-4"
+              className={`${outlineBtnCls} mt-5`}
             >
               Tambah Alamat
-            </Button>
+            </button>
           </div>
         )}
 
         {/* Address list */}
         {!loading && addresses.length > 0 && (
-          <div className="space-y-3">
+          <div>
             {addresses.map((addr) => (
-              <div key={addr._id} className="rounded-lg border border-[#E8E8E5] bg-white p-4">
+              <div key={addr._id} className="border-b border-[#E9E9EA] py-5">
                 {editingId === addr._id ? (
                   /* Edit form */
-                  <div className="space-y-3">
-                    <p className="text-[15px] font-semibold text-[#1F1F1F]">Edit Alamat</p>
+                  <div className="space-y-4">
+                    <p className="text-[13px] uppercase tracking-[0.12em] text-[#1E1E1E]">Edit Alamat</p>
 
-                    <div>
-                      <label className="text-sm text-[#9A9A9A] mb-1 block">Label (contoh: Rumah, Kantor)</label>
+                    <div className="space-y-1">
+                      <label htmlFor={`edit-label-${addr._id}`} className={labelCls}>Label (contoh: Rumah, Kantor)</label>
                       <input
+                        id={`edit-label-${addr._id}`}
                         type="text"
                         placeholder="Rumah"
                         value={editForm.label}
@@ -482,9 +492,10 @@ export default function AlamatSaya() {
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm text-[#9A9A9A] mb-1 block">Nama penerima *</label>
+                    <div className="space-y-1">
+                      <label htmlFor={`edit-recipient-${addr._id}`} className={labelCls}>Nama penerima *</label>
                       <input
+                        id={`edit-recipient-${addr._id}`}
                         type="text"
                         placeholder="Nama lengkap"
                         value={editForm.recipientName}
@@ -493,9 +504,10 @@ export default function AlamatSaya() {
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm text-[#9A9A9A] mb-1 block">Nomor HP penerima *</label>
+                    <div className="space-y-1">
+                      <label htmlFor={`edit-phone-${addr._id}`} className={labelCls}>Nomor HP penerima *</label>
                       <input
+                        id={`edit-phone-${addr._id}`}
                         type="tel"
                         placeholder="08xx-xxxx-xxxx"
                         value={editForm.phone}
@@ -504,9 +516,10 @@ export default function AlamatSaya() {
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm text-[#9A9A9A] mb-1 block">Alamat lengkap (jalan, nomor, RT/RW) *</label>
+                    <div className="space-y-1">
+                      <label htmlFor={`edit-street-${addr._id}`} className={labelCls}>Alamat lengkap (jalan, nomor, RT/RW) *</label>
                       <input
+                        id={`edit-street-${addr._id}`}
                         type="text"
                         placeholder="Jl. Contoh No. 1, RT 01/RW 02"
                         value={editForm.street}
@@ -515,100 +528,97 @@ export default function AlamatSaya() {
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm text-[#9A9A9A] mb-1 block">Kecamatan / Kelurahan *</label>
-                      <AreaSearchField
-                        areaId={editForm.areaId}
-                        areaKeyword={editAreaKeyword}
-                        areaResults={editAreaResults}
-                        kecamatan={editForm.kecamatan}
-                        city={editForm.city}
-                        province={editForm.province}
-                        postalCode={editForm.postalCode}
-                        onKeywordChange={handleAreaSearchEdit}
-                        onSelectArea={selectAreaEdit}
-                        onClear={clearAreaEdit}
-                      />
+                    <div className="space-y-1">
+                      <label htmlFor={`edit-area-${addr._id}`} className={labelCls}>Kecamatan / Kelurahan *</label>
+                      <div id={`edit-area-${addr._id}`}>
+                        <AreaSearchField
+                          areaId={editForm.areaId}
+                          areaKeyword={editAreaKeyword}
+                          areaResults={editAreaResults}
+                          kecamatan={editForm.kecamatan}
+                          city={editForm.city}
+                          province={editForm.province}
+                          postalCode={editForm.postalCode}
+                          onKeywordChange={handleAreaSearchEdit}
+                          onSelectArea={selectAreaEdit}
+                          onClear={clearAreaEdit}
+                        />
+                      </div>
                     </div>
 
-                    <label className="flex items-center gap-2 text-sm text-[#4A4A4A] cursor-pointer">
+                    <label className="flex items-center gap-2 text-[13px] text-[#6F6F71] cursor-pointer">
                       <input
                         type="checkbox"
                         checked={editForm.isDefault}
                         onChange={(e) => setEditForm((f) => ({ ...f, isDefault: e.target.checked }))}
-                        className="accent-[#1F1F1F]"
+                        className="accent-[#1E1E1E]"
                       />
                       Jadikan alamat utama
                     </label>
 
-                    <div className="flex gap-2 pt-1">
-                      <Button
+                    <div className="flex gap-3 pt-1">
+                      <button
                         type="button"
-                        variant="outline"
-                        size="sm"
                         onClick={handleCancelEdit}
+                        className={outlineBtnCls}
                       >
                         Batal
-                      </Button>
-                      <Button
+                      </button>
+                      <button
                         type="button"
-                        size="sm"
                         onClick={handleUpdateSave}
                         disabled={editSaving || !editForm.recipientName || !editForm.phone || !editForm.street || !editForm.areaId}
+                        className={primaryBtnCls}
                       >
                         {editSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 ) : (
                   /* Normal display */
                   <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-[#1F1F1F]">
-                        {addr.label || 'Alamat'}
-                      </span>
+                    <div className="flex items-center gap-3 flex-wrap mb-1.5">
+                      {addr.label && (
+                        <span className={labelCls}>{addr.label}</span>
+                      )}
                       {addr.isDefault && (
-                        <span className="text-[11px] font-medium bg-[#1F1F1F] text-white px-2 py-0.5 rounded">
-                          Utama
+                        <span className="border border-[#1E1E1E] text-[11px] uppercase px-2 py-1 text-[#1E1E1E]">
+                          Alamat Utama
                         </span>
                       )}
                     </div>
 
-                    <p className="text-sm text-[#4A4A4A] mt-1">
-                      {addr.recipientName} · {addr.phone}
-                    </p>
-                    <p className="text-sm text-[#9A9A9A] mt-0.5">{addr.street}</p>
-                    <p className="text-xs text-[#9A9A9A]">
-                      {addr.city}, {addr.province}
+                    <p className="text-[13px] uppercase text-[#1E1E1E]">{addr.recipientName}</p>
+                    <p className="text-[13px] text-[#6F6F71] leading-relaxed mt-1">{addr.phone}</p>
+                    <p className="text-[13px] text-[#6F6F71] leading-relaxed">{addr.street}</p>
+                    <p className="text-[13px] text-[#6F6F71] leading-relaxed">
+                      {addr.city}, {addr.province} {addr.postalCode}
                     </p>
 
-                    <div className="pt-3 border-t border-[#F0F0EC] mt-3 flex gap-2 flex-wrap">
-                      <Button
+                    <div className="flex gap-4 flex-wrap mt-4">
+                      <button
                         type="button"
-                        variant="outline"
-                        size="sm"
                         onClick={() => handleStartEdit(addr)}
+                        className={linkBtnCls}
                       >
-                        Edit
-                      </Button>
+                        Ubah
+                      </button>
                       {!addr.isDefault && (
-                        <Button
+                        <button
                           type="button"
-                          variant="outline"
-                          size="sm"
                           onClick={() => handleSetDefault(addr._id)}
+                          className={linkBtnCls}
                         >
                           Jadikan Utama
-                        </Button>
+                        </button>
                       )}
-                      <Button
+                      <button
                         type="button"
-                        variant="destructive"
-                        size="sm"
                         onClick={() => handleDelete(addr._id)}
+                        className={dangerLinkBtnCls}
                       >
                         Hapus
-                      </Button>
+                      </button>
                     </div>
                   </>
                 )}
