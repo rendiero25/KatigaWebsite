@@ -1,17 +1,32 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { motion } from "motion/react";
+import { FaPhone, FaWhatsapp, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../services/api";
 
-export default function ContactPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [content, setContent] = useState<any>({});
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [contactInfo, setContactInfo] = useState<any>({});
+interface ContactPageContent {
+  title?: string;
+  subtitle1?: string;
+  subtitle2?: string;
+}
 
-  // Form State
+interface ContactInfo {
+  phone?: string;
+  whatsapp?: string;
+  email?: string;
+  address?: string;
+}
+
+const inputClass =
+  "w-full border border-[#E9E9EA] px-4 py-3 text-sm outline-none focus:border-[#1E1E1E] transition-colors";
+const labelClass = "uppercase tracking-[0.12em] text-[11px] text-[#6F6F71]";
+
+export default function ContactPage() {
+  const [content, setContent] = useState<ContactPageContent>({});
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({});
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -22,10 +37,7 @@ export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // Fetch Page Content
     api.getContactPageContent().then(setContent).catch(console.error);
-
-    // Fetch Contact Info (Phone, Email, etc.)
     api.getContactInfo().then(setContactInfo).catch(console.error);
   }, []);
 
@@ -55,142 +67,168 @@ export default function ContactPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <Header />
 
-      <main className="grow pt-6 md:px-8 container mx-auto w-full px-4 sm:px-10 lg:px-20 xl:px-30">
-        <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
-          {/* Left Column: Text & Info */}
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="lg:w-1/2"
-          >
-            <h1 className="text-5xl md:text-8xl font-bold text-black leading-tight mb-8">
-              {content.title}
-            </h1>
+      <main className="grow">
+        <div className="border-b border-[#E9E9EA] py-6">
+          <h1 className="text-center text-2xl md:text-3xl">Kontak</h1>
+        </div>
 
-            <h2 className="text-4xl max-w-xs font-normal text-black mb-6">
-              {content.subtitle1}
-            </h2>
-
-            {/* Dynamic Contact Info */}
-            <div className="space-y-6 mb-12">
-              <div>
-                <p className="text-gray-400 font-medium mb-1">Phone</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {contactInfo.phone || "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-400 font-medium mb-1">Whatsapp</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {contactInfo.whatsapp || "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-400 font-medium mb-1">Email</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {contactInfo.email || "-"}
-                </p>
-              </div>
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-16">
+          {(content.subtitle1 || content.subtitle2) && (
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              {content.subtitle1 && (
+                <p className="text-lg text-black/80 leading-relaxed">{content.subtitle1}</p>
+              )}
+              {content.subtitle2 && (
+                <p className="mt-2 text-sm text-[#6F6F71] leading-relaxed">{content.subtitle2}</p>
+              )}
             </div>
-          </motion.div>
+          )}
 
-          {/* Right Column: Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="lg:w-1/2"
-          >
-            <p className="font-medium text-black mb-8 leading-relaxed text-2xl">
-              {content.subtitle2}
-            </p>
+          <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 max-w-5xl mx-auto">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="lg:w-1/2 space-y-6">
+              <div className="space-y-1">
+                <label htmlFor="contact-name" className={labelClass}>
+                  Nama
+                </label>
+                <input
+                  id="contact-name"
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
 
-            <div className="bg-[#1a1a1a] text-white p-8 md:p-12 rounded-none md:rounded-lg">
-              <h3 className="text-2xl font-bold mb-8">Contact</h3>
+              <div className="space-y-1">
+                <label htmlFor="contact-email" className={labelClass}>
+                  E-mail
+                </label>
+                <input
+                  id="contact-email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Name</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-b border-gray-600 focus:border-white py-2 outline-none transition"
-                      placeholder=""
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-b border-gray-600 focus:border-white py-2 outline-none transition"
-                      placeholder=""
-                      required
-                    />
+              <div className="space-y-1">
+                <label htmlFor="contact-phone" className={labelClass}>
+                  Telepon
+                </label>
+                <input
+                  id="contact-phone"
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="contact-subject" className={labelClass}>
+                  Subjek
+                </label>
+                <input
+                  id="contact-subject"
+                  type="text"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="contact-message" className={labelClass}>
+                  Pesan
+                </label>
+                <textarea
+                  id="contact-message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={5}
+                  className={`${inputClass} resize-none`}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] disabled:opacity-50 transition-colors"
+              >
+                {submitting ? "Mengirim..." : "Kirim Pesan"}
+              </button>
+            </form>
+
+            {/* Contact Info */}
+            <div className="lg:w-1/2 space-y-8">
+              {contactInfo.address && (
+                <div className="flex items-start gap-4">
+                  <FaMapMarkerAlt className="w-4 h-4 mt-1 text-[#6F6F71] shrink-0" />
+                  <div>
+                    <p className={`${labelClass} mb-1`}>Alamat</p>
+                    <p className="text-sm text-black/80 leading-relaxed">{contactInfo.address}</p>
                   </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Phone</label>
-                    <input
-                      type="text"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-b border-gray-600 focus:border-white py-2 outline-none transition"
-                      placeholder=""
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-sm font-medium">Subject</label>
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className="w-full bg-transparent border-b border-gray-600 focus:border-white py-2 outline-none transition"
-                      placeholder=""
-                      required
-                    />
+              {contactInfo.phone && (
+                <div className="flex items-start gap-4">
+                  <FaPhone className="w-4 h-4 mt-1 text-[#6F6F71] shrink-0" />
+                  <div>
+                    <p className={`${labelClass} mb-1`}>Telepon</p>
+                    <a
+                      href={`tel:${contactInfo.phone}`}
+                      className="text-sm text-black/80 leading-relaxed hover:text-[#4F68AF] transition-colors"
+                    >
+                      {contactInfo.phone}
+                    </a>
                   </div>
                 </div>
+              )}
 
-                <div className="space-y-1">
-                  <label className="text-sm font-medium">
-                    Tell us about your interested in
-                  </label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full bg-transparent border-b border-gray-600 focus:border-white py-2 outline-none transition resize-none"
-                    placeholder=""
-                    required
-                  />
+              {contactInfo.whatsapp && (
+                <div className="flex items-start gap-4">
+                  <FaWhatsapp className="w-4 h-4 mt-1 text-[#6F6F71] shrink-0" />
+                  <div>
+                    <p className={`${labelClass} mb-1`}>WhatsApp</p>
+                    <a
+                      href={`https://wa.me/${contactInfo.whatsapp}`}
+                      className="text-sm text-black/80 leading-relaxed hover:text-[#4F68AF] transition-colors"
+                    >
+                      {contactInfo.whatsapp}
+                    </a>
+                  </div>
                 </div>
+              )}
 
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-primary text-white font-bold py-4 mt-4 transition duration-300 shadow-lg disabled:opacity-50"
-                >
-                  {submitting ? "Sending..." : "Send to us"}
-                </button>
-              </form>
+              {contactInfo.email && (
+                <div className="flex items-start gap-4">
+                  <FaEnvelope className="w-4 h-4 mt-1 text-[#6F6F71] shrink-0" />
+                  <div>
+                    <p className={`${labelClass} mb-1`}>Email</p>
+                    <a
+                      href={`mailto:${contactInfo.email}`}
+                      className="text-sm text-black/80 leading-relaxed hover:text-[#4F68AF] transition-colors"
+                    >
+                      {contactInfo.email}
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </main>
 

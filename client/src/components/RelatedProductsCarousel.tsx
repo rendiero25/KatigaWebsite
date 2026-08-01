@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import api from '../services/api';
@@ -24,6 +26,7 @@ const fmt = (n: number) =>
 
 export default function RelatedProductsCarousel({ categoryIds, excludeIds }: Props) {
   const [products, setProducts] = useState<RelatedProduct[]>([]);
+  const swiperRef = useRef<SwiperType | null>(null);
   const categoryKey = categoryIds.join(',');
   const excludeKey = excludeIds.join(',');
 
@@ -41,12 +44,32 @@ export default function RelatedProductsCarousel({ categoryIds, excludeIds }: Pro
   if (!products.length) return null;
 
   return (
-    <section className="bg-white border-t border-gray-100 pt-10 pb-16">
+    <section className="bg-white border-t border-[#E9E9EA] pt-10 pb-16">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-        <h2 className="text-2xl font-bold text-black mb-6">Produk Lainnya</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl md:text-3xl text-[#1E1E1E]">Produk Terkait</h2>
+          <div className="hidden sm:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => swiperRef.current?.slidePrev()}
+              aria-label="Sebelumnya"
+              className="p-1 text-[#1E1E1E]/60 hover:text-[#1E1E1E] transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="size-5" strokeWidth={1.25} />
+            </button>
+            <button
+              type="button"
+              onClick={() => swiperRef.current?.slideNext()}
+              aria-label="Berikutnya"
+              className="p-1 text-[#1E1E1E]/60 hover:text-[#1E1E1E] transition-colors cursor-pointer"
+            >
+              <ChevronRight className="size-5" strokeWidth={1.25} />
+            </button>
+          </div>
+        </div>
         <Swiper
           modules={[Navigation]}
-          navigation
+          onSwiper={(swiper) => { swiperRef.current = swiper; }}
           spaceBetween={16}
           slidesPerView={1.3}
           breakpoints={{
@@ -64,22 +87,22 @@ export default function RelatedProductsCarousel({ categoryIds, excludeIds }: Pro
             return (
               <SwiperSlide key={p._id}>
                 <Link to={`/produk/${p._id}`} className="group block">
-                  <div className="rounded-2xl bg-gray-100 overflow-hidden aspect-square mb-3">
+                  <div className="bg-[#F9F7F2] overflow-hidden aspect-square mb-3">
                     <img
                       src={api.getImageUrl(p.image)}
                       alt={p.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
                   </div>
-                  <p className="text-sm font-bold text-black leading-tight mb-1 line-clamp-2">{p.name}</p>
+                  <p className="uppercase text-[13px] text-[#1E1E1E] leading-tight mb-1 line-clamp-2">{p.name}</p>
                   {discount ? (
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-bold text-white bg-red-500 rounded-full px-1.5 py-0.5">{discount}%</span>
-                      <span className="text-xs text-black/40 line-through">{fmt(p.priceNumeric)}</span>
-                      <span className="text-sm font-semibold text-primary">{fmt(discountedPrice)}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap text-[13px]">
+                      <span className="text-[#6F6F71]">{fmt(discountedPrice)}</span>
+                      <span className="text-[#6F6F71]/60 line-through">{fmt(p.priceNumeric)}</span>
+                      <span className="text-[11px] text-[#AE4B4B]">-{discount}%</span>
                     </div>
                   ) : (
-                    <p className="text-sm font-semibold text-primary">{fmt(p.priceNumeric)}</p>
+                    <p className="text-[13px] text-[#6F6F71]">{fmt(p.priceNumeric)}</p>
                   )}
                 </Link>
               </SwiperSlide>

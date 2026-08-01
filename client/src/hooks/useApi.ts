@@ -445,6 +445,51 @@ export function useNewsSection() {
   return { data, loading };
 }
 
+export function useCatalog() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.getCatalog().then(setData).catch(() => setData(null)).finally(() => setLoading(false));
+  }, []);
+
+  return { data, loading };
+}
+
+export function useNewsDetail(id?: string) {
+  const [data, setData] = useState<any>(null);
+  // Derived from `id` so an absent id never needs a setState inside the effect.
+  const [loading, setLoading] = useState(Boolean(id));
+  const [error, setError] = useState<string | null>(null);
+  const latestRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const requestId = latestRequestIdRef.current + 1;
+    latestRequestIdRef.current = requestId;
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true);
+    api.getNewsDetail(id)
+      .then((result) => {
+        if (latestRequestIdRef.current !== requestId) return;
+        setData(result);
+        setError(null);
+      })
+      .catch((err: Error) => {
+        if (latestRequestIdRef.current !== requestId) return;
+        setData(null);
+        setError(err.message);
+      })
+      .finally(() => {
+        if (latestRequestIdRef.current === requestId) setLoading(false);
+      });
+  }, [id]);
+
+  return { data, loading, error };
+}
+
 export function useProductPageSettings() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

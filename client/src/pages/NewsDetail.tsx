@@ -1,32 +1,41 @@
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+
+import { useNewsDetail } from '../hooks/useApi';
+
+import api from '../services/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import api from '../services/api';
+
+interface NewsArticle {
+  _id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  image: string;
+  date: string;
+  author?: string;
+}
 
 export default function NewsDetail() {
   const { id } = useParams();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [newsItem, setNewsItem] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (id) {
-      // setLoading(true);
-      // setLoading(true);
-      api.getNewsDetail(id)
-        .then(setNewsItem)
-        .catch(err => console.error(err))
-        .finally(() => setLoading(false));
-    }
-  }, [id]);
+  const { data, loading } = useNewsDetail(id);
+  const newsItem = (data as NewsArticle | null) ?? null;
 
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <main className="grow">
+          <div className="h-[440px] w-full bg-gray-200 animate-pulse" />
+          <div className="max-w-3xl mx-auto px-4 py-16 animate-pulse">
+            <div className="h-3 bg-gray-200 rounded w-1/4 mb-4" />
+            <div className="h-8 bg-gray-200 rounded w-3/4 mb-8" />
+            <div className="space-y-3">
+              <div className="h-3 bg-gray-200 rounded w-full" />
+              <div className="h-3 bg-gray-200 rounded w-full" />
+              <div className="h-3 bg-gray-200 rounded w-5/6" />
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -37,11 +46,14 @@ export default function NewsDetail() {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow flex flex-col items-center justify-center">
-           <h2 className="text-2xl font-bold text-gray-900 mb-4">Artikel tidak ditemukan</h2>
-           <Link to="/berita" className="text-indigo-600 hover:text-indigo-800">
-             &larr; Kembali ke daftar berita
-           </Link>
+        <main className="grow flex flex-col items-center justify-center gap-6 py-24">
+          <h2 className="text-2xl text-[#1E1E1E]">Artikel tidak ditemukan</h2>
+          <Link
+            to="/berita"
+            className="border border-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] px-8 py-4 hover:bg-[#1E1E1E] hover:text-white transition"
+          >
+            Kembali ke Berita
+          </Link>
         </main>
         <Footer />
       </div>
@@ -49,51 +61,45 @@ export default function NewsDetail() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow pb-16">
-         {/* Hero / Header Image */}
-         <div className="h-64 sm:h-96 w-full relative mb-8 sm:mb-12">
-            <img 
-               src={api.getImageUrl(newsItem.image)}
-               alt={newsItem.title}
-               className="w-full h-full object-cover"
-               onError={(e) => {
-                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200';
-               }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 w-full py-4 sm:py-8 md:py-12">
-               <div className="container mx-auto text-white px-4 sm:px-10 lg:px-20 xl:px-30">
-                  <div className="flex items-center gap-4 text-sm sm:text-base font-medium mb-2 opacity-90">
-                     <span>{newsItem.author || 'Admin'}</span>
-                     <span>&bull;</span>
-                     <span>{new Date(newsItem.date).toLocaleDateString('id-ID', { dateStyle: 'long' })}</span>
-                  </div>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-                     {newsItem.title}
-                  </h1>
-               </div>
-            </div>
-         </div>
+      <main className="grow pb-20">
+        <div className="w-full h-[440px] overflow-hidden bg-[#F9F7F2]">
+          <img
+            src={api.getImageUrl(newsItem.image)}
+            alt={newsItem.title}
+            className="w-full h-full object-cover"
+          />
+        </div>
 
-         {/* Content */}
-         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            <div className="prose prose-lg prose-indigo text-gray-700 mx-auto">
-               <p className="lead text-xl text-gray-500 font-medium mb-8 border-l-4 border-indigo-500 pl-4 italic">
-                  {newsItem.excerpt}
-               </p>
-               <div className="whitespace-pre-wrap">
-                  {newsItem.content}
-               </div>
-            </div>
+        <div className="max-w-3xl mx-auto px-4 py-16">
+          <p className="text-[11px] uppercase tracking-[0.12em] text-[#6F6F71] mb-4">
+            {newsItem.author ? `${newsItem.author} • ` : ''}
+            {new Date(newsItem.date).toLocaleDateString('id-ID', { dateStyle: 'long' })}
+          </p>
+          <h1 className="text-2xl md:text-3xl text-[#1E1E1E] leading-tight mb-8">
+            {newsItem.title}
+          </h1>
 
-            <div className="mt-12 pt-8 border-t border-gray-100 flex justify-between items-center">
-               <Link to="/berita" className="text-indigo-600 font-medium hover:text-indigo-800 flex items-center gap-2">
-                  &larr; Kembali ke Berita
-               </Link>
-            </div>
-         </div>
+          {newsItem.excerpt && (
+            <p className="text-sm text-[#6F6F71] leading-relaxed mb-8 border-l border-[#1E1E1E] pl-4">
+              {newsItem.excerpt}
+            </p>
+          )}
+
+          <div className="text-sm text-[#6F6F71] leading-relaxed whitespace-pre-wrap">
+            {newsItem.content}
+          </div>
+
+          <div className="mt-16 pt-8 border-t border-[#E9E9EA]">
+            <Link
+              to="/berita"
+              className="inline-block border border-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] px-8 py-4 hover:bg-[#1E1E1E] hover:text-white transition"
+            >
+              Kembali ke Berita
+            </Link>
+          </div>
+        </div>
       </main>
       <Footer />
     </div>

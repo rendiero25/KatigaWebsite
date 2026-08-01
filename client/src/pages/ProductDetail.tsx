@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, ShoppingCart, Share2, Heart, Zap } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Share2, Zap, ChevronDown } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { toast } from 'sonner';
@@ -15,9 +15,10 @@ import { useWishlist, useProductReviews } from '../hooks/useApi';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { Button } from '../components/ui/button';
+import WishlistButton from '../components/WishlistButton';
 import StarRating from '../components/StarRating';
 import ReviewCard from '../components/ReviewCard';
+import RelatedProductsCarousel from '../components/RelatedProductsCarousel';
 import { Spinner } from '../components/ui/spinner';
 import {
   Breadcrumb,
@@ -55,16 +56,34 @@ interface Product {
   activePromotion: { _id: string; name: string; discountPercent: number } | null;
 }
 
-interface RelatedProduct {
-  _id: string;
-  name: string;
-  image: string;
-  category: { _id: string; name: string } | null;
-  priceNumeric: number;
-}
-
 const formatRp = (n: number): string => `Rp ${n.toLocaleString('id-ID')}`;
 const BUY_NOW_ITEM_KEY = 'kk_buy_now_item';
+
+interface AccordionSectionProps {
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+function AccordionSection({ title, open, onToggle, children }: AccordionSectionProps) {
+  return (
+    <div className="border-b border-[#E9E9EA]">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-4 py-4 text-left cursor-pointer"
+      >
+        <span className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">{title}</span>
+        <ChevronDown
+          className={cn('size-4 text-[#6F6F71] transition-transform', open && 'rotate-180')}
+          strokeWidth={1.5}
+        />
+      </button>
+      {open && <div className="pb-5 text-[13px] text-[#6F6F71] leading-relaxed">{children}</div>}
+    </div>
+  );
+}
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -75,13 +94,11 @@ export default function ProductDetail() {
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [openSection, setOpenSection] = useState<'info' | 'shipping' | 'returns' | null>('info');
 
   const { wishlistIds, add, remove } = useWishlist();
   const { reviews, meta, loading: reviewsLoading, loadingMore, loadMore } = useProductReviews(id ?? '');
-
-
 
   useEffect(() => {
     if (!id) return;
@@ -107,8 +124,27 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="grow flex items-center justify-center">
-          <Spinner className="size-10 text-primary" />
+        <main className="grow pt-6 pb-16 bg-white">
+          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 animate-pulse">
+            <div className="h-4 w-48 bg-gray-200 mb-8" />
+            <div className="flex flex-col md:flex-row gap-10 lg:gap-16">
+              <div className="md:w-1/2 md:shrink-0">
+                <div className="aspect-square bg-gray-100" />
+                <div className="flex gap-2 mt-4">
+                  <div className="w-16 h-16 bg-gray-100" />
+                  <div className="w-16 h-16 bg-gray-100" />
+                  <div className="w-16 h-16 bg-gray-100" />
+                </div>
+              </div>
+              <div className="md:flex-1 flex flex-col gap-4">
+                <div className="h-3 w-24 bg-gray-200" />
+                <div className="h-8 w-3/4 bg-gray-200" />
+                <div className="h-4 w-32 bg-gray-200" />
+                <div className="h-5 w-40 bg-gray-200" />
+                <div className="h-12 w-full bg-gray-100 mt-4" />
+              </div>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -120,7 +156,7 @@ export default function ProductDetail() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="grow flex flex-col items-center justify-center gap-4">
-          <h2 className="text-2xl font-bold text-gray-900">Produk tidak ditemukan</h2>
+          <h2 className="text-2xl text-[#1E1E1E]">Produk tidak ditemukan</h2>
           <Link to="/produk" className="text-primary hover:underline">
             &larr; Kembali ke daftar produk
           </Link>
@@ -136,6 +172,12 @@ export default function ProductDetail() {
       ? (selectedVariant.price as number)
       : (product.priceNumeric ?? 0);
   const hasPrice = effectivePrice > 0;
+  const activeWeightGrams =
+    selectedVariant !== null && selectedVariant.weightGrams > 0
+      ? selectedVariant.weightGrams
+      : (product.weightGrams ?? 0);
+  const activeDimensions = normalizeDimensions(selectedVariant?.dimensions, product.dimensions);
+  const hasDimensions = activeDimensions.length > 0 || activeDimensions.width > 0 || activeDimensions.height > 0;
 
   const handleAddToCart = () => {
     if (!localStorage.getItem('customerToken')) {
@@ -151,10 +193,6 @@ export default function ProductDetail() {
     const discountedPrice = promo
       ? Math.round(basePrice * (1 - promo.discountPercent / 100))
       : basePrice;
-    const weightGrams =
-      selectedVariant !== null && selectedVariant.weightGrams > 0
-        ? selectedVariant.weightGrams
-        : (product.weightGrams ?? 0);
 
     addToCart({
       cartItemId: buildCartItemId(product._id, selectedVariant?._id),
@@ -166,8 +204,8 @@ export default function ProductDetail() {
         : product.name,
       image: activeImage || product.image || '',
       priceNumeric: discountedPrice,
-      weightGrams,
-      dimensions: normalizeDimensions(selectedVariant?.dimensions, product.dimensions),
+      weightGrams: activeWeightGrams,
+      dimensions: activeDimensions,
       quantity: qty,
       originalPrice: promo ? basePrice : undefined,
       discountPercent: promo ? promo.discountPercent : undefined,
@@ -189,10 +227,6 @@ export default function ProductDetail() {
     const discountedPrice = promo
       ? Math.round(basePrice * (1 - promo.discountPercent / 100))
       : basePrice;
-    const weightGrams =
-      selectedVariant !== null && selectedVariant.weightGrams > 0
-        ? selectedVariant.weightGrams
-        : (product.weightGrams ?? 0);
 
     const buyNowItem: CartItem = {
       cartItemId: buildCartItemId(product._id, selectedVariant?._id),
@@ -204,8 +238,8 @@ export default function ProductDetail() {
         : product.name,
       image: activeImage || product.image || '',
       priceNumeric: discountedPrice,
-      weightGrams,
-      dimensions: normalizeDimensions(selectedVariant?.dimensions, product.dimensions),
+      weightGrams: activeWeightGrams,
+      dimensions: activeDimensions,
       quantity: qty,
       originalPrice: promo ? basePrice : undefined,
       discountPercent: promo ? promo.discountPercent : undefined,
@@ -244,7 +278,7 @@ export default function ProductDetail() {
     }
   };
 
-  const handleLoveClick = async () => {
+  const handleToggleWishlist = async () => {
     if (!localStorage.getItem('customerToken')) {
       navigate(`/masuk?redirect=/produk/${id}`);
       return;
@@ -270,13 +304,17 @@ export default function ProductDetail() {
     }
   };
 
+  const toggleSection = (section: 'info' | 'shipping' | 'returns') => {
+    setOpenSection((current) => (current === section ? null : section));
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="grow pt-6 pb-16 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <Breadcrumb className="mb-8">
-            <BreadcrumbList>
+            <BreadcrumbList className="uppercase text-[12px] tracking-[0.08em] text-[#6F6F71]">
               <BreadcrumbItem>
                 <BreadcrumbLink render={<Link to="/" />}>Beranda</BreadcrumbLink>
               </BreadcrumbItem>
@@ -286,15 +324,15 @@ export default function ProductDetail() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{product.name}</BreadcrumbPage>
+                <BreadcrumbPage className="text-[#1E1E1E] normal-case">{product.name}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="flex flex-col md:flex-row gap-12">
+          <div className="flex flex-col md:flex-row gap-10 lg:gap-16">
             {/* Image Gallery */}
-            <div className="flex flex-col gap-4 md:w-1/2 md:shrink-0 md:sticky md:top-24 md:self-start">
-              <div className="bg-gray-50 rounded-2xl overflow-hidden relative aspect-square">
+            <div className="flex flex-col gap-3 md:w-1/2 md:shrink-0 md:sticky md:top-24 md:self-start">
+              <div className="bg-[#F9F7F2] overflow-hidden relative aspect-square">
                 <img
                   src={
                     activeImage
@@ -302,17 +340,24 @@ export default function ProductDetail() {
                       : api.getImageUrl(product.image)
                   }
                   alt={product.name}
-                  className="w-full h-full object-contain p-4"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
                       'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
                   }}
                 />
                 {product.isFeatured && (
-                  <span className="absolute top-4 left-4 px-3 py-1 bg-pink-500 text-white font-medium rounded-full text-sm">
+                  <span className="absolute top-4 left-4 px-2.5 py-1 bg-white/90 text-[#1E1E1E] uppercase text-[11px] tracking-[0.1em]">
                     Featured
                   </span>
                 )}
+                <WishlistButton
+                  variant="bare"
+                  productId={product._id}
+                  inWishlist={inWishlist}
+                  onToggle={handleToggleWishlist}
+                  redirectTo={`/produk/${id}`}
+                />
               </div>
 
               {product.images.length > 1 && (
@@ -328,10 +373,10 @@ export default function ProductDetail() {
                       <button
                         onClick={() => setActiveImage(img)}
                         className={cn(
-                          'cursor-pointer w-full aspect-square rounded-lg overflow-hidden border-2 transition',
+                          'cursor-pointer w-full aspect-square overflow-hidden border transition',
                           activeImage === img
-                            ? 'border-primary ring-2 ring-primary ring-offset-2'
-                            : 'border-transparent hover:border-gray-300'
+                            ? 'border-[#1E1E1E]'
+                            : 'border-[#E9E9EA] hover:border-[#1E1E1E]/40'
                         )}
                       >
                         <img
@@ -347,25 +392,44 @@ export default function ProductDetail() {
             </div>
 
             {/* Product Info */}
-            <div className="flex flex-col gap-5 md:flex-1">
-              <span className="text-primary font-medium bg-primary/10 px-3 py-1 rounded-full text-sm w-fit">
+            <div className="flex flex-col gap-4 md:flex-1">
+              <span className="uppercase text-[12px] tracking-[0.12em] text-[#6F6F71]">
                 {product.category?.name || 'Kategori Umum'}
               </span>
 
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-2xl md:text-3xl text-[#1E1E1E] leading-tight">
                 {product.name}
               </h1>
 
               <div className="flex items-center gap-2">
                 <StarRating value={product.ratingAvg} size="sm" />
-                <span className="text-sm text-gray-400">
+                <span className="text-[12px] text-[#6F6F71]">
                   {product.reviewCount > 0 ? `${product.reviewCount} ulasan` : 'Belum ada ulasan'}
                 </span>
               </div>
 
+              {hasPrice ? (
+                product.activePromotion ? (
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-lg text-[#1E1E1E]">
+                        {formatRp(Math.round(effectivePrice * (1 - product.activePromotion.discountPercent / 100)))}
+                      </span>
+                      <span className="text-[#6F6F71]/60 line-through text-[13px]">{formatRp(effectivePrice)}</span>
+                      <span className="text-[11px] text-[#AE4B4B]">-{product.activePromotion.discountPercent}%</span>
+                    </div>
+                    <span className="text-[12px] text-[#6F6F71]">{product.activePromotion.name}</span>
+                  </div>
+                ) : (
+                  <p className="text-lg text-[#1E1E1E]">{formatRp(effectivePrice)}</p>
+                )
+              ) : (
+                <p className="text-lg text-[#1E1E1E]">Hubungi untuk harga</p>
+              )}
+
               {variants.length > 0 && (
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-3">Varian</p>
+                  <p className="uppercase text-[12px] tracking-[0.12em] text-[#6F6F71] mb-2">Varian</p>
                   <div className="flex flex-wrap gap-2">
                     {variants.map((v) => (
                       <button
@@ -381,10 +445,10 @@ export default function ProductDetail() {
                           }
                         }}
                         className={cn(
-                          'px-4 py-2 rounded-lg border text-sm font-medium transition',
+                          'border text-[12px] px-3 py-1.5 uppercase tracking-[0.04em] transition cursor-pointer',
                           selectedVariant?._id === v._id
-                            ? 'border-primary bg-primary/10 text-primary'
-                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                            ? 'border-[#1E1E1E] text-[#1E1E1E]'
+                            : 'border-[#E9E9EA] text-[#6F6F71] hover:border-[#1E1E1E]/40'
                         )}
                       >
                         {v.name}
@@ -394,133 +458,121 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {hasPrice ? (
-                product.activePromotion ? (
-                  <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold text-red-600">
-                        {formatRp(Math.round(effectivePrice * (1 - product.activePromotion.discountPercent / 100)))}
-                      </span>
-                      <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-bold rounded-full">
-                        -{product.activePromotion.discountPercent}%
-                      </span>
-                    </div>
-                    <span className="text-sm text-gray-400 line-through">{formatRp(effectivePrice)}</span>
-                    <span className="text-xs text-primary mt-0.5">{product.activePromotion.name}</span>
-                  </div>
-                ) : (
-                  <p className="text-2xl font-bold text-gray-900">{formatRp(effectivePrice)}</p>
-                )
-              ) : (
-                <p className="text-2xl font-bold text-gray-900">Hubungi untuk harga</p>
-              )}
-
-              <div>
-                <p
-                  className={cn(
-                    'text-sm text-gray-600 leading-relaxed whitespace-pre-line',
-                    !descExpanded && 'line-clamp-[10]'
-                  )}
-                >
-                  {product.description || 'Tidak ada deskripsi.'}
-                </p>
-                <button
-                  onClick={() => setDescExpanded((v) => !v)}
-                  className="mt-2 text-sm font-semibold text-primary hover:underline"
-                >
-                  {descExpanded ? 'Lihat lebih sedikit' : 'Lihat lebih lanjut'}
-                </button>
-              </div>
-
               {hasPrice && (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 pt-2">
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
+                    <div className="flex items-center border border-[#E9E9EA]">
+                      <button
+                        type="button"
                         onClick={() => setQty((q) => Math.max(1, q - 1))}
                         disabled={qty <= 1}
-                        className="rounded-none border-r border-gray-200"
+                        className="flex items-center justify-center w-9 h-10 text-[#1E1E1E] border-r border-[#E9E9EA] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                       >
-                        <Minus />
-                      </Button>
-                      <span className="px-4 text-sm font-semibold text-gray-900 select-none min-w-[2.5rem] text-center">
+                        <Minus className="size-3.5" />
+                      </button>
+                      <span className="px-4 text-[13px] text-[#1E1E1E] select-none min-w-[2.5rem] text-center">
                         {qty}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
+                      <button
+                        type="button"
                         onClick={() => setQty((q) => q + 1)}
-                        className="rounded-none border-l border-gray-200"
+                        className="flex items-center justify-center w-9 h-10 text-[#1E1E1E] border-l border-[#E9E9EA] cursor-pointer"
                       >
-                        <Plus />
-                      </Button>
+                        <Plus className="size-3.5" />
+                      </button>
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-[12px] text-[#6F6F71]">
                       Subtotal:{' '}
-                      <span className="font-semibold text-gray-900">
+                      <span className="text-[#1E1E1E]">
                         {formatRp(effectivePrice * qty)}
                       </span>
                     </p>
                   </div>
 
-                  <div className="flex gap-3">
-                    <Button
-                      onClick={handleAddToCart}
-                      disabled={adding}
-                      variant="outline"
-                      className="flex-1 h-12 rounded-xl border-gray-200 text-gray-700 font-semibold hover:bg-gray-50"
-                    >
-                      {adding ? (
-                        <>
-                          <Spinner className="mr-2" />
-                          Menambahkan...
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingCart className="mr-2" />
-                          Tambah ke Keranjang
-                        </>
-                      )}
-                    </Button>
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={adding}
+                    className="w-full flex items-center justify-center gap-2 bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3.5 hover:bg-[#2B3A67] transition-colors disabled:opacity-60 cursor-pointer"
+                  >
+                    {adding ? (
+                      <>
+                        <Spinner className="size-4" />
+                        Menambahkan...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="size-4" />
+                        Tambah ke Keranjang
+                      </>
+                    )}
+                  </button>
 
-                    <Button
-                      onClick={handleBuyNow}
-                      className="flex-1 h-12 rounded-xl bg-gradient-to-br from-[#4F68AF] to-[#2B3A67] text-white font-semibold shadow-[0_10px_20px_rgba(79,104,175,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all duration-300"
-                    >
-                      <Zap className="mr-2" />
-                      Beli Langsung
-                    </Button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    className="w-full flex items-center justify-center gap-2 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] px-6 py-3.5 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
+                  >
+                    <Zap className="size-4" />
+                    Beli Langsung
+                  </button>
 
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleShare}
-                      className="flex-1 h-11 rounded-xl border-gray-200 text-gray-700 font-medium hover:bg-gray-50"
-                    >
-                      <Share2 className="mr-2 size-4" />
-                      {shareCopied ? 'Tersalin!' : 'Bagikan'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={inWishlist ? 'ghost' : 'outline'}
-                      onClick={handleLoveClick}
-                      className={cn(
-                        'flex-1 h-11 rounded-xl font-medium transition',
-                        inWishlist
-                          ? 'bg-red-500 text-white border border-red-500 hover:bg-red-600'
-                          : 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                      )}
-                    >
-                      <Heart className={cn('mr-2 size-4', inWishlist && 'fill-white')} />
-                      {inWishlist ? 'Disukai' : 'Suka'}
-                    </Button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="flex items-center justify-center gap-2 text-[#6F6F71] hover:text-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] transition-colors cursor-pointer"
+                  >
+                    <Share2 className="size-3.5" />
+                    {shareCopied ? 'Tersalin!' : 'Bagikan Produk'}
+                  </button>
                 </div>
               )}
+
+              {/* Accordion */}
+              <div className="mt-4 border-t border-[#E9E9EA]">
+                <AccordionSection
+                  title="Info"
+                  open={openSection === 'info'}
+                  onToggle={() => toggleSection('info')}
+                >
+                  <p className="whitespace-pre-line">
+                    {product.description || 'Tidak ada deskripsi.'}
+                  </p>
+                </AccordionSection>
+
+                <AccordionSection
+                  title="Pengiriman & Pembayaran"
+                  open={openSection === 'shipping'}
+                  onToggle={() => toggleSection('shipping')}
+                >
+                  <ul className="flex flex-col gap-1.5">
+                    {activeWeightGrams > 0 && <li>Berat paket: {activeWeightGrams} gram</li>}
+                    {hasDimensions && (
+                      <li>
+                        Dimensi: {activeDimensions.length} x {activeDimensions.width} x{' '}
+                        {activeDimensions.height} cm
+                      </li>
+                    )}
+                    <li>Ongkos kirim dihitung otomatis saat checkout melalui integrasi Biteship.</li>
+                    <li>Pembayaran diproses melalui Midtrans: kartu kredit/debit, transfer bank/VA, e-wallet, dan QRIS.</li>
+                  </ul>
+                </AccordionSection>
+
+                <AccordionSection
+                  title="Pengembalian"
+                  open={openSection === 'returns'}
+                  onToggle={() => toggleSection('returns')}
+                >
+                  <p>
+                    Pengajuan komplain atau retur dapat dilakukan maksimal 3 hari kalender sejak
+                    pesanan berstatus &quot;Diterima&quot;. Lihat{' '}
+                    <Link to="/kebijakan-pengembalian" className="text-[#1E1E1E] underline underline-offset-2">
+                      Kebijakan Pengembalian
+                    </Link>{' '}
+                    untuk ketentuan lengkap.
+                  </p>
+                </AccordionSection>
+              </div>
             </div>
           </div>
         </div>
@@ -528,23 +580,23 @@ export default function ProductDetail() {
         {/* Rating & Reviews */}
         <section className="py-16 mt-12 bg-[#F9F7F2]">
           <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+            <h2 className="text-2xl md:text-3xl text-[#1E1E1E] mb-1">
               Ulasan Pembeli
             </h2>
-            <p className="text-sm text-gray-400 mb-8">{product.reviewCount} ulasan</p>
+            <p className="text-[12px] text-[#6F6F71] mb-8">{product.reviewCount} ulasan</p>
 
             {reviewsLoading ? (
               <div className="flex justify-center py-12">
-                <div className="animate-pulse h-6 w-40 bg-gray-200 rounded" />
+                <div className="animate-pulse h-6 w-40 bg-gray-200" />
               </div>
             ) : meta && meta.total > 0 ? (
               <>
                 {/* Summary */}
-                <div className="flex flex-col sm:flex-row gap-8 mb-10 p-6 bg-white rounded-2xl">
+                <div className="flex flex-col sm:flex-row gap-8 mb-10 p-6 bg-white">
                   <div className="flex flex-col items-center justify-center shrink-0">
-                    <p className="text-5xl font-bold text-gray-900">{meta.ratingAvg.toFixed(1)}</p>
+                    <p className="text-4xl text-[#1E1E1E]">{meta.ratingAvg.toFixed(1)}</p>
                     <StarRating value={meta.ratingAvg} size="md" />
-                    <p className="text-sm text-gray-400 mt-1">{meta.total} ulasan</p>
+                    <p className="text-[12px] text-[#6F6F71] mt-1">{meta.total} ulasan</p>
                   </div>
                   <div className="flex-1 space-y-2">
                     {([5, 4, 3, 2, 1] as const).map((star) => {
@@ -552,14 +604,14 @@ export default function ProductDetail() {
                       const pct   = meta.total > 0 ? Math.round((count / meta.total) * 100) : 0;
                       return (
                         <div key={star} className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500 w-6 text-right">{star}★</span>
-                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <span className="text-[11px] text-[#6F6F71] w-6 text-right">{star}★</span>
+                          <div className="flex-1 bg-[#E9E9EA] h-1.5">
                             <div
-                              className="bg-amber-400 h-2 rounded-full transition-all"
+                              className="bg-[#1E1E1E] h-1.5 transition-all"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-400 w-6">{count}</span>
+                          <span className="text-[11px] text-[#6F6F71] w-6">{count}</span>
                         </div>
                       );
                     })}
@@ -567,7 +619,7 @@ export default function ProductDetail() {
                 </div>
 
                 {/* Review list */}
-                <div className="bg-white rounded-2xl px-6">
+                <div className="bg-white px-6">
                   {reviews.map((review) => (
                     <ReviewCard key={review._id} review={review} />
                   ))}
@@ -579,7 +631,7 @@ export default function ProductDetail() {
                     <button
                       onClick={loadMore}
                       disabled={loadingMore}
-                      className="px-8 py-2.5 rounded-full border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition disabled:opacity-50"
+                      className="px-8 py-2.5 border border-[#E9E9EA] uppercase text-[12px] tracking-[0.1em] text-[#1E1E1E] hover:bg-white transition disabled:opacity-50 cursor-pointer"
                     >
                       {loadingMore ? 'Memuat...' : 'Muat lebih banyak'}
                     </button>
@@ -589,84 +641,19 @@ export default function ProductDetail() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
                 <StarRating value={0} size="lg" />
-                <p className="text-gray-400 text-sm">Belum ada ulasan untuk produk ini.</p>
+                <p className="text-[#6F6F71] text-[13px]">Belum ada ulasan untuk produk ini.</p>
               </div>
             )}
           </div>
         </section>
 
         {/* Related Products */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Produk dari Kategori Lain</h2>
-            <RelatedProducts excludeId={product._id} excludeCategoryId={product.category?._id} />
-          </div>
-        </section>
+        <RelatedProductsCarousel
+          categoryIds={product.category ? [product.category._id] : []}
+          excludeIds={[product._id]}
+        />
       </main>
       <Footer />
     </div>
-  );
-}
-
-interface RelatedProductsProps {
-  excludeId: string;
-  excludeCategoryId?: string;
-}
-
-function RelatedProducts({ excludeId, excludeCategoryId }: RelatedProductsProps) {
-  const [products, setProducts] = useState<RelatedProduct[]>([]);
-
-  useEffect(() => {
-    api.getProducts({ exclude: excludeId }).then((data: RelatedProduct[]) => {
-      if (!Array.isArray(data)) return;
-      const filtered = excludeCategoryId
-        ? data.filter((p) => p.category?._id !== excludeCategoryId)
-        : data;
-      setProducts(filtered);
-    });
-  }, [excludeId, excludeCategoryId]);
-
-  if (products.length === 0) return null;
-
-  return (
-    <Swiper
-      modules={[Navigation]}
-      spaceBetween={24}
-      slidesPerView={1}
-      navigation
-      breakpoints={{
-        640: { slidesPerView: 2 },
-        768: { slidesPerView: 3 },
-        1024: { slidesPerView: 4 },
-      }}
-      className="pb-12"
-    >
-      {products.map((p) => (
-        <SwiperSlide key={p._id} className="h-auto">
-          <Link to={`/produk/${p._id}`} className="group flex flex-col h-full">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3">
-              <img
-                src={api.getImageUrl(p.image)}
-                alt={p.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-              />
-            </div>
-            <div className="flex flex-col flex-1 pt-1">
-              {p.category?.name && (
-                <span className="text-xs font-medium text-primary/80 mb-1 block">
-                  {p.category.name}
-                </span>
-              )}
-              <h3 className="text-base font-semibold text-gray-900 mb-1.5 line-clamp-2 leading-tight h-10 overflow-hidden">
-                {p.name}
-              </h3>
-              <p className="text-base font-bold text-gray-900">
-                {p.priceNumeric > 0 ? `Rp ${p.priceNumeric.toLocaleString('id-ID')}` : 'Hubungi Kami'}
-              </p>
-            </div>
-          </Link>
-        </SwiperSlide>
-      ))}
-    </Swiper>
   );
 }

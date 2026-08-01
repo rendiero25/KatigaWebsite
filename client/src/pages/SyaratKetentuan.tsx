@@ -12,16 +12,18 @@ export default function SyaratKetentuan() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <main className="pt-6">
+      <main>
+        <div className="border-b border-[#E9E9EA] py-6">
+          <h1 className="text-center text-2xl md:text-3xl">Syarat & Ketentuan</h1>
+        </div>
         <section className="py-16">
           <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-            <div className="max-w-4xl mx-auto">
-              <h1 className="text-3xl md:text-5xl font-normal leading-tight text-[#1e1e1e] mb-4">Syarat & Ketentuan</h1>
-              <p className="text-sm text-black/60 mb-12">Terakhir diperbarui: 10 Juli 2026</p>
-              <div className="space-y-10">
+            <div className="max-w-3xl mx-auto">
+              <p className="text-[11px] uppercase tracking-[0.12em] text-[#6F6F71] mb-12">Terakhir diperbarui: 10 Juli 2026</p>
+              <div className="space-y-12">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">1. Definisi & Penerimaan</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">1. Definisi & Penerimaan</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Selamat datang di KATIGA (katiga.id), platform belanja daring yang dioperasikan oleh{' '}
                     {settings?.companyName || 'PT Kusuma Kencana Khatulistiwa'} ("KATIGA", "kami"). Dengan mengakses,
                     mendaftar, atau melakukan transaksi di katiga.id, Anda ("Pengguna") dianggap telah membaca,
@@ -39,8 +41,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">2. Akun Pengguna</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">2. Akun Pengguna</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Untuk berbelanja, Anda perlu membuat akun dengan mendaftarkan nama, alamat email, dan nomor
                     telepon, atau masuk menggunakan akun Google Anda. Anda bertanggung jawab penuh atas kerahasiaan
                     kata sandi dan seluruh aktivitas yang terjadi melalui akun Anda. Segera hubungi kami apabila Anda
@@ -50,8 +52,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">3. Produk & Harga</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">3. Produk & Harga</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Seluruh produk yang dipasarkan di katiga.id ditampilkan beserta deskripsi, harga, dan
                     ketersediaan stok yang kami usahakan seakurat mungkin. Harga dapat berubah sewaktu-waktu tanpa
                     pemberitahuan sebelumnya, namun harga yang berlaku adalah harga yang tercantum pada saat pesanan
@@ -61,8 +63,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">4. Pemesanan & Pembayaran</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">4. Pemesanan & Pembayaran</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Pembayaran pada katiga.id diproses melalui Midtrans sebagai penyedia payment gateway resmi,
                     mencakup metode kartu kredit/debit, transfer bank/Virtual Account, dompet digital (e-wallet), dan
                     QRIS, sesuai metode yang tersedia pada saat checkout. Kami tidak menyediakan metode pembayaran
@@ -73,8 +75,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">5. Pengiriman</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">5. Pengiriman</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Pengiriman pesanan dilakukan melalui mitra jasa kirim yang terintegrasi dengan Biteship dari satu
                     titik gudang KATIGA. Ongkos kirim dan estimasi waktu tiba dihitung otomatis berdasarkan kurir
                     yang Anda pilih dan area pengiriman tujuan pada saat checkout. Estimasi waktu pengiriman bersifat
@@ -84,8 +86,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">6. Pembatalan Pesanan</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">6. Pembatalan Pesanan</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Anda dapat mengajukan pembatalan mandiri melalui halaman Pesanan Saya selama status pesanan masih
                     Menunggu Pembayaran atau Diproses (sebelum pesanan dikirim). Setelah pesanan berstatus Dikirim,
                     pembatalan mandiri tidak dapat lagi dilakukan — silakan menunggu pesanan diterima dan ajukan
@@ -99,8 +101,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">7. Retur, Komplain & Pengembalian Dana</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">7. Retur, Komplain & Pengembalian Dana</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Ketentuan lengkap mengenai pengajuan komplain, retur barang, dan pengembalian dana diatur dalam{' '}
                     <Link to="/kebijakan-pengembalian" className="text-primary underline hover:text-primary-dark">
                       Kebijakan Pengembalian
@@ -110,8 +112,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">8. Voucher & Promosi</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">8. Voucher & Promosi</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     KATIGA dapat sewaktu-waktu menerbitkan kode voucher atau promosi dengan syarat dan masa berlaku
                     tertentu. Voucher yang telah diterapkan pada suatu pesanan akan otomatis dilepas kembali apabila
                     pesanan tersebut dibatalkan. Kami berhak membatalkan voucher atau promosi yang digunakan secara
@@ -120,8 +122,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">9. Hak Kekayaan Intelektual</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">9. Hak Kekayaan Intelektual</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Seluruh konten pada katiga.id, termasuk namun tidak terbatas pada logo, nama merek, teks, gambar
                     produk, dan tata letak situs, adalah milik {settings?.companyName || 'PT Kusuma Kencana Khatulistiwa'}{' '}
                     atau pemberi lisensinya dan dilindungi oleh hukum hak kekayaan intelektual yang berlaku. Dilarang
@@ -130,8 +132,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">10. Batasan Tanggung Jawab</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">10. Batasan Tanggung Jawab</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Kami berupaya menjaga akurasi informasi dan kelancaran layanan katiga.id, namun tidak menjamin
                     situs akan selalu bebas dari gangguan, kesalahan, atau kondisi force majeure (bencana alam,
                     gangguan sistem pihak ketiga seperti Midtrans/Biteship, dan sejenisnya). Tanggung jawab kami atas
@@ -141,8 +143,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">11. Hukum yang Berlaku & Penyelesaian Sengketa</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">11. Hukum yang Berlaku & Penyelesaian Sengketa</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Syarat & Ketentuan ini diatur dan ditafsirkan berdasarkan hukum Negara Republik Indonesia. Setiap
                     perselisihan yang timbul akan diupayakan penyelesaiannya secara musyawarah; apabila tidak
                     tercapai kesepakatan, sengketa akan diselesaikan melalui Pengadilan Negeri yang berwenang di
@@ -151,8 +153,8 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">12. Perubahan Ketentuan</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">12. Perubahan Ketentuan</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Kami dapat memperbarui Syarat & Ketentuan ini dari waktu ke waktu. Perubahan berlaku efektif
                     sejak tanggal dipublikasikan pada halaman ini. Penggunaan layanan katiga.id secara berkelanjutan
                     setelah perubahan dipublikasikan dianggap sebagai persetujuan Anda atas ketentuan yang telah
@@ -161,11 +163,11 @@ export default function SyaratKetentuan() {
                 </div>
 
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-normal text-black leading-tight mb-4">13. Kontak</h2>
-                  <p className="text-lg text-black/80 leading-relaxed">
+                  <h2 className="text-2xl md:text-3xl mb-4">13. Kontak</h2>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Jika Anda memiliki pertanyaan lebih lanjut, silakan hubungi kami melalui:
                   </p>
-                  <ul className="list-disc pl-6 text-lg text-black/80 leading-relaxed space-y-2 mt-4">
+                  <ul className="list-disc pl-6 text-sm text-[#6F6F71] leading-relaxed space-y-2 mt-4">
                     <li>Telepon: {contact?.phone || '021-535-7450'}</li>
                     <li>WhatsApp: {contact?.whatsapp || '0821-2233-8226'}</li>
                     <li>Email: {contact?.email || 'info@kusumakencana.co.id'}</li>

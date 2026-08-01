@@ -1,282 +1,154 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "motion/react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import { useNews } from "../hooks/useApi";
-import api from "../services/api";
-import { 
-  FaSearch, 
-  FaChevronLeft, 
-  FaChevronRight, 
-  FaClock, 
-  FaHistory, 
-  FaSortAlphaDown, 
-  FaSortAlphaUp,
-  FaChevronDown
-} from "react-icons/fa";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { FiChevronDown, FiSearch } from 'react-icons/fi';
+
+import { useNews, useNewsSection } from '../hooks/useApi';
+import api from '../services/api';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+import ProductPagination from '../components/products/ProductPagination';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+interface NewsArticle {
+  _id: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  date: string;
+}
+
+type SortKey = 'newest' | 'oldest' | 'az' | 'za';
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'newest', label: 'Terbaru' },
+  { value: 'oldest', label: 'Terlama' },
+  { value: 'az', label: 'A-Z' },
+  { value: 'za', label: 'Z-A' },
+];
 
 export default function News() {
   const [page, setPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [category] = useState(""); // Default to all news
-  const [sort, setSort] = useState("newest");
-  const [isSortOpen, setIsSortOpen] = useState(false);
-  
-  // Pass params to hook
-  const { data: news, pagination, loading } = useNews(page, 12, searchQuery, category, sort);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [sectionContent, setSectionContent] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('newest');
 
-  useEffect(() => {
-    // Fetch section content for banner
-    api.getNewsSection()
-      .then(setSectionContent)
-      .catch(console.error);
-  }, []);
+  const { data, pagination, loading } = useNews(page, 12, searchQuery, '', sort);
+  const news = data as NewsArticle[];
+  const { data: sectionContent } = useNewsSection();
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= pagination.pages) {
-      setPage(newPage);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-  
-  // Reset page when search, category, or sort changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [searchQuery, category, sort]);
+  }, [searchQuery, sort]);
 
-  const sortOptions = [
-    { value: "newest", label: "Terbaru", icon: <FaClock /> },
-    { value: "oldest", label: "Terlama", icon: <FaHistory /> },
-    { value: "az", label: "A-Z", icon: <FaSortAlphaDown /> },
-    { value: "za", label: "Z-A", icon: <FaSortAlphaUp /> },
-  ];
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="grow">
-        {/* Banner Section */}
-        <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
-          <img
-            src={
-              sectionContent?.bannerImage
-                ? api.getImageUrl(sectionContent.bannerImage)
-                : "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1600"
-            }
-            alt="News Banner"
-            className="w-full h-full object-cover"
-          />
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
-          <div className="absolute inset-0 flex flex-col justify-center">
-            <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7 }}
-                className="text-white/80 text-base font-medium tracking-widest mb-3"
-              >
-                {sectionContent?.subtitle}
-              </motion.p>
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.15 }}
-                className="text-4xl md:text-5xl font-bold text-white uppercase leading-tight max-w-xl"
-              >
-                {sectionContent?.title}
-              </motion.h1>
+        <div className="border-b border-[#E9E9EA] py-6">
+          <h1 className="text-center text-2xl md:text-3xl">Berita</h1>
+        </div>
+
+        <div className="w-full h-[320px] md:h-[440px] bg-[#F9F7F2] overflow-hidden">
+          {sectionContent?.bannerImage && (
+            <img
+              src={api.getImageUrl(sectionContent.bannerImage)}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          )}
+        </div>
+
+        <div className="sticky top-20 z-30 bg-white border-y border-[#E9E9EA]">
+          <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 py-4">
+            <div className="relative w-full md:w-72">
+              <FiSearch className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6F6F71]" />
+              <input
+                type="text"
+                placeholder="CARI BERITA"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-6 pr-2 py-1 border-b border-[#E9E9EA] bg-transparent uppercase tracking-[0.12em] text-[13px] text-[#1E1E1E] placeholder:text-[#6F6F71] focus:outline-none focus:border-[#1E1E1E] transition-colors"
+              />
             </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1.5 uppercase tracking-[0.12em] text-[13px] text-[#6F6F71] hover:text-[#1E1E1E] transition-colors cursor-pointer focus:outline-none self-start md:self-auto">
+                {SORT_OPTIONS.find((opt) => opt.value === sort)?.label}
+                <FiChevronDown className="w-3.5 h-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-none p-1 min-w-40 shadow-none ring-1 ring-[#E9E9EA]">
+                <DropdownMenuRadioGroup value={sort} onValueChange={(value) => setSort(value as SortKey)}>
+                  {SORT_OPTIONS.map((option) => (
+                    <DropdownMenuRadioItem
+                      key={option.value}
+                      value={option.value}
+                      className="rounded-none uppercase tracking-[0.08em] text-[12px] text-[#1E1E1E]"
+                    >
+                      {option.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <div className="container mx-auto py-12 px-4 sm:px-10 lg:px-20 xl:px-30">
-          {/* Search and Filter Section */}
-          <div className="flex flex-col md:flex-row w-full justify-between items-center gap-4 mb-10 z-20 relative">
-            {/* Search Bar */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="w-full md:w-1/2 relative"
-            >
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="cursor-pointer w-full pl-12 pr-6 py-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm text-lg"
-              />
-              <FaSearch className="absolute left-5 top-1/2 transform -translate-y-1/2 text-black/40 w-4 h-4" />
-            </motion.div>
-
-            {/* Filter Group */}
-            <div className="flex w-full">
-              {/* Custom Sort Dropdown */}
-               <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="w-1/2 relative"
-              >
-                <button
-                  onClick={() => setIsSortOpen(!isSortOpen)}
-                  className="cursor-pointer px-6 py-4 rounded-full border border-gray-300 bg-white flex items-center justify-between shadow-sm text-lg hover:border-indigo-500 transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    {sortOptions.find(opt => opt.value === sort)?.icon}
-                    {sortOptions.find(opt => opt.value === sort)?.label}
-                  </span>
-                  <FaChevronDown className={`w-3 h-3 ml-2 transition-transform ${isSortOpen ? "rotate-180" : ""}`} />
-                </button>
-                
-                <AnimatePresence>
-                  {isSortOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 p-1"
-                    >
-                      {sortOptions.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => {
-                            setSort(opt.value);
-                            setIsSortOpen(false);
-                          }}
-                          className={`cursor-pointer w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                            sort === opt.value 
-                              ? "bg-indigo-50 text-indigo-600 font-medium" 
-                              : "hover:bg-gray-50 text-gray-700"
-                          }`}
-                        >
-                          <span className={`${sort === opt.value ? "text-indigo-600" : "text-gray-400"}`}>
-                            {opt.icon}
-                          </span>
-                          {opt.label}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            </div>
-          </div>
-
-
-          {/* News Grid */}
+        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-16">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-12">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div
-                  key={i}
-                  className="animate-pulse aspect-[4/5] bg-gray-200 rounded-lg"
-                ></div>
+                <div key={i} className="animate-pulse">
+                  <div className="w-full aspect-[16/10] bg-gray-200 mb-4" />
+                  <div className="h-3 bg-gray-200 rounded w-1/4 mb-2" />
+                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                </div>
               ))}
             </div>
+          ) : news.length === 0 ? (
+            <p className="text-center text-sm text-[#6F6F71] py-20">
+              Belum ada berita yang cocok dengan pencarian Anda.
+            </p>
           ) : (
-            <motion.div 
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={{
-                visible: {
-                  transition: {
-                    staggerChildren: 0.1
-                  }
-                }
-              }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
-              {news.map((item: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
-                <motion.div
-                  key={item._id}
-                  variants={{
-                    hidden: { opacity: 0, y: 30 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
-                  }}
-                >
-                  <Link
-                    to={`/berita/${item._id}`}
-                    className="group relative block aspect-[4/5] overflow-hidden rounded-lg bg-gray-900 h-full"
-                  >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-12">
+              {news.map((item) => (
+                <Link key={item._id} to={`/berita/${item._id}`} className="group block">
+                  <div className="aspect-[16/10] overflow-hidden mb-4 bg-[#F9F7F2]">
                     <img
                       src={api.getImageUrl(item.image)}
                       alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-60"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
                     />
-
-                    {/* Date Badge */}
-                    <div className="absolute top-0 right-4 bg-primary text-white p-2 text-center min-w-[60px]">
-                      <span className="block text-xl font-bold leading-none">
-                        {new Date(item.date).getDate()}
-                      </span>
-                      <span className="block text-xs uppercase font-medium">
-                        {new Date(item.date).toLocaleDateString("id-ID", {
-                          month: "short",
-                        })}
-                      </span>
-                    </div>
-
-                    {/* Content Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 to-transparent pt-20">
-                      <h3 className="text-white font-bold text-lg mb-1 leading-tight group-hover:underline">
-                        {item.title}
-                      </h3>
-                      {/* Assuming user meant excerpt for the subtitle 'Outlet Baru di Bekasi' */}
-                      <p className="text-white/80 text-sm font-medium">
-                        {item.excerpt}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
+                  </div>
+                  <p className="text-[11px] text-[#6F6F71] tracking-[0.12em] uppercase mb-2">
+                    {new Date(item.date).toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                  <h3 className="uppercase text-[13px] text-[#1E1E1E]">{item.title}</h3>
+                </Link>
               ))}
-            </motion.div>
-          )}
-
-          {/* Pagination */}
-          {pagination.pages > 1 && (
-            <div className="mt-16 flex justify-center items-center gap-6">
-              <button 
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                className="p-2 text-gray-400 hover:text-black transition disabled:opacity-30 disabled:hover:text-gray-400"
-              >
-                <FaChevronLeft className="w-3 h-3" />
-              </button>
-              
-              <div className="flex gap-4 font-medium">
-                {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pageNum) => (
-                  <button
-                    key={pageNum}
-                    onClick={() => handlePageChange(pageNum)}
-                    className={`${
-                      page === pageNum 
-                        ? "text-black font-bold" 
-                        : "text-gray-400 hover:text-black"
-                    } transition`}
-                  >
-                    {pageNum}
-                  </button>
-                ))}
-              </div>
-
-              <button 
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === pagination.pages}
-                className="cursor-pointer p-2 text-gray-400 hover:text-black transition disabled:opacity-30 disabled:hover:text-gray-400"
-              >
-                <FaChevronRight className="cursor-pointer w-3 h-3" />
-              </button>
             </div>
           )}
+
+          <ProductPagination
+            currentPage={page}
+            totalPages={pagination.pages}
+            onPageChange={handlePageChange}
+          />
         </div>
       </main>
       <Footer />
