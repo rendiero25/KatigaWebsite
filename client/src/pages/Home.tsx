@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
@@ -8,7 +9,6 @@ import ProductSpotlightSection from '../components/ProductSpotlightSection';
 import ProductsSection from '../components/ProductsSection';
 import ManufacturingSection from '../components/ManufacturingSection';
 import AdvantagesSection from '../components/AdvantagesSection';
-import InstagramSection from '../components/InstagramSection';
 import NewsSection from '../components/NewsSection';
 
 const reveal = {
@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="flex flex-col gap-15 md:gap-24 mb-15 md:mb-24">
+      <main className="flex flex-col gap-8 md:gap-12 mb-8 md:mb-12">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
           <HeroSection />
         </motion.div>
@@ -49,10 +49,6 @@ export default function Home() {
 
         <motion.div {...reveal}>
           <AdvantagesSection />
-        </motion.div>
-
-        <motion.div {...reveal}>
-          <InstagramSection />
         </motion.div>
 
         <motion.div {...reveal}>

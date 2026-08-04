@@ -34,7 +34,7 @@ export default function AboutUs() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="flex flex-col gap-15 md:gap-24 mb-15 md:mb-24">
+      <main className="flex flex-col gap-8 md:gap-12 mb-8 md:mb-12">
         <AboutBanner image={images[0]} />
 
         <motion.div {...reveal}>

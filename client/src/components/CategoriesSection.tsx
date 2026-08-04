@@ -127,14 +127,20 @@ function CategoryCard({ category, fallbackImage }: CategoryCardProps) {
         <div className="w-full h-full bg-[#F9F7F2]"></div>
       )}
 
+      {hasImage && (
+        <div className="absolute inset-0 bg-black/50"></div>
+      )}
+
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 px-4">
-        <h3
-          className={`text-4xl md:text-5xl uppercase tracking-wide text-center ${
-            hasImage ? 'text-white drop-shadow-lg' : 'text-[#1E1E1E]'
-          }`}
-        >
-          {category.name}
-        </h3>
+        <div className="flex min-h-[3.75rem] md:min-h-[4.5rem] items-center">
+          <h3
+            className={`text-2xl md:text-3xl uppercase tracking-wide text-center ${
+              hasImage ? 'text-white' : 'text-[#1E1E1E]'
+            }`}
+          >
+            {category.name}
+          </h3>
+        </div>
         <span className="bg-white text-[#1E1E1E] uppercase tracking-[0.18em] text-[13px] px-6 py-3">
           View Products
         </span>

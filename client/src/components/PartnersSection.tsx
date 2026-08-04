@@ -6,7 +6,7 @@ export default function PartnersSection() {
 
   if (loading) {
     return (
-      <section className="bg-white py-16">
+      <section className="bg-white pt-10 pb-20">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <div className="h-3 bg-gray-200 rounded w-40 mx-auto mb-10 animate-pulse" />
           <div className="grid grid-cols-3 md:grid-cols-6 gap-8 items-center">
@@ -22,7 +22,7 @@ export default function PartnersSection() {
   if (!partners || partners.length === 0) return null;
 
   return (
-    <section className="bg-white py-16">
+    <section className="bg-white pt-10 pb-20">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] text-center mb-10">
           Dipercaya Oleh

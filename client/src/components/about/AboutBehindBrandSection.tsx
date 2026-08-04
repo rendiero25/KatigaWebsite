@@ -20,7 +20,7 @@ export default function AboutBehindBrandSection() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-white">
+      <section className="pt-10 pb-20 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <div className="max-w-3xl mx-auto text-center">
             <div className="h-3 bg-gray-200 w-32 mx-auto mb-4 animate-pulse" />
@@ -48,7 +48,7 @@ export default function AboutBehindBrandSection() {
   const features = manufacturing.features ?? [];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="pt-10 pb-20 bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <div className="max-w-3xl mx-auto text-center">
           <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] mb-4">

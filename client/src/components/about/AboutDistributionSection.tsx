@@ -50,15 +50,15 @@ export default function AboutDistributionSection() {
             )}
           </div>
 
-          <div className="aspect-[4/3] bg-white">
-            {distribution.mapImage ? (
-              <img
-                src={api.getImageUrl(distribution.mapImage)}
-                alt={distribution.title ?? 'Peta distribusi'}
-                className="w-full h-full object-contain"
-              />
-            ) : null}
-          </div>
+          {distribution.mapImage ? (
+            <img
+              src={api.getImageUrl(distribution.mapImage)}
+              alt={distribution.title ?? 'Peta distribusi'}
+              className="w-full h-auto object-contain"
+            />
+          ) : (
+            <div className="aspect-[4/3] bg-white/60" />
+          )}
         </div>
       </div>
     </section>

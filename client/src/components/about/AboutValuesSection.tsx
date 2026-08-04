@@ -12,7 +12,7 @@ export default function AboutValuesSection({ title, points }: Props) {
   if (!points || points.length === 0) return null;
 
   return (
-    <section className="py-16 bg-white">
+    <section className="pt-10 pb-20 bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <span className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] mb-10 block text-center">
           {title || 'Nilai Kami'}

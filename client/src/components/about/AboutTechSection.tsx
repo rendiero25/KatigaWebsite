@@ -37,7 +37,7 @@ export default function AboutTechSection() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-white">
+      <section className="pt-10 pb-20 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <div className="h-4 bg-gray-200 rounded w-1/4 mx-auto mb-4 animate-pulse" />
           <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto mb-16 animate-pulse" />
@@ -71,7 +71,7 @@ export default function AboutTechSection() {
   if (!header?.title && !header?.subtitle && !hasSection1 && !hasSection2) return null;
 
   return (
-    <section className="py-16 bg-white">
+    <section className="pt-10 pb-20 bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         {(header?.title || header?.subtitle) && (
           <div className="text-center max-w-2xl mx-auto mb-16">

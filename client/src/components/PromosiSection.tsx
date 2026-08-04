@@ -1,6 +1,7 @@
-import { FaInstagram, FaTiktok } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
-import { useActivePromotions, useSiteSettings } from '../hooks/useApi';
+import { useActivePromotions } from '../hooks/useApi';
+
 import api from '../services/api';
 
 interface ActivePromotion {
@@ -10,66 +11,43 @@ interface ActivePromotion {
   bannerImage: string;
 }
 
-interface SiteSettingsData {
-  instagramUrl?: string;
-}
+const BANNER_HEIGHT = 'h-[320px] md:h-[440px]';
 
 export default function PromosiSection() {
-  const { data: promosData, loading: promosLoading } = useActivePromotions();
-  const { data: siteSettingsData, loading: settingsLoading } = useSiteSettings();
-
-  const loading = promosLoading || settingsLoading;
+  const { data: promosData, loading } = useActivePromotions();
 
   if (loading) {
-    return <section className="h-[320px] bg-[#F9F7F2] animate-pulse" />;
+    return <section className={`${BANNER_HEIGHT} bg-[#F9F7F2] animate-pulse`} />;
   }
 
-  const promos = promosData as ActivePromotion[];
-  const promo = promos?.[0];
-  const siteSettings = siteSettingsData as SiteSettingsData | null;
+  const promo = (promosData as ActivePromotion[] | null)?.[0];
 
-  // TODO(cms): foto banner + kalimat quote final menyusul
-  const hasContent = Boolean(promo?.bannerImage && promo?.description);
-
-  if (!hasContent) {
-    return <section className="h-[320px] bg-[#F9F7F2]" />;
+  if (!promo?.bannerImage) {
+    return null;
   }
-
-  const instagramUrl = siteSettings?.instagramUrl || '#';
 
   return (
-    <section className="h-[320px] relative overflow-hidden">
+    <section className={`relative ${BANNER_HEIGHT} overflow-hidden`}>
       <img
         src={api.getImageUrl(promo.bannerImage)}
         alt={promo.name}
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-black/25" />
-      <div className="relative h-full flex flex-col items-center justify-center text-center px-4 gap-6">
-        <p className="text-xl md:text-2xl italic text-white max-w-2xl">
-          {promo.description}
-        </p>
-        <div className="flex items-center gap-5">
-          <span className="uppercase tracking-[0.12em] text-[13px] text-white/80">Ikuti Kami</span>
-          <a
-            href={instagramUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 text-white/80 hover:text-white transition text-sm"
-          >
-            <FaInstagram className="w-4 h-4" />
-            <span>@katiga.id</span>
-          </a>
-          <a
-            href="#"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 text-white/80 hover:text-white transition text-sm"
-          >
-            <FaTiktok className="w-4 h-4" />
-            <span>@katiga.id</span>
-          </a>
-        </div>
+
+      <div className="relative h-full flex flex-col items-center justify-center text-center px-4 gap-8">
+        <h2 className="text-2xl md:text-3xl text-white">{promo.name}</h2>
+        {promo.description && promo.description.trim() !== promo.name.trim() && (
+          <p className="text-sm md:text-base text-white/85 max-w-2xl leading-relaxed">
+            {promo.description}
+          </p>
+        )}
+        <Link
+          to="/produk"
+          className="border border-white text-white uppercase tracking-[0.18em] text-[13px] px-8 py-4 hover:bg-white hover:text-[#1E1E1E] transition"
+        >
+          Lihat Produk
+        </Link>
       </div>
     </section>
   );
