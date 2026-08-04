@@ -15,17 +15,10 @@ import type { CatalogProduct } from '../components/products/ProductCard';
 
 const PRODUCTS_PER_PAGE = 12;
 
-type Availability = 'all' | 'in-stock' | 'out-of-stock';
-
 const resolvePrice = (product: CatalogProduct): number => {
   if (product.priceNumeric > 0) return product.priceNumeric;
   const parsed = Number(String(product.price ?? '').replace(/[^\d]/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const isInStock = (product: CatalogProduct): boolean => {
-  if ((product.stock ?? 0) > 0) return true;
-  return (product.variants ?? []).some((variant) => (variant.stock ?? 0) > 0);
 };
 
 export default function Products() {
@@ -36,8 +29,7 @@ export default function Products() {
   const categoryParam = searchParams.get('category');
 
   const [activeCategory, setActiveCategory] = useState('');
-  const [activeVariants, setActiveVariants] = useState<string[]>([]);
-  const [availability, setAvailability] = useState<Availability>('all');
+  const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('newest');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -73,26 +65,11 @@ export default function Products() {
     [categories]
   );
 
-  const variantOptions: FilterOption[] = useMemo(() => {
-    const names = new Set<string>();
-    for (const product of products) {
-      for (const variant of product.variants ?? []) {
-        if (variant.name) names.add(variant.name);
-      }
-    }
-    return [...names].sort((a, b) => a.localeCompare(b)).map((name) => ({ value: name, label: name }));
-  }, [products]);
-
   const visibleProducts = useMemo(() => {
-    const filtered = products.filter((product) => {
-      if (activeVariants.length > 0) {
-        const names = (product.variants ?? []).map((v) => v.name).filter(Boolean) as string[];
-        if (!activeVariants.some((name) => names.includes(name))) return false;
-      }
-      if (availability === 'in-stock' && !isInStock(product)) return false;
-      if (availability === 'out-of-stock' && isInStock(product)) return false;
-      return true;
-    });
+    const keyword = search.trim().toLowerCase();
+    const filtered = keyword
+      ? products.filter((product) => product.name.toLowerCase().includes(keyword))
+      : products;
 
     const sorted = [...filtered];
     if (sort === 'az') sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -100,12 +77,12 @@ export default function Products() {
     else if (sort === 'price-asc') sorted.sort((a, b) => resolvePrice(a) - resolvePrice(b));
     else if (sort === 'price-desc') sorted.sort((a, b) => resolvePrice(b) - resolvePrice(a));
     return sorted;
-  }, [products, activeVariants, availability, sort]);
+  }, [products, search, sort]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
-  }, [activeCategory, activeVariants, availability, sort]);
+  }, [activeCategory, search, sort]);
 
   const totalPages = Math.ceil(visibleProducts.length / PRODUCTS_PER_PAGE);
   const pagedProducts = visibleProducts.slice(
@@ -120,8 +97,7 @@ export default function Products() {
 
   const handleClearAll = () => {
     setActiveCategory('');
-    setActiveVariants([]);
-    setAvailability('all');
+    setSearch('');
     setSort('newest');
   };
 
@@ -155,11 +131,8 @@ export default function Products() {
           categories={categoryOptions}
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
-          variants={variantOptions}
-          activeVariants={activeVariants}
-          onVariantsChange={setActiveVariants}
-          availability={availability}
-          onAvailabilityChange={setAvailability}
+          search={search}
+          onSearchChange={setSearch}
           resultCount={visibleProducts.length}
           onClearAll={handleClearAll}
         />

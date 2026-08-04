@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { FiChevronDown, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiSearch, FiX } from 'react-icons/fi';
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
@@ -24,11 +23,8 @@ interface Props {
   categories: FilterOption[];
   activeCategory: string;
   onCategoryChange: (value: string) => void;
-  variants: FilterOption[];
-  activeVariants: string[];
-  onVariantsChange: (values: string[]) => void;
-  availability: 'all' | 'in-stock' | 'out-of-stock';
-  onAvailabilityChange: (value: 'all' | 'in-stock' | 'out-of-stock') => void;
+  search: string;
+  onSearchChange: (value: string) => void;
   resultCount: number;
   onClearAll: () => void;
 }
@@ -41,12 +37,6 @@ const SORT_OPTIONS: FilterOption[] = [
   { value: 'za', label: 'Z-A' },
 ];
 
-const AVAILABILITY_OPTIONS: FilterOption[] = [
-  { value: 'all', label: 'Semua' },
-  { value: 'in-stock', label: 'Tersedia' },
-  { value: 'out-of-stock', label: 'Habis' },
-];
-
 const triggerClass =
   'flex items-center gap-1.5 uppercase tracking-[0.12em] text-[13px] text-[#6F6F71] hover:text-[#1E1E1E] transition-colors cursor-pointer focus:outline-none';
 
@@ -56,30 +46,51 @@ function labelOf(options: FilterOption[], value: string): string | undefined {
   return options.find((option) => option.value === value)?.label;
 }
 
+interface SearchFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}
+
+function SearchField({ value, onChange, className = '' }: SearchFieldProps) {
+  return (
+    <div className={`relative flex items-center ${className}`}>
+      <FiSearch className="pointer-events-none absolute left-3 w-4 h-4 text-[#6F6F71]" />
+      <input
+        type="search"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Cari produk"
+        aria-label="Cari produk"
+        className="w-full border border-[#E9E9EA] bg-white py-2.5 pl-9 pr-9 text-[13px] text-[#1E1E1E] placeholder:text-[#6F6F71] focus:border-[#1E1E1E] focus:outline-none"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label="Hapus pencarian"
+          className="absolute right-2 p-1 text-[#6F6F71] hover:text-[#1E1E1E] cursor-pointer"
+        >
+          <FiX className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function ProductFilterBar({
   sort,
   onSortChange,
   categories,
   activeCategory,
   onCategoryChange,
-  variants,
-  activeVariants,
-  onVariantsChange,
-  availability,
-  onAvailabilityChange,
+  search,
+  onSearchChange,
   resultCount,
   onClearAll,
 }: Props) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobileSortOpen, setIsMobileSortOpen] = useState(false);
-
-  const toggleVariant = (value: string) => {
-    if (activeVariants.includes(value)) {
-      onVariantsChange(activeVariants.filter((v) => v !== value));
-    } else {
-      onVariantsChange([...activeVariants, value]);
-    }
-  };
 
   const chips: { key: string; label: string; onRemove: () => void }[] = [];
   if (activeCategory) {
@@ -89,18 +100,11 @@ export default function ProductFilterBar({
       onRemove: () => onCategoryChange(''),
     });
   }
-  activeVariants.forEach((value) => {
+  if (search.trim()) {
     chips.push({
-      key: `variant:${value}`,
-      label: labelOf(variants, value) ?? value,
-      onRemove: () => onVariantsChange(activeVariants.filter((v) => v !== value)),
-    });
-  });
-  if (availability !== 'all') {
-    chips.push({
-      key: `availability:${availability}`,
-      label: labelOf(AVAILABILITY_OPTIONS, availability) ?? availability,
-      onRemove: () => onAvailabilityChange('all'),
+      key: `search:${search}`,
+      label: `"${search.trim()}"`,
+      onRemove: () => onSearchChange(''),
     });
   }
 
@@ -108,7 +112,7 @@ export default function ProductFilterBar({
     <div className="sticky top-20 z-30 bg-white border-y border-[#E9E9EA]">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         {/* Desktop bar */}
-        <div className="hidden md:flex items-center justify-between py-4">
+        <div className="hidden md:flex items-center justify-between gap-8 py-4">
           <div className="flex items-center gap-8">
             <DropdownMenu>
               <DropdownMenuTrigger className={triggerClass}>
@@ -162,43 +166,30 @@ export default function ProductFilterBar({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger className={triggerClass}>
-                VARIAN
-                <FiChevronDown className="w-3.5 h-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className={dropdownContentClass}>
-                {variants.length === 0 ? (
-                  <div className="px-2 py-1.5 text-[12px] text-[#6F6F71]">Tidak ada varian</div>
-                ) : (
-                  variants.map((option) => (
-                    <DropdownMenuCheckboxItem
-                      key={option.value}
-                      checked={activeVariants.includes(option.value)}
-                      onCheckedChange={() => toggleVariant(option.value)}
-                      onSelect={(event) => event.preventDefault()}
-                      className="rounded-none uppercase tracking-[0.08em] text-[12px] text-[#1E1E1E]"
-                    >
-                      {option.label}
-                    </DropdownMenuCheckboxItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SearchField value={search} onChange={onSearchChange} className="w-64" />
+          </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger className={triggerClass}>
-                KETERSEDIAAN
+          <span className="shrink-0 uppercase tracking-[0.12em] text-[13px] text-[#6F6F71]">
+            {resultCount} PRODUK
+          </span>
+        </div>
+
+        {/* Mobile bar */}
+        <div className="md:hidden flex flex-col gap-3 py-3">
+          <SearchField value={search} onChange={onSearchChange} />
+
+          <div className="flex items-center gap-3">
+            <DropdownMenu open={isMobileSortOpen} onOpenChange={setIsMobileSortOpen}>
+              <DropdownMenuTrigger className="flex-1 flex items-center justify-center gap-1.5 border border-[#E9E9EA] py-2.5 uppercase tracking-[0.18em] text-[13px] text-[#1E1E1E] cursor-pointer focus:outline-none">
+                URUTKAN
                 <FiChevronDown className="w-3.5 h-3.5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className={dropdownContentClass}>
                 <DropdownMenuRadioGroup
-                  value={availability}
-                  onValueChange={(value) =>
-                    onAvailabilityChange(value as 'all' | 'in-stock' | 'out-of-stock')
-                  }
+                  value={sort}
+                  onValueChange={(value) => onSortChange(value as SortKey)}
                 >
-                  {AVAILABILITY_OPTIONS.map((option) => (
+                  {SORT_OPTIONS.map((option) => (
                     <DropdownMenuRadioItem
                       key={option.value}
                       value={option.value}
@@ -210,45 +201,15 @@ export default function ProductFilterBar({
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(true)}
+              className="flex-1 flex items-center justify-center gap-1.5 border border-[#E9E9EA] py-2.5 uppercase tracking-[0.18em] text-[13px] text-[#1E1E1E] cursor-pointer"
+            >
+              KATEGORI
+            </button>
           </div>
-
-          <span className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71]">
-            {resultCount} PRODUK
-          </span>
-        </div>
-
-        {/* Mobile bar */}
-        <div className="flex md:hidden items-center gap-3 py-3">
-          <DropdownMenu open={isMobileSortOpen} onOpenChange={setIsMobileSortOpen}>
-            <DropdownMenuTrigger className="flex-1 flex items-center justify-center gap-1.5 border border-[#E9E9EA] py-2.5 uppercase tracking-[0.18em] text-[13px] text-[#1E1E1E] cursor-pointer focus:outline-none">
-              URUTKAN
-              <FiChevronDown className="w-3.5 h-3.5" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className={dropdownContentClass}>
-              <DropdownMenuRadioGroup
-                value={sort}
-                onValueChange={(value) => onSortChange(value as SortKey)}
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <DropdownMenuRadioItem
-                    key={option.value}
-                    value={option.value}
-                    className="rounded-none uppercase tracking-[0.08em] text-[12px] text-[#1E1E1E]"
-                  >
-                    {option.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <button
-            type="button"
-            onClick={() => setIsDrawerOpen(true)}
-            className="flex-1 flex items-center justify-center gap-1.5 border border-[#E9E9EA] py-2.5 uppercase tracking-[0.18em] text-[13px] text-[#1E1E1E] cursor-pointer"
-          >
-            FILTER
-          </button>
         </div>
 
         <p className="md:hidden pb-3 uppercase tracking-[0.12em] text-[12px] text-[#6F6F71]">
@@ -287,23 +248,20 @@ export default function ProductFilterBar({
         )}
       </div>
 
-      {/* Mobile filter drawer */}
+      {/* Mobile category drawer */}
       <div
         className={`md:hidden fixed inset-0 z-50 transition-opacity duration-300 ${
           isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div
-          className="absolute inset-0 bg-black/20"
-          onClick={() => setIsDrawerOpen(false)}
-        />
+        <div className="absolute inset-0 bg-black/20" onClick={() => setIsDrawerOpen(false)} />
         <div
           className={`absolute inset-y-0 right-0 w-[85%] max-w-sm bg-white flex flex-col transition-transform duration-300 ${
             isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
           <div className="flex items-center justify-between h-16 px-5 border-b border-[#E9E9EA] shrink-0">
-            <span className="uppercase tracking-[0.12em] text-[13px] text-[#1E1E1E]">Filter</span>
+            <span className="uppercase tracking-[0.12em] text-[13px] text-[#1E1E1E]">Kategori</span>
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
@@ -314,85 +272,31 @@ export default function ProductFilterBar({
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-8">
-            <div>
-              <p className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71] mb-3">
-                Kategori
-              </p>
-              <div className="flex flex-col gap-3">
-                <label className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.08em] text-[#1E1E1E]">
+          <div className="flex-1 overflow-y-auto px-5 py-6">
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.08em] text-[#1E1E1E]">
+                <input
+                  type="radio"
+                  name="mobile-category"
+                  checked={activeCategory === ''}
+                  onChange={() => onCategoryChange('')}
+                />
+                Semua
+              </label>
+              {categories.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.08em] text-[#1E1E1E]"
+                >
                   <input
                     type="radio"
                     name="mobile-category"
-                    checked={activeCategory === ''}
-                    onChange={() => onCategoryChange('')}
+                    checked={activeCategory === option.value}
+                    onChange={() => onCategoryChange(option.value)}
                   />
-                  Semua
+                  {option.label}
                 </label>
-                {categories.map((option) => (
-                  <label
-                    key={option.value}
-                    className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.08em] text-[#1E1E1E]"
-                  >
-                    <input
-                      type="radio"
-                      name="mobile-category"
-                      checked={activeCategory === option.value}
-                      onChange={() => onCategoryChange(option.value)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71] mb-3">
-                Varian
-              </p>
-              {variants.length === 0 ? (
-                <p className="text-[13px] text-[#6F6F71]">Tidak ada varian</p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {variants.map((option) => (
-                    <label
-                      key={option.value}
-                      className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.08em] text-[#1E1E1E]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={activeVariants.includes(option.value)}
-                        onChange={() => toggleVariant(option.value)}
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <p className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71] mb-3">
-                Ketersediaan
-              </p>
-              <div className="flex flex-col gap-3">
-                {AVAILABILITY_OPTIONS.map((option) => (
-                  <label
-                    key={option.value}
-                    className="flex items-center gap-2.5 text-[13px] uppercase tracking-[0.08em] text-[#1E1E1E]"
-                  >
-                    <input
-                      type="radio"
-                      name="mobile-availability"
-                      checked={availability === option.value}
-                      onChange={() =>
-                        onAvailabilityChange(option.value as 'all' | 'in-stock' | 'out-of-stock')
-                      }
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
