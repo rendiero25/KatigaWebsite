@@ -58,21 +58,23 @@ const UlasanSaya = lazy(() => import('./pages/UlasanSaya'));
 const Notifikasi = lazy(() => import('./pages/Notifikasi'));
 const AdminNotifikasi = lazy(() => import('./pages/admin/Notifikasi'));
 
-const LEGAL_PAGE_PATHS = new Set([
+const SCROLL_RESET_PATHS = new Set([
+  '/produk',
   '/syarat-ketentuan',
   '/kebijakan-privasi',
   '/kebijakan-pengembalian',
   '/faq',
 ]);
 
-function LegalPageScrollReset() {
-  const { pathname } = useLocation();
+function ScrollReset() {
+  const { pathname, search } = useLocation();
 
   useEffect(() => {
-    if (LEGAL_PAGE_PATHS.has(pathname)) {
-      window.scrollTo(0, 0);
+    if (SCROLL_RESET_PATHS.has(pathname)) {
+      // instant: html { scroll-behavior: smooth } would otherwise animate the jump
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
-  }, [pathname]);
+  }, [pathname, search]);
 
   return null;
 }
@@ -80,7 +82,7 @@ function LegalPageScrollReset() {
 function App() {
   return (
     <BrowserRouter>
-      <LegalPageScrollReset />
+      <ScrollReset />
       <Toaster position="top-center" richColors closeButton />
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F9F7F2]"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>}>
       <Routes>
