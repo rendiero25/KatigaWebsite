@@ -211,6 +211,7 @@ export default function ProductDetail() {
       discountPercent: promo ? promo.discountPercent : undefined,
       categoryId: product.category?._id ?? undefined,
     });
+    window.dispatchEvent(new Event('cartDrawerOpen'));
     setTimeout(() => setAdding(false), 600);
   };
 
@@ -331,7 +332,7 @@ export default function ProductDetail() {
 
           <div className="flex flex-col md:flex-row gap-10 lg:gap-16">
             {/* Image Gallery */}
-            <div className="flex flex-col gap-3 md:w-1/2 md:shrink-0 md:sticky md:top-24 md:self-start">
+            <div className="flex flex-col gap-3 md:w-1/2 md:shrink-0">
               <div className="bg-[#F9F7F2] overflow-hidden relative aspect-square">
                 <img
                   src={
@@ -392,7 +393,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Product Info */}
-            <div className="flex flex-col gap-4 md:flex-1">
+            <div className="flex flex-col gap-4 md:flex-1 md:sticky md:top-24 md:self-start">
               <span className="uppercase text-[12px] tracking-[0.12em] text-[#6F6F71]">
                 {product.category?.name || 'Kategori Umum'}
               </span>

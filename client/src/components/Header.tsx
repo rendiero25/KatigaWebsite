@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSiteSettings, useCartCount, useNotifications } from "../hooks/useApi";
 import { clearCart } from "../utils/cart";
 import api from "../services/api";
+import CartDrawer from "./CartDrawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -324,6 +325,8 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      <CartDrawer />
     </header>
   );
 }
