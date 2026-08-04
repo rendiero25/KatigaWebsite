@@ -15,6 +15,9 @@ export default function AdminManufacturing() {
   // Form State
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
+  const [label, setLabel] = useState("");
+  const [ctaLabel, setCtaLabel] = useState("");
+  const [ctaUrl, setCtaUrl] = useState("");
   const [features, setFeatures] = useState([
     { title: "", icon: "" },
     { title: "", icon: "" },
@@ -38,6 +41,9 @@ export default function AdminManufacturing() {
         setData(fetchedData);
         setTagline(fetchedData.tagline || "");
         setDescription(fetchedData.description || "");
+        setLabel(fetchedData.label || "");
+        setCtaLabel(fetchedData.ctaLabel || "");
+        setCtaUrl(fetchedData.ctaUrl || "");
 
         // Ensure we have 3 features
         const loadedFeatures = fetchedData.features || [];
@@ -70,6 +76,9 @@ export default function AdminManufacturing() {
     const formData = new FormData();
     formData.append("tagline", tagline);
     formData.append("description", description);
+    formData.append("label", label);
+    formData.append("ctaLabel", ctaLabel);
+    formData.append("ctaUrl", ctaUrl);
     if (bgFile) formData.append("backgroundImage", bgFile);
 
     features.forEach((feat, i) => {
@@ -92,7 +101,7 @@ export default function AdminManufacturing() {
       if (res.ok) {
         const updated = await res.json();
         setData(updated);
-        toast.success("Manufacturing section berhasil diperbarui!");
+        toast.success("Banner Tentang Kami berhasil diperbarui!");
         // Clear file inputs if needed, or keep them? Usually keep or reset.
         setIconFiles([null, null, null]);
       } else {
@@ -108,7 +117,7 @@ export default function AdminManufacturing() {
 
   if (loading) {
     return (
-      <AdminLayout title="Manufacturing Section">
+      <AdminLayout title="Banner Tentang Kami">
         <div className="animate-pulse space-y-4">
           <div className="h-64 bg-gray-200 rounded-xl"></div>
         </div>
@@ -120,38 +129,20 @@ export default function AdminManufacturing() {
     <AdminLayout title="Manufacturing Section">
       <div className="w-full">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Main Content */}
+          {/* Banner Tentang Kami di halaman Home */}
           <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Konten Utama</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tagline (Atas)
-              </label>
-              <input
-                type="text"
-                value={tagline}
-                onChange={(e) => setTagline(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                placeholder="Kualitas yang Kami Jaga..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Deskripsi Utama
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 h-32"
-                placeholder="Sebagai produsen langsung..."
-              />
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-900">
+                Banner Tentang Kami (Halaman Home)
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Banner lebar di halaman Home, di bawah section Produk Terbaru.
+              </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Background Image
+                Background
               </label>
               <div className="flex items-center gap-4">
                 {data.backgroundImage && (
@@ -169,15 +160,104 @@ export default function AdminManufacturing() {
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Format: JPG, PNG. Ukuran ideal 1920x1080px.
+                Format: JPG, PNG. Ukuran ideal 1920x1080px. Tanpa background,
+                banner tampil dengan latar polos.
               </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Label Kecil (di atas judul)
+              </label>
+              <input
+                type="text"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                placeholder="Tentang Kami"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Kosongkan untuk menyembunyikan label.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Judul Banner
+              </label>
+              <input
+                type="text"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                placeholder="Kualitas yang Kami Jaga..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Judul yang sama juga dipakai di section Di Balik Brand pada
+                halaman Tentang Kami.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Teks Tombol
+                </label>
+                <input
+                  type="text"
+                  value={ctaLabel}
+                  onChange={(e) => setCtaLabel(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Baca Cerita Kami"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Link Tombol
+                </label>
+                <input
+                  type="text"
+                  value={ctaUrl}
+                  onChange={(e) => setCtaUrl(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="/tentang-kami"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Kosongkan salah satu untuk menyembunyikan tombol.
+            </p>
+          </div>
+
+          {/* Konten halaman Tentang Kami */}
+          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-900">
+                Di Balik Brand (Halaman Tentang Kami)
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Deskripsi dan poin kunci yang tampil di halaman /tentang-kami.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Deskripsi
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 h-32"
+                placeholder="Sebagai produsen langsung..."
+              />
             </div>
           </div>
 
           {/* Features */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              Fitur / Poin Kunci (3 Item)
+              Poin Kunci (3 Item)
             </h3>
 
             {features.map((feature, i) => (

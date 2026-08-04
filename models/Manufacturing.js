@@ -15,6 +15,18 @@ const manufacturingSchema = new mongoose.Schema({
     type: String, // URL to uploaded image
     required: false
   },
+  label: {
+    type: String,
+    default: 'Tentang Kami'
+  },
+  ctaLabel: {
+    type: String,
+    default: 'Baca Cerita Kami'
+  },
+  ctaUrl: {
+    type: String,
+    default: '/tentang-kami'
+  },
   features: [{
     title: {
       type: String,

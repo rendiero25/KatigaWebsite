@@ -51,9 +51,12 @@ router.put('/', auth, upload.fields([
         manufacturing = new Manufacturing();
     }
 
-    const { tagline, description } = req.body;
+    const { tagline, description, label, ctaLabel, ctaUrl } = req.body;
     if (tagline) manufacturing.tagline = tagline;
     if (description) manufacturing.description = description;
+    if (typeof label === 'string') manufacturing.label = label;
+    if (typeof ctaLabel === 'string') manufacturing.ctaLabel = ctaLabel;
+    if (typeof ctaUrl === 'string') manufacturing.ctaUrl = ctaUrl;
 
     if (req.files && req.files['backgroundImage']) {
         console.log('Updating background image:', req.files['backgroundImage'][0].filename);

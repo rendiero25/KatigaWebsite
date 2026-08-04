@@ -93,7 +93,7 @@ const menuGroups: MenuGroup[] = [
           { path: '/admin/hero', label: 'Hero Section' },
           { path: '/admin/partners', label: 'Partners' },
           { path: '/admin/advantages', label: 'Keunggulan' },
-          { path: '/admin/manufacturing', label: 'Manufacturing' },
+          { path: '/admin/manufacturing', label: 'Banner Tentang Kami' },
         ],
       },
       {
