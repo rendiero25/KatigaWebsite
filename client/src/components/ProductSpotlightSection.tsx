@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useBestSellers } from '../hooks/useApi';
 
 import api from '../services/api';
+import { resolveProductPrice } from '../utils/price';
 
 interface SpotlightProduct {
   _id: string;
@@ -17,15 +18,8 @@ interface SpotlightProduct {
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
 
-// priceNumeric sering 0 sementara `price` menyimpan angka sebagai string ("88400").
-const resolvePrice = (product: SpotlightProduct): number => {
-  if (product.priceNumeric > 0) return product.priceNumeric;
-  const parsed = Number(String(product.price ?? '').replace(/[^\d]/g, ''));
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
 const priceLabel = (product: SpotlightProduct) => {
-  const base = resolvePrice(product);
+  const base = resolveProductPrice(product);
   if (base <= 0) return null;
   const discount = product.activePromotion?.discountPercent ?? 0;
   return discount > 0 ? formatRp(Math.round(base * (1 - discount / 100))) : formatRp(base);

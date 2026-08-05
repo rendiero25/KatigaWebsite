@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import api from '../../services/api';
+import { resolveProductPrice } from '../../utils/price';
 import WishlistButton from '../WishlistButton';
 import StarRating from '../StarRating';
 
@@ -29,17 +30,10 @@ interface Props {
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
 
-// priceNumeric sering 0 sementara `price` menyimpan angka sebagai string ("88400").
-const resolvePrice = (product: CatalogProduct): number => {
-  if (product.priceNumeric > 0) return product.priceNumeric;
-  const parsed = Number(String(product.price ?? '').replace(/[^\d]/g, ''));
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
 const coverOf = (product: CatalogProduct) => product.image || product.images?.[0] || '';
 
 export default function ProductCard({ product, inWishlist, onToggleWishlist }: Props) {
-  const basePrice = resolvePrice(product);
+  const basePrice = resolveProductPrice(product);
   const discount = product.activePromotion?.discountPercent ?? 0;
   const finalPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
   const cover = coverOf(product);

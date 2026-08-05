@@ -9,6 +9,16 @@ const ProductCategory = require('../models/ProductCategory');
 const Promotion = require('../models/Promotion');
 const Order = require('../models/Order');
 
+// Form admin hanya mengirim `price` (string). Turunkan angkanya supaya priceNumeric
+// tidak tersimpan 0 dan setiap pembaca harga tidak perlu mengurai string sendiri.
+const resolvePriceNumeric = (priceNumeric, price) => {
+  const explicit = Number(priceNumeric);
+  if (Number.isFinite(explicit) && explicit > 0) return explicit;
+
+  const parsed = Number(String(price ?? '').replace(/[^\d]/g, ''));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+};
+
 const attachActivePromotions = async (products) => {
   const now = new Date();
   const activePromos = await Promotion.find({
@@ -248,7 +258,7 @@ router.post('/', auth, upload.any(), async (req, res) => {
       description,
       category,
       price,
-      priceNumeric: Number(priceNumeric) || 0,
+      priceNumeric: resolvePriceNumeric(priceNumeric, price),
       weightGrams: Number(weightGrams) || 0,
       dimensions: {
         length: Number(dimensionLength) || 1,
@@ -292,7 +302,9 @@ router.put('/:id', auth, upload.any(), async (req, res) => {
     if (description) product.description = description;
     if (category) product.category = category;
     if (price) product.price = price;
-    if (priceNumeric !== undefined) product.priceNumeric = Number(priceNumeric) || 0;
+    if (price !== undefined || priceNumeric !== undefined) {
+      product.priceNumeric = resolvePriceNumeric(priceNumeric, price ?? product.price);
+    }
     if (weightGrams !== undefined) product.weightGrams = Number(weightGrams) || 0;
     if (dimensionLength !== undefined || dimensionWidth !== undefined || dimensionHeight !== undefined) {
       product.dimensions = {

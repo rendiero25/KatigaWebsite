@@ -7,11 +7,13 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import api from '../services/api';
+import { resolveProductPrice } from '../utils/price';
 
 interface RelatedProduct {
   _id: string;
   name: string;
   image: string;
+  price?: string;
   priceNumeric: number;
   activePromotion: { discountPercent: number } | null;
 }
@@ -80,10 +82,11 @@ export default function RelatedProductsCarousel({ categoryIds, excludeIds }: Pro
           }}
         >
           {products.map((p) => {
+            const basePrice = resolveProductPrice(p);
             const discount = p.activePromotion?.discountPercent;
             const discountedPrice = discount
-              ? Math.round(p.priceNumeric * (1 - discount / 100))
-              : p.priceNumeric;
+              ? Math.round(basePrice * (1 - discount / 100))
+              : basePrice;
             return (
               <SwiperSlide key={p._id}>
                 <Link to={`/produk/${p._id}`} className="group block">
@@ -98,11 +101,11 @@ export default function RelatedProductsCarousel({ categoryIds, excludeIds }: Pro
                   {discount ? (
                     <div className="flex items-center gap-1.5 flex-wrap text-[13px]">
                       <span className="text-[#6F6F71]">{fmt(discountedPrice)}</span>
-                      <span className="text-[#6F6F71]/60 line-through">{fmt(p.priceNumeric)}</span>
+                      <span className="text-[#6F6F71]/60 line-through">{fmt(basePrice)}</span>
                       <span className="text-[11px] text-[#AE4B4B]">-{discount}%</span>
                     </div>
                   ) : (
-                    <p className="text-[13px] text-[#6F6F71]">{fmt(p.priceNumeric)}</p>
+                    <p className="text-[13px] text-[#6F6F71]">{fmt(basePrice)}</p>
                   )}
                 </Link>
               </SwiperSlide>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { useProducts } from '../hooks/useApi';
 import api from '../services/api';
+import { resolveProductPrice } from '../utils/price';
 
 interface ProductVariant {
   _id: string;
@@ -20,13 +21,6 @@ interface Product {
 }
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
-
-// priceNumeric sering 0 sementara `price` menyimpan angka sebagai string ("88400").
-const resolvePrice = (product: Product): number => {
-  if (product.priceNumeric > 0) return product.priceNumeric;
-  const parsed = Number(String(product.price ?? '').replace(/[^\d]/g, ''));
-  return Number.isFinite(parsed) ? parsed : 0;
-};
 
 export default function ProductsSection() {
   const { data, loading } = useProducts();
@@ -61,7 +55,7 @@ export default function ProductsSection() {
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-12">
           {featuredProducts.map((product) => {
-            const basePrice = resolvePrice(product);
+            const basePrice = resolveProductPrice(product);
             const discount = product.activePromotion?.discountPercent ?? 0;
             const finalPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
             return (
