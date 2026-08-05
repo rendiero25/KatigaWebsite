@@ -40,7 +40,7 @@ export default function NotificationBell({ role, notifications, unreadCount, onM
       <DropdownMenuTrigger className="relative cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
         <Bell className="size-5" strokeWidth={1.5} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-2 min-w-3.5 h-3.5 px-0.5 bg-[#4F68AF] text-white text-[9px] leading-none flex items-center justify-center">
+          <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-[#4F68AF] text-white text-[9px] leading-none flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

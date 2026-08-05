@@ -24,7 +24,6 @@ const NAV_LINKS = [
   { to: "/", label: "Beranda" },
   { to: "/tentang-kami", label: "Tentang Kami" },
   { to: "/produk", label: "Produk" },
-  { to: "/katalog", label: "Katalog" },
   { to: "/berita", label: "Berita" },
   { to: "/kontak", label: "Kontak" },
 ];
@@ -80,10 +79,10 @@ export default function Header() {
 
   const handleCartClick = () => {
     if (!localStorage.getItem("customerToken")) {
-      navigate("/masuk?redirect=/keranjang");
-    } else {
-      navigate("/keranjang");
+      navigate("/masuk?redirect=/produk");
+      return;
     }
+    window.dispatchEvent(new Event("cartDrawerOpen"));
   };
 
   return (
@@ -145,9 +144,9 @@ export default function Header() {
             >
               <FiShoppingCart className="w-5 h-5" />
               {cartCount > 0 && (
-                <sup className="absolute -top-1 -right-2 text-[10px] font-bold text-primary">
+                <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-[#4F68AF] text-white text-[9px] leading-none flex items-center justify-center">
                   {cartCount > 9 ? "9+" : cartCount}
-                </sup>
+                </span>
               )}
             </button>
 

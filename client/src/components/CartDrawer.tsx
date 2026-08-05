@@ -166,7 +166,7 @@ export default function CartDrawer() {
                 <span className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71]">
                   Subtotal
                 </span>
-                <span className="text-[13px] text-[#1E1E1E]">{fmt(subtotal)}</span>
+                <span className="text-lg text-[#1E1E1E]">{fmt(subtotal)}</span>
               </div>
 
               <p className="text-[13px] text-[#6F6F71]">
@@ -179,13 +179,6 @@ export default function CartDrawer() {
                 className="bg-[#4F68AF] text-white text-center uppercase tracking-[0.18em] text-[13px] px-6 py-4 hover:bg-[#2B3A67] transition"
               >
                 Checkout
-              </Link>
-              <Link
-                to="/keranjang"
-                onClick={() => setIsOpen(false)}
-                className="border border-[#1E1E1E] text-center uppercase tracking-[0.18em] text-[13px] px-6 py-4 hover:bg-[#1E1E1E] hover:text-white transition"
-              >
-                Lihat Keranjang
               </Link>
             </div>
           </>
