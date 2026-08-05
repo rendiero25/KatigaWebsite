@@ -118,7 +118,7 @@ export default function Keranjang() {
                   </div>
                 ))}
               </div>
-              <div className="lg:w-80 shrink-0">
+              <div className="lg:w-96 shrink-0">
                 <div className="h-56 bg-gray-100" />
               </div>
             </div>
@@ -183,16 +183,29 @@ export default function Keranjang() {
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Item list */}
             <div className="flex-1 min-w-0">
-              <label className="flex items-center gap-3 pb-4 border-b border-[#E9E9EA] cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  className="w-4 h-4 accent-[#1E1E1E] shrink-0"
-                />
-                <span className="uppercase text-[13px] text-[#1E1E1E]">Pilih Semua</span>
-                <span className="text-[13px] text-[#6F6F71] ml-auto">{displayCart.length} produk</span>
-              </label>
+              <div className="flex items-center gap-4 pb-3 border-b border-[#E9E9EA]">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="w-4 h-4 accent-[#1E1E1E] shrink-0"
+                  />
+                  <span className="uppercase tracking-[0.12em] text-[12px] text-[#6F6F71]">
+                    Pilih Semua
+                  </span>
+                </label>
+                <span className="uppercase tracking-[0.12em] text-[12px] text-[#6F6F71] md:hidden ml-auto">
+                  {displayCart.length} produk
+                </span>
+                <span className="hidden md:block flex-1" />
+                <span className="hidden md:block w-28 text-center uppercase tracking-[0.12em] text-[12px] text-[#6F6F71]">
+                  Jumlah
+                </span>
+                <span className="hidden md:block w-28 text-right uppercase tracking-[0.12em] text-[12px] text-[#6F6F71]">
+                  Total
+                </span>
+              </div>
 
               <div>
                 {displayCart.map((item) => (
@@ -209,39 +222,41 @@ export default function Keranjang() {
             </div>
 
             {/* Summary */}
-            <div className="lg:w-80 shrink-0">
-              <div className="sticky top-24">
-                <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-4">Ringkasan</p>
+            <div className="lg:w-96 shrink-0">
+              <div className="sticky top-24 border border-[#E9E9EA] p-5">
+                <p className="uppercase tracking-[0.18em] text-[11px] text-[#6F6F71] mb-4">Ringkasan</p>
 
-                <div className="flex justify-between text-[13px] text-[#6F6F71] mb-2">
-                  <span>Produk dipilih</span>
-                  <span>{selectedCount} item</span>
-                </div>
                 <div className="flex justify-between text-[13px] text-[#6F6F71] mb-4">
-                  <span>Ongkir</span>
-                  <span>Dihitung saat checkout</span>
+                  <span>Produk dipilih</span>
+                  <span className="tabular-nums">{selectedCount} item</span>
                 </div>
 
-                <div className="border-t border-[#E9E9EA] pt-4 flex justify-between text-[13px] text-[#1E1E1E] mb-6">
-                  <span>Subtotal</span>
-                  <span className="tabular-nums">{cartReady ? fmt(selectedTotal) : '—'}</span>
+                <div className="border-t border-[#E9E9EA] pt-4 flex items-center justify-between mb-2">
+                  <span className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71]">Subtotal</span>
+                  <span className="text-lg text-[#1E1E1E] tabular-nums">
+                    {cartReady ? fmt(selectedTotal) : '—'}
+                  </span>
                 </div>
+
+                <p className="text-[13px] text-[#6F6F71] mb-5">
+                  Ongkos kirim dihitung saat checkout.
+                </p>
 
                 <button
                   onClick={handleCheckout}
                   disabled={selectedIds.size === 0 || cartSyncing || !cartReady}
-                  className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-4 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {!cartHydrated || cartSyncing
                     ? 'Sinkronisasi...'
                     : selectedIds.size > 0
-                    ? `Lanjut ke Checkout (${selectedIds.size})`
+                    ? `Checkout (${selectedIds.size})`
                     : 'Pilih Produk'}
                 </button>
 
                 <Link
                   to="/produk"
-                  className="block text-center text-[13px] text-[#6F6F71] mt-4 hover:text-[#1E1E1E] transition-colors"
+                  className="block text-center uppercase tracking-[0.12em] text-[12px] text-[#6F6F71] mt-4 hover:text-[#1E1E1E] transition-colors"
                 >
                   Lanjut Belanja
                 </Link>

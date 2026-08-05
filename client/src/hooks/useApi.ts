@@ -2,8 +2,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { UnauthorizedError } from '../services/api';
-import type { WishlistProduct, SavedAddress, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification } from '../types/ecommerce';
+import type { WishlistProduct, SavedAddress, CustomerProfile, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification } from '../types/ecommerce';
 import { getCartCount, clearCart, normalizeDimensions, syncCartItems } from '../utils/cart';
+import { resolveProductPrice } from '../utils/price';
 
 interface CartProductPromotion {
   _id: string;
@@ -25,6 +26,7 @@ interface CartProductSnapshot {
   image?: string;
   images?: string[];
   category?: { _id: string; name: string } | string | null;
+  price?: string;
   priceNumeric: number;
   weightGrams: number;
   dimensions?: ItemDimensions;
@@ -90,8 +92,7 @@ const buildLiveCartItem = (
 
   const basePrice =
     resolvePositiveNumber(matchedVariant?.price) ??
-    resolvePositiveNumber(product.priceNumeric) ??
-    0;
+    resolveProductPrice(product);
   const priceNumeric = applyPromotionPrice(basePrice, product.activePromotion);
 
   if (priceNumeric <= 0) {
@@ -658,6 +659,64 @@ export function useMyOrders() {
       .then((res) => setData(Array.isArray(res) ? res : []))
       .finally(() => setLoading(false))
   }, [])
+
+  return { data, loading }
+}
+
+export function useCustomerProfile() {
+  const [data, setData] = useState<CustomerProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!localStorage.getItem('customerToken')) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setLoading(false)
+      return
+    }
+    api.getCustomerProfile()
+      .then((res) => setData(res?._id ? res : null))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false))
+  }, [])
+
+  return { data, loading }
+}
+
+export function useMyOrder(id?: string, verifyPayment = false) {
+  const [data, setData] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+  const latestRequestIdRef = useRef(0)
+
+  useEffect(() => {
+    if (!id) return
+    const requestId = ++latestRequestIdRef.current
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoading(true)
+
+    const load = async () => {
+      try {
+        const fetched = await api.getMyOrder(id)
+        const order: Order | null = fetched?._id ? fetched : null
+        if (order && verifyPayment && order.paymentStatus !== 'paid') {
+          try {
+            const verified = await api.verifyOrderPayment(order._id)
+            return verified?._id ? (verified as Order) : order
+          } catch {
+            return order
+          }
+        }
+        return order
+      } catch {
+        return null
+      }
+    }
+
+    load().then((order) => {
+      if (requestId !== latestRequestIdRef.current) return
+      setData(order)
+      setLoading(false)
+    })
+  }, [id, verifyPayment])
 
   return { data, loading }
 }

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Package } from 'lucide-react'
-import type { Order } from '../types/ecommerce'
-import api from '../services/api'
+import { useMyOrders } from '../hooks/useApi'
 import UserLayout from '../components/UserLayout'
 
 const fmt = (n: number) =>
@@ -34,15 +33,11 @@ const STATUS_LABEL: Record<string, { label: string; className: string }> = {
 
 export default function Pesanan() {
   const navigate = useNavigate()
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<TabKey>('semua')
+  const { data: orders, loading } = useMyOrders()
 
   useEffect(() => {
-    if (!localStorage.getItem('customerToken')) { navigate('/masuk?redirect=/pesanan'); return }
-    api.getMyOrders()
-      .then((data) => setOrders(Array.isArray(data) ? data : []))
-      .finally(() => setLoading(false))
+    if (!localStorage.getItem('customerToken')) navigate('/masuk?redirect=/pesanan')
   }, [navigate])
 
   const filteredOrders = activeTab === 'semua'
@@ -105,23 +100,37 @@ export default function Pesanan() {
             </div>
           ) : (
             <div>
+              <div className="hidden md:flex items-center gap-4 border-b border-[#E9E9EA] py-3 uppercase tracking-[0.12em] text-[12px] text-[#6F6F71]">
+                <span className="flex-1">Pesanan</span>
+                <span className="w-40">Tanggal</span>
+                <span className="w-32 text-right">Total</span>
+                <span className="w-44 text-right">Status</span>
+              </div>
+
               {filteredOrders.map((order) => {
                 const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, className: 'border-[#6F6F71] text-[#6F6F71]' }
                 return (
                   <Link
                     key={order._id}
                     to={`/pesanan/${order._id}`}
-                    className="flex w-full items-center justify-between gap-4 border-b border-[#E9E9EA] py-5 hover:bg-[#F9F7F2] transition-colors"
+                    className="flex w-full flex-col gap-2 border-b border-[#E9E9EA] py-5 hover:bg-[#F9F7F2] transition-colors md:flex-row md:items-center md:gap-4"
                   >
-                    <div>
-                      <p className="uppercase text-[13px] text-[#1E1E1E]">#{order._id.slice(-8).toUpperCase()}</p>
-                      <p className="text-[13px] text-[#6F6F71] mt-1">
-                        {order.items.length} item · {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <div className="flex-1 min-w-0">
+                      <p className="uppercase text-[13px] text-[#1E1E1E]">
+                        #{order.midtransOrderId || order._id.slice(-8).toUpperCase()}
                       </p>
-                      <p className="text-[13px] text-[#6F6F71] mt-0.5">{fmt(order.total)}</p>
+                      <p className="text-[13px] text-[#6F6F71] mt-1">{order.items.length} item</p>
                     </div>
-                    <span className={`border text-[11px] uppercase tracking-[0.12em] px-2 py-1 shrink-0 ${s.className}`}>
-                      {s.label}
+                    <span className="md:w-40 text-[13px] text-[#6F6F71]">
+                      {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                    <span className="md:w-32 text-[13px] text-[#1E1E1E] tabular-nums md:text-right">
+                      {fmt(order.total)}
+                    </span>
+                    <span className="md:w-44 flex md:justify-end">
+                      <span className={`border text-[11px] uppercase tracking-[0.12em] px-2 py-1 ${s.className}`}>
+                        {s.label}
+                      </span>
                     </span>
                   </Link>
                 )

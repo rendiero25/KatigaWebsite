@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import type { CartItem, ShippingAddress, ShippingRate, VoucherValidation } from '../types/ecommerce';
-import { useLiveCart } from '../hooks/useApi';
+import { useLiveCart, useCustomerProfile } from '../hooks/useApi';
 import { getCart, removeManyFromCart, normalizeCartItem } from '../utils/cart';
 import api from '../services/api';
 import AddressSelector from '../components/AddressSelector';
@@ -44,26 +43,6 @@ const getStoredBuyNowItem = (): CartItem | null => {
   }
 };
 
-interface StepBadgeProps {
-  number: number;
-  done: boolean;
-}
-
-function StepBadge({ number, done }: StepBadgeProps) {
-  if (done) {
-    return (
-      <span className="w-5 h-5 flex items-center justify-center bg-[#1E1E1E] shrink-0">
-        <Check className="size-3 text-white" strokeWidth={2} />
-      </span>
-    );
-  }
-  return (
-    <span className="w-5 h-5 flex items-center justify-center text-[11px] shrink-0 border border-[#E9E9EA] text-[#6F6F71]">
-      {number}
-    </span>
-  );
-}
-
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,6 +52,7 @@ export default function Checkout() {
   const [appliedVoucher, setAppliedVoucher] = useState<VoucherValidation | null>(null);
   const [voucherCode, setVoucherCode] = useState('');
   const [paying, setPaying] = useState(false);
+  const { data: profile, loading: profileLoading } = useCustomerProfile();
   const {
     data: liveCart,
     loading: cartSyncing,
@@ -195,17 +175,15 @@ export default function Checkout() {
         sessionStorage.removeItem(BUY_NOW_ITEM_KEY);
       };
 
+      const goToSuccessPage = () => {
+        removePurchasedItems();
+        clearCheckoutSelection();
+        navigate(`/pesanan/${result.orderId}/selesai?verify=1`);
+      };
+
       window.snap.pay(result.snapToken, {
-        onSuccess:  () => {
-          removePurchasedItems();
-          clearCheckoutSelection();
-          navigate(`/pesanan/${result.orderId}`, { state: { fromPayment: true } });
-        },
-        onPending:  () => {
-          removePurchasedItems();
-          clearCheckoutSelection();
-          navigate(`/pesanan/${result.orderId}`, { state: { fromPayment: true } });
-        },
+        onSuccess:  goToSuccessPage,
+        onPending:  goToSuccessPage,
         onError:    () => { toast.error('Pembayaran gagal, silakan coba lagi.'); setPaying(false); },
         onClose:    () => {
           clearCheckoutSelection();
@@ -255,12 +233,30 @@ export default function Checkout() {
                 </div>
               )}
 
-              {/* Step 1: Address */}
+              {/* Kontak */}
               <div className="border-b border-[#E9E9EA] pb-8">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <StepBadge number={1} done={!!selectedAddress} />
-                  <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">Alamat Pengiriman</h2>
-                </div>
+                <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E] mb-4">Kontak</h2>
+                {profileLoading ? (
+                  <div className="h-16 bg-gray-200 animate-pulse" />
+                ) : profile ? (
+                  <div className="border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#1E1E1E]">
+                    <p>{profile.name}</p>
+                    <p className="text-[#6F6F71] mt-0.5">{profile.email}</p>
+                    {profile.phone && <p className="text-[#6F6F71]">{profile.phone}</p>}
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-[#6F6F71]">Data kontak tidak tersedia.</p>
+                )}
+                <Link
+                  to="/profil/pengaturan"
+                  className="inline-block mt-3 uppercase tracking-[0.12em] text-[12px] text-[#6F6F71] hover:text-[#1E1E1E] underline underline-offset-2"
+                >
+                  Ubah data kontak
+                </Link>
+              </div>
+
+              {/* Alamat Pengiriman */}
+              <div className="border-b border-[#E9E9EA] pb-8">
                 <AddressSelector
                   selected={selectedAddress}
                   onSelect={(addr) => {
@@ -270,21 +266,17 @@ export default function Checkout() {
                     setVoucherCode('');
                   }}
                 />
-                {selectedAddress && (
-                  <div className="mt-3 border border-[#E9E9EA] px-4 py-3 text-[13px] text-[#1E1E1E]">
-                    <p>{selectedAddress.recipientName} · {selectedAddress.phone}</p>
-                    <p className="text-[13px] text-[#6F6F71] mt-0.5">{selectedAddress.street}, {selectedAddress.areaName}</p>
-                  </div>
-                )}
               </div>
 
-              {/* Step 2: Shipping */}
-              {selectedAddress && (
-                <div className="border-b border-[#E9E9EA] pb-8">
-                  <div className="flex items-center gap-2.5 mb-4">
-                    <StepBadge number={2} done={!!selectedRate} />
-                    <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">Metode Pengiriman</h2>
-                  </div>
+              {/* Metode Pengiriman */}
+              <div className="border-b border-[#E9E9EA] pb-8">
+                <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E] mb-4">Metode Pengiriman</h2>
+                {!selectedAddress ? (
+                  <p className="text-[13px] text-[#6F6F71]">
+                    Pilih alamat pengiriman dulu untuk melihat kurir yang tersedia.
+                  </p>
+                ) : (
+                  <>
                   {!cartHydrated || cartSyncing ? (
                     <p className="text-[13px] text-[#6F6F71]">Menyiapkan data pengiriman terbaru...</p>
                   ) : cartSyncError ? (
@@ -298,30 +290,27 @@ export default function Checkout() {
                       onSelect={handleRateSelect}
                     />
                   )}
-                </div>
-              )}
+                  </>
+                )}
+              </div>
 
-              {/* Step 3: Voucher */}
-              {selectedRate && cartReady && (
-                <div>
-                  <div className="flex items-center gap-2.5 mb-4">
-                    <StepBadge number={3} done={!!appliedVoucher} />
-                    <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E]">Kode Voucher</h2>
-                    <span className="text-[13px] text-[#6F6F71]">(opsional)</span>
-                  </div>
-                  <VoucherInput
-                    subtotal={subtotal}
-                    onApply={(v, code) => { setAppliedVoucher(v); setVoucherCode(code); }}
-                    onClear={() => { setAppliedVoucher(null); setVoucherCode(''); }}
-                  />
+              {/* Pembayaran */}
+              <div>
+                <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E] mb-4">Pembayaran</h2>
+                <div className="border border-[#E9E9EA] px-4 py-4 text-[13px] text-[#6F6F71] leading-relaxed">
+                  <p className="text-[#1E1E1E]">Kartu, Transfer Bank, QRIS, E-wallet</p>
+                  <p className="mt-1">
+                    Semua transaksi diproses dengan aman lewat Midtrans. Setelah menekan Bayar Sekarang,
+                    jendela pembayaran akan terbuka dan kamu memilih metodenya di sana.
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* Right — summary */}
-            <div className="lg:w-80 shrink-0">
-              <div className="sticky top-24">
-                <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-4">Ringkasan Pesanan</p>
+            <div className="lg:w-96 shrink-0">
+              <div className="sticky top-24 border border-[#E9E9EA] p-5">
+                <p className="uppercase tracking-[0.18em] text-[11px] text-[#6F6F71] mb-4">Ringkasan Pesanan</p>
 
                 <div className="mb-4">
                   {effectiveCart.map((c) => (
@@ -351,7 +340,22 @@ export default function Checkout() {
                   ))}
                 </div>
 
-                <div className="border-t border-[#E9E9EA] pt-4 space-y-2 text-[13px] text-[#6F6F71]">
+                <div className="border-t border-[#E9E9EA] pt-4">
+                  <p className="uppercase tracking-[0.12em] text-[11px] text-[#6F6F71] mb-2">Kode Diskon</p>
+                  {cartReady ? (
+                    <VoucherInput
+                      subtotal={subtotal}
+                      onApply={(v, code) => { setAppliedVoucher(v); setVoucherCode(code); }}
+                      onClear={() => { setAppliedVoucher(null); setVoucherCode(''); }}
+                    />
+                  ) : (
+                    <p className="text-[13px] text-[#6F6F71]">
+                      Tersedia setelah keranjang selesai disinkronkan.
+                    </p>
+                  )}
+                </div>
+
+                <div className="border-t border-[#E9E9EA] mt-4 pt-4 space-y-2 text-[13px] text-[#6F6F71]">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span className="tabular-nums">{cartReady ? fmt(subtotal) : '—'}</span>
@@ -370,15 +374,21 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="border-t border-[#E9E9EA] mt-3 pt-3 flex justify-between text-[13px] text-[#1E1E1E] mb-6">
-                  <span>Total</span>
-                  <span className="tabular-nums">{cartReady ? fmt(total) : '—'}</span>
+                <div className="border-t border-[#E9E9EA] mt-3 pt-3 flex items-center justify-between mb-2">
+                  <span className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71]">Total</span>
+                  <span className="text-lg text-[#1E1E1E] tabular-nums">{cartReady ? fmt(total) : '—'}</span>
                 </div>
+
+                {!selectedRate && (
+                  <p className="text-[13px] text-[#6F6F71]">
+                    Ongkir dihitung setelah metode pengiriman dipilih.
+                  </p>
+                )}
 
                 <button
                   onClick={handlePay}
                   disabled={!selectedAddress || !selectedRate || paying || cartSyncing || !cartReady}
-                  className="w-full bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-3 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full mt-5 bg-[#4F68AF] text-white uppercase tracking-[0.18em] text-[13px] px-6 py-4 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {!cartHydrated || cartSyncing ? 'Sinkronisasi...' : paying ? 'Memproses...' : 'Bayar Sekarang'}
                 </button>

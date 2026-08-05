@@ -49,6 +49,7 @@ const Keranjang = lazy(() => import('./pages/Keranjang'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const Pesanan = lazy(() => import('./pages/Pesanan'));
 const PesananDetail = lazy(() => import('./pages/PesananDetail'));
+const PesananSelesai = lazy(() => import('./pages/PesananSelesai'));
 const Profil = lazy(() => import('./pages/Profil'));
 const PengaturanAkun = lazy(() => import('./pages/PengaturanAkun'));
 const AlamatSaya = lazy(() => import('./pages/AlamatSaya'));
@@ -107,6 +108,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/pesanan" element={<Pesanan />} />
         <Route path="/pesanan/:id" element={<PesananDetail />} />
+        <Route path="/pesanan/:id/selesai" element={<PesananSelesai />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/profil/pengaturan" element={<PengaturanAkun />} />
         <Route path="/profil/alamat" element={<AlamatSaya />} />
