@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
-const midtransClient = require('midtrans-client');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Promotion = require('../models/Promotion');
@@ -17,12 +16,7 @@ const {
 const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
 const { notifyAdmin, notifyCustomer } = require('../utils/notify');
-
-const snap = new midtransClient.Snap({
-  isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
-  serverKey: process.env.MIDTRANS_SERVER_KEY,
-  clientKey: process.env.MIDTRANS_CLIENT_KEY,
-});
+const { createPayment, getTransaction, MayarError } = require('../services/mayarService');
 
 const resolvePositiveNumber = (value) => {
   const parsed = Number(value);
@@ -426,46 +420,23 @@ router.post('/', customerAuth, async (req, res) => {
     });
     order.orderCode = order._id.toString();
 
-    const snapTransaction = await snap.createTransaction({
-      transaction_details: { order_id: order.orderCode, gross_amount: total },
-      customer_details: {
-        first_name: req.customer.name,
-        email: req.customer.email,
-        phone: req.customer.phone,
-        shipping_address: {
-          first_name: shippingAddress.recipientName,
-          phone: shippingAddress.phone,
-          address: shippingAddress.street,
-          city: shippingAddress.city,
-          postal_code: shippingAddress.postalCode,
-        },
-      },
-      item_details: (() => {
-        const itemDetails = orderItems.map((i) => ({
-          id: i.product.toString(),
-          price: i.priceNumeric,
-          quantity: i.quantity,
-          name: i.name.substring(0, 50),
-        }));
-        itemDetails.push({
-          id: 'SHIPPING',
-          price: verifiedShippingCost,
-          quantity: 1,
-          name: `Ongkir ${verifiedShippingServiceName}`.substring(0, 50),
-        });
-        if (appliedVoucherDiscount > 0) {
-          itemDetails.push({
-            id: 'VOUCHER',
-            price: -appliedVoucherDiscount,
-            quantity: 1,
-            name: `Diskon ${appliedVoucherCode}`,
-          });
-        }
-        return itemDetails;
-      })(),
+    const expiryHours = Number(process.env.MAYAR_PAYMENT_EXPIRY_HOURS) || 24;
+    const paymentExpiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+
+    const payment = await createPayment({
+      name: `Pesanan ${order.orderCode}`,
+      amount: total,
+      email: req.customer.email,
+      mobile: req.customer.phone,
+      description: `Pembayaran pesanan ${order.orderCode} di katiga.id`,
+      expiredAt: paymentExpiredAt.toISOString(),
+      redirectUrl: `${process.env.FRONTEND_URL}/pesanan/${order._id}/selesai?verify=1`,
+      extraData: { orderId: order._id.toString() },
     });
 
-    order.midtransToken = snapTransaction.token;
+    order.paymentRef = payment.transactionId;
+    order.paymentLink = payment.link;
+    order.paymentExpiredAt = paymentExpiredAt;
     await order.save();
 
     try {
@@ -480,7 +451,7 @@ router.post('/', customerAuth, async (req, res) => {
       console.error('[Notify] order_new failed:', notifyErr.message);
     }
 
-    res.status(201).json({ orderId: order._id, snapToken: snapTransaction.token });
+    res.status(201).json({ orderId: order._id, paymentLink: payment.link });
   } catch (err) {
     if (reservedVoucherId) {
       try {
@@ -491,6 +462,13 @@ router.post('/', customerAuth, async (req, res) => {
       } catch (voucherErr) {
         console.error('[Voucher] Release after create-order failure failed:', voucherErr.message);
       }
+    }
+
+    if (err instanceof MayarError && [409, 429].includes(err.status)) {
+      console.error(`[Create Order] Mayar menolak duplikat (${err.status})`);
+      return res.status(429).json({
+        message: 'Permintaan pembayaran sebelumnya masih diproses. Tunggu satu menit lalu coba lagi.',
+      });
     }
 
     console.error('[Create Order]', err);

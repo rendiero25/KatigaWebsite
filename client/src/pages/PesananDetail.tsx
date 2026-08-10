@@ -283,18 +283,9 @@ export default function PesananDetail() {
   }, [order])
 
   const handleRepay = () => {
-    if (!order?.midtransToken) return
-    if (!window.snap) {
-      toast.error('Sistem pembayaran belum siap. Refresh halaman dan coba lagi.')
-      return
-    }
+    if (!order?.paymentLink) return
     setPaying(true)
-    window.snap.pay(order.midtransToken, {
-      onSuccess: () => { toast.success('Pembayaran berhasil!'); window.location.reload() },
-      onPending: () => { toast.info('Pembayaran pending.'); window.location.reload() },
-      onError: () => { toast.error('Pembayaran gagal.'); setPaying(false) },
-      onClose: () => setPaying(false),
-    })
+    window.location.href = order.paymentLink
   }
 
   const handleCancel = async () => {
@@ -380,7 +371,10 @@ export default function PesananDetail() {
   )
 
   const s = STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, className: 'border-[#6F6F71] text-[#6F6F71]' }
-  const canRepay = order.paymentStatus === 'pending' && order.orderStatus === 'awaiting_payment' && order.midtransToken
+  const canRepay = order.paymentStatus === 'pending'
+    && order.orderStatus === 'awaiting_payment'
+    && Boolean(order.paymentLink)
+    && (!order.paymentExpiredAt || new Date(order.paymentExpiredAt) > new Date())
   const canCancel = ['awaiting_payment', 'processing'].includes(order.orderStatus) && order.orderStatus !== 'cancelled'
   const canDownloadInvoice = order.paymentStatus === 'paid' || order.orderStatus === 'cancelled'
   const currentStep = STATUS_STEP_INDEX[order.orderStatus] ?? 0

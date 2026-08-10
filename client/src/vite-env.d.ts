@@ -3,7 +3,6 @@
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
   readonly VITE_GOOGLE_CLIENT_ID: string;
-  readonly VITE_MIDTRANS_CLIENT_KEY: string;
 }
 
 interface ImportMeta {
@@ -11,14 +10,6 @@ interface ImportMeta {
 }
 
 interface Window {
-  snap?: {
-    pay: (token: string, options: {
-      onSuccess?: (result: object) => void;
-      onPending?: (result: object) => void;
-      onError?: (result: object) => void;
-      onClose?: () => void;
-    }) => void;
-  };
   google: {
     accounts: {
       id: {
