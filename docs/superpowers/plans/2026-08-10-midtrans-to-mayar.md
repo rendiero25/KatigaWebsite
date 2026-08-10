@@ -52,6 +52,7 @@ Merename tiga field yang artinya sama sebelum dan sesudah migrasi gateway, terpi
 - Modify: `models/Order.js:60-63`
 - Modify: `routes/orderRoutes.js` (semua kemunculan `midtransOrderId`, `midtransPaymentType`)
 - Modify: `routes/complaints.js:87,163`
+- Modify: `routes/reportRoutes.js:88` — `$group: { _id: '$midtransPaymentType' }` di agregasi laporan penjualan. Agregasi MongoDB membaca nama field mentah dan melewati skema Mongoose, jadi kalau tidak ikut diganti, rincian "Metode Pembayaran" di laporan diam-diam kosong untuk semua order baru.
 - Modify: `client/src/types/ecommerce.ts:127,129,342`
 - Modify: `client/src/pages/Pesanan.tsx:120`
 - Modify: `client/src/pages/PesananSelesai.tsx:95`
