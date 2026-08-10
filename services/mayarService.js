@@ -15,14 +15,19 @@ async function request(path, options = {}) {
     throw new MayarError('MAYAR_API_URL / MAYAR_API_KEY belum diset', 0, null);
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
-  });
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+        ...(options.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    throw new MayarError(`Network error calling ${path}: ${err.message}`, 0, null);
+  }
 
   let body = null;
   try {
@@ -54,6 +59,11 @@ async function createPayment({ name, amount, email, mobile, description, expired
     }),
   });
 
+  if (!data?.transactionId || !data?.link) {
+    // 502 indicates a malformed upstream response, not a client/auth error
+    throw new MayarError('Invalid createPayment response: missing transactionId or link', 502, data);
+  }
+
   return {
     id: data.id,
     transactionId: data.transactionId,
@@ -63,6 +73,11 @@ async function createPayment({ name, amount, email, mobile, description, expired
 
 async function getTransaction(transactionId) {
   const data = await request(`/transactions/${transactionId}`, { method: 'GET' });
+
+  if (!data?.status) {
+    // 502 indicates a malformed upstream response, not a client/auth error
+    throw new MayarError('Invalid getTransaction response: missing status', 502, data);
+  }
 
   return {
     status: data.status,
