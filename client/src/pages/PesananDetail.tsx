@@ -729,11 +729,11 @@ export default function PesananDetail() {
                 <span>-{fmt(order.voucherDiscount ?? 0)}</span>
               </div>
             )}
-            {order.midtransPaymentType && (
+            {order.paymentMethod && (
               <div className="flex items-center justify-between py-1.5 text-[13px] text-[#6F6F71]">
                 <span>Metode Pembayaran</span>
                 <span className="text-[#1E1E1E]">
-                  {PAYMENT_METHOD_LABEL[order.midtransPaymentType] ?? order.midtransPaymentType}
+                  {PAYMENT_METHOD_LABEL[order.paymentMethod] ?? order.paymentMethod}
                 </span>
               </div>
             )}

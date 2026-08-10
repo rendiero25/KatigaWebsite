@@ -92,7 +92,7 @@ export default function PesananSelesai() {
             <div className="border-b border-[#E9E9EA] py-10">
               <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 text-center">
                 <p className="uppercase tracking-[0.18em] text-[11px] text-[#6F6F71]">
-                  Pesanan #{order.midtransOrderId || order._id.slice(-8).toUpperCase()}
+                  Pesanan #{order.orderCode || order._id.slice(-8).toUpperCase()}
                 </p>
                 <h1 className="text-2xl md:text-3xl mt-3">
                   {(PAYMENT_STATUS_COPY[order.paymentStatus] ?? PAYMENT_STATUS_COPY.pending).title}

@@ -57,10 +57,9 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed', 'expired', 'refunded'],
     default: 'pending',
   },
-  midtransOrderId:     { type: String, unique: true, sparse: true },
-  midtransToken:       { type: String, default: '' },
-  midtransPaymentType: { type: String, default: '' },
-  midtransFraudStatus: { type: String, default: '' },
+  orderCode:     { type: String, unique: true, sparse: true },
+  midtransToken: { type: String, default: '' },
+  paymentMethod: { type: String, default: '' },
 
   orderStatus: {
     type: String,
