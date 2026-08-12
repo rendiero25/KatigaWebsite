@@ -369,11 +369,11 @@ export default function AdminOrderDetail() {
             </div>
           )}
 
-          {/* Midtrans */}
+          {/* Pembayaran */}
           <div className="bg-white rounded-xl shadow-sm p-5">
             <h2 className="font-semibold text-gray-700 mb-3">Pembayaran</h2>
-            {order.midtransOrderId && <p className="text-sm text-gray-600">Midtrans Order ID: <span className="font-mono">{order.midtransOrderId}</span></p>}
-            {order.midtransPaymentType && <p className="text-sm text-gray-600">Metode: {order.midtransPaymentType}</p>}
+            {order.orderCode && <p className="text-sm text-gray-600">Kode Pesanan: <span className="font-mono">{order.orderCode}</span></p>}
+            {order.paymentMethod && <p className="text-sm text-gray-600">Metode: {order.paymentMethod}</p>}
           </div>
         </div>
 

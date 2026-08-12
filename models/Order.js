@@ -54,13 +54,14 @@ const orderSchema = new mongoose.Schema({
 
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'expired', 'refunded'],
+    enum: ['pending', 'paid', 'failed', 'expired', 'refunded', 'refund_pending'],
     default: 'pending',
   },
-  midtransOrderId:     { type: String, unique: true, sparse: true },
-  midtransToken:       { type: String, default: '' },
-  midtransPaymentType: { type: String, default: '' },
-  midtransFraudStatus: { type: String, default: '' },
+  orderCode:        { type: String, unique: true, sparse: true },
+  paymentRef:       { type: String, unique: true, sparse: true },
+  paymentLink:      { type: String, default: '' },
+  paymentExpiredAt: { type: Date },
+  paymentMethod:    { type: String, default: '' },
 
   orderStatus: {
     type: String,

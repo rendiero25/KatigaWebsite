@@ -121,12 +121,13 @@ export interface Order {
   shippingService: string;
   shippingServiceName: string;
   estimatedDays: string;
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'expired' | 'refunded';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'expired' | 'refunded' | 'refund_pending';
   orderStatus: 'awaiting_payment' | 'processing' | 'packing' | 'shipped' | 'delivered' | 'cancelled';
   cancelledAt?: string;
-  midtransOrderId: string;
-  midtransToken: string;
-  midtransPaymentType?: string;
+  orderCode: string;
+  paymentLink: string;
+  paymentExpiredAt?: string;
+  paymentMethod?: string;
   biteshipOrderId?: string;
   biteshipTrackingCode?: string;
   biteshipWaybillId?: string;
@@ -339,7 +340,7 @@ export interface BiteshipTracking {
 
 export interface Complaint {
   _id: string;
-  order: string | { _id: string; midtransOrderId: string; total: number };
+  order: string | { _id: string; orderCode: string; total: number };
   customer: string;
   customerSnapshot: { name: string; email: string };
   type: 'complaint' | 'return';

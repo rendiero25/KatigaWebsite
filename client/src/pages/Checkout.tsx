@@ -156,45 +156,22 @@ export default function Checkout() {
         voucherDiscount: voucherDiscount > 0 ? voucherDiscount : undefined,
       });
 
-      if (!result.snapToken) {
+      if (!result.paymentLink) {
         toast.error(result.message ?? 'Gagal membuat pesanan');
         setPaying(false);
         return;
       }
 
-      if (!window.snap) {
-        toast.error('Sistem pembayaran belum siap. Refresh halaman dan coba lagi.');
-        setPaying(false);
-        return;
-      }
+      removeManyFromCart(effectiveCart.map((item) => item.cartItemId));
+      sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
+      sessionStorage.removeItem(BUY_NOW_ITEM_KEY);
 
-      const purchasedCartItemIds = effectiveCart.map((item) => item.cartItemId);
-      const removePurchasedItems = () => removeManyFromCart(purchasedCartItemIds);
-      const clearCheckoutSelection = () => {
-        sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
-        sessionStorage.removeItem(BUY_NOW_ITEM_KEY);
-      };
-
-      const goToSuccessPage = () => {
-        removePurchasedItems();
-        clearCheckoutSelection();
-        navigate(`/pesanan/${result.orderId}/selesai?verify=1`);
-      };
-
-      window.snap.pay(result.snapToken, {
-        onSuccess:  goToSuccessPage,
-        onPending:  goToSuccessPage,
-        onError:    () => { toast.error('Pembayaran gagal, silakan coba lagi.'); setPaying(false); },
-        onClose:    () => {
-          clearCheckoutSelection();
-          navigate(`/pesanan/${result.orderId}`);
-        },
-      });
+      window.location.href = result.paymentLink;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Terjadi kesalahan, coba lagi.');
       setPaying(false);
     }
-  }, [effectiveCart, selectedAddress, selectedRate, voucherDiscount, voucherCode, navigate, cartSyncing, cartReady]);
+  }, [effectiveCart, selectedAddress, selectedRate, voucherDiscount, voucherCode, cartSyncing, cartReady]);
 
   return (
     <div className="min-h-screen flex flex-col">

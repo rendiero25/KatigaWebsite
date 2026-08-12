@@ -43,7 +43,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 interface ComplaintWithOrder extends Complaint {
-  order: { _id: string; midtransOrderId: string; total: number };
+  order: { _id: string; orderCode: string; total: number };
 }
 
 export default function AdminComplaints() {
@@ -167,12 +167,12 @@ export default function AdminComplaints() {
                   </td>
                   <td className="px-4 py-3 max-w-xs">
                     <p className="truncate text-gray-700">{c.reason}</p>
-                    {typeof c.order === 'object' && c.order?.midtransOrderId && (
+                    {typeof c.order === 'object' && c.order?.orderCode && (
                       <Link
                         to={`/admin/orders/${c.order._id}`}
                         className="text-xs text-indigo-500 hover:underline"
                       >
-                        #{c.order.midtransOrderId.slice(-8).toUpperCase()}
+                        #{c.order.orderCode.slice(-8).toUpperCase()}
                       </Link>
                     )}
                   </td>

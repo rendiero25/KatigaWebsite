@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
-const midtransClient = require('midtrans-client');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Promotion = require('../models/Promotion');
@@ -17,12 +16,7 @@ const {
 const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
 const { notifyAdmin, notifyCustomer } = require('../utils/notify');
-
-const snap = new midtransClient.Snap({
-  isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
-  serverKey: process.env.MIDTRANS_SERVER_KEY,
-  clientKey: process.env.MIDTRANS_CLIENT_KEY,
-});
+const { createPayment, getTransaction, MayarError } = require('../services/mayarService');
 
 const resolvePositiveNumber = (value) => {
   const parsed = Number(value);
@@ -119,10 +113,10 @@ const webhookHandler = async (req, res) => {
       return res.status(403).json({ message: 'Invalid signature' });
     }
 
-    const order = await Order.findOne({ midtransOrderId: order_id });
+    const order = await Order.findOne({ orderCode: order_id });
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    order.midtransPaymentType = payment_type ?? '';
+    order.paymentMethod = payment_type ?? '';
 
     let newPaymentStatus = order.paymentStatus;
     if (transaction_status === 'capture' && fraud_status === 'accept') newPaymentStatus = 'paid';
@@ -185,7 +179,7 @@ const webhookHandler = async (req, res) => {
         await notifyAdmin({
           type: 'payment_paid',
           title: 'Pembayaran diterima',
-          message: `Pesanan ${order.midtransOrderId} telah dibayar`,
+          message: `Pesanan ${order.orderCode} telah dibayar`,
           link: `/admin/orders/${order._id}`,
           relatedId: order._id,
         });
@@ -202,7 +196,7 @@ const webhookHandler = async (req, res) => {
         await notifyAdmin({
           type: 'payment_failed',
           title: 'Pembayaran gagal',
-          message: `Pembayaran pesanan ${order.midtransOrderId} ${expired ? 'kedaluwarsa' : 'gagal'}`,
+          message: `Pembayaran pesanan ${order.orderCode} ${expired ? 'kedaluwarsa' : 'gagal'}`,
           link: `/admin/orders/${order._id}`,
           relatedId: order._id,
         });
@@ -424,48 +418,25 @@ router.post('/', customerAuth, async (req, res) => {
       voucherDiscount: appliedVoucherDiscount,
       voucherReserved: Boolean(appliedVoucherCode),
     });
-    order.midtransOrderId = order._id.toString();
+    order.orderCode = order._id.toString();
 
-    const snapTransaction = await snap.createTransaction({
-      transaction_details: { order_id: order.midtransOrderId, gross_amount: total },
-      customer_details: {
-        first_name: req.customer.name,
-        email: req.customer.email,
-        phone: req.customer.phone,
-        shipping_address: {
-          first_name: shippingAddress.recipientName,
-          phone: shippingAddress.phone,
-          address: shippingAddress.street,
-          city: shippingAddress.city,
-          postal_code: shippingAddress.postalCode,
-        },
-      },
-      item_details: (() => {
-        const itemDetails = orderItems.map((i) => ({
-          id: i.product.toString(),
-          price: i.priceNumeric,
-          quantity: i.quantity,
-          name: i.name.substring(0, 50),
-        }));
-        itemDetails.push({
-          id: 'SHIPPING',
-          price: verifiedShippingCost,
-          quantity: 1,
-          name: `Ongkir ${verifiedShippingServiceName}`.substring(0, 50),
-        });
-        if (appliedVoucherDiscount > 0) {
-          itemDetails.push({
-            id: 'VOUCHER',
-            price: -appliedVoucherDiscount,
-            quantity: 1,
-            name: `Diskon ${appliedVoucherCode}`,
-          });
-        }
-        return itemDetails;
-      })(),
+    const expiryHours = Number(process.env.MAYAR_PAYMENT_EXPIRY_HOURS) || 24;
+    const paymentExpiredAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+
+    const payment = await createPayment({
+      name: `Pesanan ${order.orderCode}`,
+      amount: total,
+      email: req.customer.email,
+      mobile: req.customer.phone,
+      description: `Pembayaran pesanan ${order.orderCode} di katiga.id`,
+      expiredAt: paymentExpiredAt.toISOString(),
+      redirectUrl: `${process.env.FRONTEND_URL}/pesanan/${order._id}/selesai?verify=1`,
+      extraData: { orderId: order._id.toString() },
     });
 
-    order.midtransToken = snapTransaction.token;
+    order.paymentRef = payment.transactionId;
+    order.paymentLink = payment.link;
+    order.paymentExpiredAt = paymentExpiredAt;
     await order.save();
 
     try {
@@ -480,7 +451,7 @@ router.post('/', customerAuth, async (req, res) => {
       console.error('[Notify] order_new failed:', notifyErr.message);
     }
 
-    res.status(201).json({ orderId: order._id, snapToken: snapTransaction.token });
+    res.status(201).json({ orderId: order._id, paymentLink: payment.link });
   } catch (err) {
     if (reservedVoucherId) {
       try {
@@ -491,6 +462,13 @@ router.post('/', customerAuth, async (req, res) => {
       } catch (voucherErr) {
         console.error('[Voucher] Release after create-order failure failed:', voucherErr.message);
       }
+    }
+
+    if (err instanceof MayarError && [409, 429].includes(err.status)) {
+      console.error(`[Create Order] Mayar menolak duplikat (${err.status})`);
+      return res.status(429).json({
+        message: 'Permintaan pembayaran sebelumnya masih diproses. Tunggu satu menit lalu coba lagi.',
+      });
     }
 
     console.error('[Create Order]', err);
@@ -532,7 +510,7 @@ router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
       clientKey: process.env.MIDTRANS_CLIENT_KEY,
     });
 
-    const statusResponse = await coreApi.transaction.status(order.midtransOrderId);
+    const statusResponse = await coreApi.transaction.status(order.orderCode);
     const { transaction_status, fraud_status, payment_type } = statusResponse;
 
     let newPaymentStatus = order.paymentStatus;
@@ -546,7 +524,7 @@ router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
 
     const previousPaymentStatus = order.paymentStatus;
     order.paymentStatus = newPaymentStatus;
-    order.midtransPaymentType = payment_type ?? '';
+    order.paymentMethod = payment_type ?? '';
 
     if (newPaymentStatus === 'paid' && order.orderStatus === 'awaiting_payment') {
       order.orderStatus = 'processing';
@@ -577,7 +555,7 @@ router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
         await notifyAdmin({
           type: 'payment_paid',
           title: 'Pembayaran diterima',
-          message: `Pesanan ${order.midtransOrderId} telah dibayar`,
+          message: `Pesanan ${order.orderCode} telah dibayar`,
           link: `/admin/orders/${order._id}`,
           relatedId: order._id,
         });
@@ -611,7 +589,7 @@ router.get('/', auth, async (req, res) => {
     if (search) {
       filter.$or = [
         { 'customerSnapshot.name': { $regex: search, $options: 'i' } },
-        { midtransOrderId: { $regex: search, $options: 'i' } },
+        { orderCode: { $regex: search, $options: 'i' } },
       ];
     }
     const total = await Order.countDocuments(filter);
@@ -727,7 +705,7 @@ router.post('/my/:id/cancel', customerAuth, async (req, res) => {
 
     if (order.paymentStatus === 'paid') {
       try {
-        await coreApi.transaction.refund(order.midtransOrderId, {
+        await coreApi.transaction.refund(order.orderCode, {
           refund_key: `refund-${order._id}`,
           amount: order.total,
           reason: 'Customer request',
@@ -739,7 +717,7 @@ router.post('/my/:id/cancel', customerAuth, async (req, res) => {
       }
     } else if (order.paymentStatus === 'pending') {
       try {
-        await coreApi.transaction.cancel(order.midtransOrderId);
+        await coreApi.transaction.cancel(order.orderCode);
       } catch (cancelErr) {
         if (!cancelErr.message?.includes('404')) {
           console.error('[Cancel] Midtrans cancel failed:', cancelErr.message);
@@ -776,7 +754,7 @@ router.post('/my/:id/cancel', customerAuth, async (req, res) => {
       await notifyAdmin({
         type: 'order_cancelled',
         title: 'Pesanan dibatalkan',
-        message: `Pesanan ${order.midtransOrderId} dibatalkan oleh customer`,
+        message: `Pesanan ${order.orderCode} dibatalkan oleh customer`,
         link: `/admin/orders/${order._id}`,
         relatedId: order._id,
       });

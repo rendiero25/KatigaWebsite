@@ -85,7 +85,7 @@ router.get('/summary', auth, async (req, res) => {
           ],
           paymentTypeCounts: [
             { $match: { paymentStatus: 'paid', ...dateFilter } },
-            { $group: { _id: '$midtransPaymentType', count: { $sum: 1 } } },
+            { $group: { _id: '$paymentMethod', count: { $sum: 1 } } },
           ],
           courierCounts: [
             { $match: { paymentStatus: 'paid', ...dateFilter } },

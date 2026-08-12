@@ -357,7 +357,7 @@ export const api = {
   },
 
   // Orders — customer
-  createOrder: async (payload: CreateOrderPayload) => {
+  createOrder: async (payload: CreateOrderPayload): Promise<{ orderId: string; paymentLink: string; message?: string }> => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/orders`, {
       method: 'POST',

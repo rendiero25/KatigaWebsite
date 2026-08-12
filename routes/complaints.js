@@ -84,7 +84,7 @@ router.get('/my', customerAuth, async (req, res) => {
   try {
     const complaints = await Complaint.find({ customer: req.customer._id })
       .sort({ createdAt: -1 })
-      .populate('order', '_id midtransOrderId total');
+      .populate('order', '_id orderCode total');
     res.json(complaints);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -160,7 +160,7 @@ router.get('/', auth, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit))
-      .populate('order', '_id midtransOrderId total');
+      .populate('order', '_id orderCode total');
     res.json({ data: complaints, pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)), limit: Number(limit) } });
   } catch (err) {
     res.status(500).json({ message: err.message });

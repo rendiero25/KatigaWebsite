@@ -117,7 +117,7 @@ export default function Pesanan() {
                   >
                     <div className="flex-1 min-w-0">
                       <p className="uppercase text-[13px] text-[#1E1E1E]">
-                        #{order.midtransOrderId || order._id.slice(-8).toUpperCase()}
+                        #{order.orderCode || order._id.slice(-8).toUpperCase()}
                       </p>
                       <p className="text-[13px] text-[#6F6F71] mt-1">{order.items.length} item</p>
                     </div>
