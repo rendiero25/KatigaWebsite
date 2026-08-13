@@ -85,13 +85,15 @@ export default function AboutTechSection() {
         )}
 
         {hasSection1 && (
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start mb-24">
-            <div className="aspect-[4/5] bg-[#F9F7F2] overflow-hidden">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-stretch mb-24">
+            {/* Di md ke atas tinggi gambar mengikuti kolom teks; rasio 4/5 hanya dipakai
+                saat satu kolom, karena di sana tidak ada sisi lain untuk diikuti. */}
+            <div className="relative aspect-[4/5] md:aspect-auto bg-[#F9F7F2] overflow-hidden">
               {section1?.image ? (
                 <img
                   src={api.getImageUrl(section1.image)}
                   alt={section1.title || ''}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : null}
             </div>
@@ -116,13 +118,13 @@ export default function AboutTechSection() {
         )}
 
         {hasSection2 && (
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
-            <div className="aspect-[4/5] bg-[#F9F7F2] overflow-hidden md:order-2">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-stretch">
+            <div className="relative aspect-[4/5] md:aspect-auto bg-[#F9F7F2] overflow-hidden md:order-2">
               {section2?.image ? (
                 <img
                   src={api.getImageUrl(section2.image)}
                   alt={section2.title || ''}
-                  className="w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : null}
             </div>
