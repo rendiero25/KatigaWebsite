@@ -80,7 +80,7 @@ export default function KebijakanPengembalian() {
                 <div>
                   <h2 className="text-2xl md:text-3xl mb-4">7. Opsi Resolusi</h2>
                   <p className="text-sm text-[#6F6F71] leading-relaxed">
-                    Setelah barang retur diterima dan diverifikasi, atau untuk kasus komplain yang disetujui tanpa pengiriman balik fisik, tim kami akan menawarkan salah satu dari dua opsi resolusi: pengembalian dana (refund) penuh melalui Midtrans ke metode pembayaran asal Anda, atau penggantian barang (replace) dengan produk yang sama.
+                    Setelah barang retur diterima dan diverifikasi, atau untuk kasus komplain yang disetujui tanpa pengiriman balik fisik, tim kami akan menawarkan salah satu dari dua opsi resolusi: pengembalian dana (refund) penuh melalui transfer bank ke rekening yang Anda konfirmasikan kepada tim kami, atau penggantian barang (replace) dengan produk yang sama.
                   </p>
                 </div>
 

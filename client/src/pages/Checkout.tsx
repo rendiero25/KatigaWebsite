@@ -275,10 +275,10 @@ export default function Checkout() {
               <div>
                 <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E] mb-4">Pembayaran</h2>
                 <div className="border border-[#E9E9EA] px-4 py-4 text-[13px] text-[#6F6F71] leading-relaxed">
-                  <p className="text-[#1E1E1E]">Kartu, Transfer Bank, QRIS, E-wallet</p>
+                  <p className="text-[#1E1E1E]">QRIS, Transfer Bank, E-wallet, Mini Market</p>
                   <p className="mt-1">
-                    Semua transaksi diproses dengan aman lewat Midtrans. Setelah menekan Bayar Sekarang,
-                    jendela pembayaran akan terbuka dan kamu memilih metodenya di sana.
+                    Semua transaksi diproses dengan aman lewat Mayar. Setelah menekan Bayar Sekarang,
+                    kamu akan diarahkan ke halaman pembayaran Mayar.
                   </p>
                 </div>
               </div>

@@ -65,11 +65,11 @@ export default function SyaratKetentuan() {
                 <div>
                   <h2 className="text-2xl md:text-3xl mb-4">4. Pemesanan & Pembayaran</h2>
                   <p className="text-sm text-[#6F6F71] leading-relaxed">
-                    Pembayaran pada katiga.id diproses melalui Midtrans sebagai penyedia payment gateway resmi,
-                    mencakup metode kartu kredit/debit, transfer bank/Virtual Account, dompet digital (e-wallet), dan
-                    QRIS, sesuai metode yang tersedia pada saat checkout. Kami tidak menyediakan metode pembayaran
-                    tunai di tempat (Cash on Delivery/COD). Pesanan dianggap sah setelah pembayaran dikonfirmasi
-                    berhasil oleh Midtrans. Apabila pembayaran tidak diselesaikan dalam batas waktu yang ditentukan,
+                    Pembayaran pada katiga.id diproses melalui Mayar sebagai penyedia payment gateway resmi,
+                    mencakup metode QRIS, transfer bank/Virtual Account, dompet digital (e-wallet), dan
+                    pembayaran di gerai mini market, sesuai metode yang tersedia pada saat checkout. Kami tidak
+                    menyediakan metode pembayaran tunai di tempat (Cash on Delivery/COD). Pesanan dianggap sah
+                    setelah pembayaran dikonfirmasi berhasil oleh Mayar. Apabila pembayaran tidak diselesaikan dalam batas waktu yang ditentukan,
                     pesanan akan otomatis kedaluwarsa dan dibatalkan oleh sistem.
                   </p>
                 </div>
@@ -96,7 +96,8 @@ export default function SyaratKetentuan() {
                       Kebijakan Pengembalian
                     </Link>
                     . Untuk pesanan yang telah dibayar dan dibatalkan sebelum dikirim, dana akan dikembalikan penuh
-                    secara otomatis melalui Midtrans ke metode pembayaran asal Anda.
+                    melalui transfer bank ke rekening yang Anda konfirmasikan kepada tim kami, paling lambat
+                    7 hari kerja setelah pembatalan disetujui.
                   </p>
                 </div>
 
@@ -136,7 +137,7 @@ export default function SyaratKetentuan() {
                   <p className="text-sm text-[#6F6F71] leading-relaxed">
                     Kami berupaya menjaga akurasi informasi dan kelancaran layanan katiga.id, namun tidak menjamin
                     situs akan selalu bebas dari gangguan, kesalahan, atau kondisi force majeure (bencana alam,
-                    gangguan sistem pihak ketiga seperti Midtrans/Biteship, dan sejenisnya). Tanggung jawab kami atas
+                    gangguan sistem pihak ketiga seperti Mayar/Biteship, dan sejenisnya). Tanggung jawab kami atas
                     kerugian yang timbul dari penggunaan layanan ini dibatasi sesuai ketentuan hukum yang berlaku di
                     Indonesia.
                   </p>

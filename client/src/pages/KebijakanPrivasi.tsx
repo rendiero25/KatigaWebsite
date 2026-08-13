@@ -62,7 +62,7 @@ export default function KebijakanPrivasi() {
                     Untuk memproses transaksi Anda, kami membagikan sebagian data yang relevan kepada mitra tepercaya berikut:
                   </p>
                   <ul className="list-disc pl-6 text-sm text-[#6F6F71] leading-relaxed space-y-2 mt-4">
-                    <li>Midtrans, sebagai penyedia payment gateway, menerima data pesanan dan data kontak yang diperlukan untuk memproses pembayaran Anda.</li>
+                    <li>Mayar, sebagai penyedia payment gateway, menerima data pesanan dan data kontak yang diperlukan untuk memproses pembayaran Anda.</li>
                     <li>Biteship, sebagai penyedia integrasi layanan pengiriman, menerima data alamat dan kontak penerima untuk mengatur pengambilan dan pengiriman paket melalui mitra kurir.</li>
                     <li>Google, apabila Anda memilih masuk melalui Google Sign-In, memproses autentikasi identitas Anda.</li>
                   </ul>

@@ -555,7 +555,7 @@ export default function ProductDetail() {
                       </li>
                     )}
                     <li>Ongkos kirim dihitung otomatis saat checkout melalui integrasi Biteship.</li>
-                    <li>Pembayaran diproses melalui Midtrans: kartu kredit/debit, transfer bank/VA, e-wallet, dan QRIS.</li>
+                    <li>Pembayaran diproses melalui Mayar: QRIS, transfer bank/VA, e-wallet, dan gerai mini market.</li>
                   </ul>
                 </AccordionSection>
 

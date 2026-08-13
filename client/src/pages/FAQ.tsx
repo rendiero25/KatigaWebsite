@@ -79,7 +79,7 @@ export default function FAQ() {
                 <div>
                   <FaqItem
                     question="Metode pembayaran apa saja yang tersedia?"
-                    answer="Kami menerima pembayaran melalui Midtrans, mencakup kartu kredit/debit, transfer bank/Virtual Account, e-wallet, dan QRIS. Kami belum menyediakan pembayaran tunai di tempat (COD)."
+                    answer="Kami menerima pembayaran melalui Mayar, mencakup QRIS, transfer bank/Virtual Account, e-wallet, dan pembayaran di gerai mini market. Kami belum menyediakan pembayaran tunai di tempat (COD)."
                   />
                   <FaqItem
                     question="Berapa lama batas waktu saya harus membayar pesanan?"
