@@ -59,6 +59,7 @@ const orderSchema = new mongoose.Schema({
   },
   orderCode:        { type: String, unique: true, sparse: true },
   paymentRef:       { type: String, unique: true, sparse: true },
+  paymentLinkId:    { type: String, default: '' },
   paymentLink:      { type: String, default: '' },
   paymentExpiredAt: { type: Date },
   paymentMethod:    { type: String, default: '' },
@@ -74,10 +75,30 @@ const orderSchema = new mongoose.Schema({
   biteshipWaybillId:    { type: String, default: '' },
 
   adminNote: { type: String, default: '' },
+  deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 orderSchema.index({ customer: 1 });
 orderSchema.index({ orderStatus: 1, paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ deletedAt: 1 });
+
+// Order yang di-soft-delete harus tak terlihat oleh SEMUA jalur baca, bukan hanya yang
+// diingat penulisnya. Dipasang di skema karena ada 26 call site, lima di antaranya
+// aggregate() yang membaca field mentah dan melewati skema. Opt-out: .setOptions({ withDeleted: true })
+// pada query, atau aggregate([...], { withDeleted: true }).
+// countDocuments dan distinct tidak cocok dengan /^find/, jadi didaftarkan eksplisit.
+orderSchema.pre(
+  ['find', 'findOne', 'findOneAndUpdate', 'findOneAndDelete', 'findOneAndReplace', 'countDocuments', 'distinct'],
+  function () {
+    if (this.getOptions().withDeleted) return;
+    this.where({ deletedAt: null });
+  },
+);
+
+orderSchema.pre('aggregate', function () {
+  if (this.options?.withDeleted) return;
+  this.pipeline().unshift({ $match: { deletedAt: null } });
+});
 
 module.exports = mongoose.model('Order', orderSchema);

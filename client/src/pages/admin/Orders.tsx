@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import { Button } from '@/components/ui/button';
-import { API_BASE_URL } from '../../services/api';
+import { API_BASE_URL, api } from '../../services/api';
 import type { Order, Pagination } from '../../types/ecommerce';
 
 const fmt = (n: number) =>
@@ -17,11 +17,12 @@ const ORDER_STATUS_LABEL: Record<string, { label: string; color: string }> = {
 };
 
 const PAYMENT_STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  pending:  { label: 'Pending',  color: 'bg-yellow-100 text-yellow-700' },
-  paid:     { label: 'Lunas',   color: 'bg-green-100 text-green-700' },
-  failed:   { label: 'Gagal',   color: 'bg-red-100 text-red-700' },
-  expired:  { label: 'Expired', color: 'bg-gray-100 text-gray-600' },
-  refunded: { label: 'Refund',  color: 'bg-purple-100 text-purple-700' },
+  pending:        { label: 'Pending',          color: 'bg-yellow-100 text-yellow-700' },
+  paid:           { label: 'Lunas',            color: 'bg-green-100 text-green-700' },
+  failed:         { label: 'Gagal',            color: 'bg-red-100 text-red-700' },
+  expired:        { label: 'Expired',          color: 'bg-gray-100 text-gray-600' },
+  refund_pending: { label: 'Menunggu Refund',  color: 'bg-orange-100 text-orange-700' },
+  refunded:       { label: 'Refund',           color: 'bg-purple-100 text-purple-700' },
 };
 
 export default function AdminOrders() {
@@ -30,6 +31,9 @@ export default function AdminOrders() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ orderStatus: '', paymentStatus: '', search: '', page: 1 });
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -37,6 +41,7 @@ export default function AdminOrders() {
     if (filters.orderStatus) params.set('orderStatus', filters.orderStatus);
     if (filters.paymentStatus) params.set('paymentStatus', filters.paymentStatus);
     if (filters.search) params.set('search', filters.search);
+    if (showDeleted) params.set('deleted', '1');
     params.set('page', String(filters.page));
     params.set('limit', '20');
     try {
@@ -47,7 +52,40 @@ export default function AdminOrders() {
       setOrders(data.data ?? []);
       setPagination(data.pagination ?? null);
     } finally { setLoading(false); }
-  }, [filters, token]);
+  }, [filters, showDeleted, token]);
+
+  const handleDelete = async (order: Order) => {
+    const confirmed = window.confirm(
+      `Hapus pesanan #${order._id.slice(-8).toUpperCase()} atas nama ${order.customerSnapshot.name}?\n\n` +
+      'Pesanan dipindahkan ke Kotak Sampah dan tidak lagi masuk laporan penjualan. ' +
+      (order.paymentStatus === 'paid'
+        ? 'Pesanan ini SUDAH LUNAS — omzetnya akan hilang dari laporan.'
+        : 'Link pembayarannya ikut ditutup di Mayar sehingga tidak bisa dibayar lagi.'),
+    );
+    if (!confirmed) return;
+
+    setBusyId(order._id);
+    setNotice(null);
+    try {
+      const result = await api.deleteAdminOrder(order._id);
+      setNotice({ text: result.message, tone: result.warning ? 'warn' : 'ok' });
+      await fetchOrders();
+    } catch (err) {
+      setNotice({ text: err instanceof Error ? err.message : 'Gagal menghapus pesanan', tone: 'warn' });
+    } finally { setBusyId(null); }
+  };
+
+  const handleRestore = async (order: Order) => {
+    setBusyId(order._id);
+    setNotice(null);
+    try {
+      await api.restoreAdminOrder(order._id);
+      setNotice({ text: 'Pesanan dipulihkan. Link pembayaran lama tetap tertutup.', tone: 'ok' });
+      await fetchOrders();
+    } catch (err) {
+      setNotice({ text: err instanceof Error ? err.message : 'Gagal memulihkan pesanan', tone: 'warn' });
+    } finally { setBusyId(null); }
+  };
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -88,12 +126,32 @@ export default function AdminOrders() {
             <option key={v} value={v}>{label}</option>
           ))}
         </select>
+        <Button
+          variant={showDeleted ? 'default' : 'outline'}
+          size="sm"
+          className="self-center"
+          onClick={() => { setShowDeleted((v) => !v); setFilters((f) => ({ ...f, page: 1 })); }}
+        >
+          {showDeleted ? 'Lihat Pesanan Aktif' : 'Kotak Sampah'}
+        </Button>
         {pagination && (
           <p className="ml-auto text-sm text-gray-500 self-center">
             {pagination.total} pesanan
           </p>
         )}
       </div>
+
+      {notice && (
+        <div
+          className={`mb-4 px-4 py-3 rounded-lg text-sm ${
+            notice.tone === 'warn'
+              ? 'bg-yellow-50 border border-yellow-200 text-yellow-800'
+              : 'bg-green-50 border border-green-200 text-green-700'
+          }`}
+        >
+          {notice.text}
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -113,7 +171,11 @@ export default function AdminOrders() {
             {loading ? (
               <tr><td colSpan={7} className="px-5 py-8 text-center text-gray-400">Memuat...</td></tr>
             ) : orders.length === 0 ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-gray-400">Tidak ada pesanan</td></tr>
+              <tr>
+                <td colSpan={7} className="px-5 py-8 text-center text-gray-400">
+                  {showDeleted ? 'Kotak sampah kosong' : 'Tidak ada pesanan'}
+                </td>
+              </tr>
             ) : orders.map((order) => {
               const os = ORDER_STATUS_LABEL[order.orderStatus] ?? { label: order.orderStatus, color: 'bg-gray-100 text-gray-600' };
               const ps = PAYMENT_STATUS_LABEL[order.paymentStatus] ?? { label: order.paymentStatus, color: 'bg-gray-100 text-gray-600' };
@@ -135,9 +197,30 @@ export default function AdminOrders() {
                     {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </td>
                   <td className="px-5 py-3">
-                    <Link to={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
-                      Detail
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
+                        Detail
+                      </Link>
+                      {order.deletedAt ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(order)}
+                          disabled={busyId === order._id}
+                          className="text-green-600 hover:text-green-800 font-medium disabled:opacity-50"
+                        >
+                          {busyId === order._id ? '...' : 'Pulihkan'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(order)}
+                          disabled={busyId === order._id}
+                          className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
+                        >
+                          {busyId === order._id ? '...' : 'Hapus'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

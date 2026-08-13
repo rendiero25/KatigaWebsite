@@ -79,11 +79,23 @@ async function getTransaction(transactionId) {
     throw new MayarError('Invalid getTransaction response: missing status', 502, data);
   }
 
+  // Mayar memakai dua status yang bergerak sendiri-sendiri. Diverifikasi di sandbox
+  // 2026-08-13: data.status TIDAK pernah menjadi 'expired' saat pembayaran kedaluwarsa —
+  // ia tetap 'created', dan yang berubah hanya paymentLink.status (unpaid → closed).
+  // Tanpa linkStatus, pesanan kedaluwarsa akan macet 'pending' selamanya.
   return {
     status: data.status,
+    linkStatus: data.paymentLink?.status ?? '',
     paymentMethod: data.paymentMethod ?? '',
     amount: data.amount,
   };
 }
 
-module.exports = { createPayment, getTransaction, MayarError };
+// Mayar tidak punya endpoint hapus transaksi — catatan transaksi permanen. Yang bisa
+// dilakukan hanya menutup payment request-nya, efeknya sama seperti kedaluwarsa:
+// link mati, transaksi tetap tercatat. Butuh paymentLinkId, bukan transactionId.
+async function closePayment(paymentLinkId) {
+  await request(`/payments/${paymentLinkId}/close`, { method: 'POST' });
+}
+
+module.exports = { createPayment, getTransaction, closePayment, MayarError };

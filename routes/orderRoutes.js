@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
@@ -16,7 +15,7 @@ const {
 const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
 const { notifyAdmin, notifyCustomer } = require('../utils/notify');
-const { createPayment, getTransaction, MayarError } = require('../services/mayarService');
+const { createPayment, getTransaction, closePayment, MayarError } = require('../services/mayarService');
 
 const resolvePositiveNumber = (value) => {
   const parsed = Number(value);
@@ -93,71 +92,67 @@ const applyPromotionPrice = (priceNumeric, promotion) => {
   );
 };
 
-// ─── Midtrans webhook (registered in server.js with express.raw BEFORE express.json) ───
-const webhookHandler = async (req, res) => {
+// Nilai yang diketahui menandakan lunas. Ditulis sebagai himpunan, bukan satu konstanta,
+// karena Mayar memakai kosakata berbeda per endpoint: detail transaksi mengembalikan
+// 'created' sebelum bayar, sementara daftar transaksi lunas mendokumentasikan 'settled'.
+// Nilai lunas pada detail transaksi belum pernah teramati langsung — simulator sandbox
+// tidak menyelesaikan settlement — jadi keduanya diterima dan nilai asing dicatat ke log.
+const MAYAR_PAID_STATUSES = new Set(['paid', 'settled', 'success']);
+
+// Diverifikasi di sandbox 2026-08-13: transaksi kedaluwarsa TETAP berstatus 'created';
+// yang berubah hanya paymentLink.status menjadi 'closed'. Menutup payment request lewat
+// POST /payments/{id}/close menghasilkan keadaan yang sama persis.
+const resolvePaymentStatus = (transaction) => {
+  if (MAYAR_PAID_STATUSES.has(transaction.status)) return 'paid';
+  if (transaction.linkStatus === 'closed') return 'expired';
+  if (['created', 'unpaid', 'active'].includes(transaction.status)) return 'pending';
+  return null;
+};
+
+// Satu-satunya tempat status pembayaran berubah. Dipanggil webhook, verify-payment,
+// dan sapuan terjadwal — karena itu wajib idempoten.
+const syncPaymentStatus = async (order) => {
+  if (!order.paymentRef) return order;
+
+  let transaction;
   try {
-    const raw = req.body ? req.body.toString() : '';
-    if (!raw || raw === '{}' || raw === '') return res.status(200).json({ message: 'OK' });
-
-    const notification = JSON.parse(raw);
-    const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status, payment_type } = notification;
-
-    if (!order_id) return res.status(200).json({ message: 'OK' });
-
-    const expectedSig = crypto
-      .createHash('sha512')
-      .update(`${order_id}${status_code}${gross_amount}${process.env.MIDTRANS_SERVER_KEY}`)
-      .digest('hex');
-
-    if (expectedSig !== signature_key) {
-      return res.status(403).json({ message: 'Invalid signature' });
+    transaction = await getTransaction(order.paymentRef);
+  } catch (err) {
+    if (err instanceof MayarError && err.status === 404) {
+      console.error(`[Mayar] transaksi ${order.paymentRef} tidak ditemukan untuk order ${order._id}`);
+      return order;
     }
+    throw err;
+  }
 
-    const order = await Order.findOne({ orderCode: order_id });
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+  const newPaymentStatus = resolvePaymentStatus(transaction);
+  if (!newPaymentStatus) {
+    console.error(
+      `[Mayar] status tidak dikenal "${transaction.status}" (link "${transaction.linkStatus}") untuk order ${order._id}`
+    );
+    return order;
+  }
 
-    order.paymentMethod = payment_type ?? '';
+  const previousPaymentStatus = order.paymentStatus;
+  if (newPaymentStatus === previousPaymentStatus) return order;
 
-    let newPaymentStatus = order.paymentStatus;
-    if (transaction_status === 'capture' && fraud_status === 'accept') newPaymentStatus = 'paid';
-    else if (transaction_status === 'settlement') newPaymentStatus = 'paid';
-    else if (transaction_status === 'pending') newPaymentStatus = 'pending';
-    else if (['deny', 'cancel', 'failure'].includes(transaction_status)) newPaymentStatus = 'failed';
-    else if (transaction_status === 'expire') { newPaymentStatus = 'expired'; order.orderStatus = 'cancelled'; order.cancelledAt = new Date(); }
-    else if (transaction_status === 'refund') newPaymentStatus = 'refunded';
+  // Pesanan yang sudah lunas tidak boleh diturunkan lagi oleh webhook yang datang
+  // terlambat — link pembayarannya memang ditutup sesudah dibayar.
+  if (previousPaymentStatus === 'paid') return order;
 
-    const previousPaymentStatus = order.paymentStatus;
-    const wasPending = order.paymentStatus !== 'paid';
-    order.paymentStatus = newPaymentStatus;
+  order.paymentStatus = newPaymentStatus;
+  order.paymentMethod = transaction.paymentMethod ?? '';
 
+  if (newPaymentStatus === 'paid') {
     if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
-      if (newPaymentStatus === 'paid') {
-        order.voucherReserved = false;
-        order.voucherConsumed = true;
-      } else if (['failed', 'expired'].includes(newPaymentStatus)) {
-        try {
-          const releasedVoucher = await Voucher.findOneAndUpdate(
-            { code: order.voucherCode, usedCount: { $gt: 0 } },
-            { $inc: { usedCount: -1 } }
-          );
-
-          if (!releasedVoucher) {
-            console.error(
-              `[Voucher] Voucher ${order.voucherCode} tidak ditemukan saat release order ${order._id}`
-            );
-          }
-        } catch (voucherErr) {
-          console.error('[Voucher] Release on failed payment failed:', voucherErr.message);
-        }
-
-        order.voucherReserved = false;
-      }
-    } else if (newPaymentStatus === 'paid' && order.voucherCode && !order.voucherConsumed) {
-      // Backfill legacy orders that were already counted before voucher reservations existed.
+      order.voucherReserved = false;
+      order.voucherConsumed = true;
+    } else if (order.voucherCode && !order.voucherConsumed) {
+      // Backfill order lama yang sudah terhitung sebelum reservasi voucher ada.
       order.voucherConsumed = true;
     }
 
-    if (newPaymentStatus === 'paid' && wasPending && order.orderStatus === 'awaiting_payment') {
+    if (order.orderStatus === 'awaiting_payment') {
       order.orderStatus = 'processing';
       try {
         const biteshipResult = await biteshipCreateOrder(order);
@@ -168,55 +163,107 @@ const webhookHandler = async (req, res) => {
         console.error('[Biteship] Auto-create order failed:', bErr.message);
       }
     }
+  }
 
-    await order.save();
-
-    try {
-      if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
+  if (newPaymentStatus === 'expired') {
+    if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
+      try {
+        const released = await Voucher.findOneAndUpdate(
+          { code: order.voucherCode, usedCount: { $gt: 0 } },
+          { $inc: { usedCount: -1 } }
+        );
+        if (!released) {
+          console.error(`[Voucher] Voucher ${order.voucherCode} tidak ditemukan saat release order ${order._id}`);
         }
-        await notifyAdmin({
-          type: 'payment_paid',
-          title: 'Pembayaran diterima',
-          message: `Pesanan ${order.orderCode} telah dibayar`,
-          link: `/admin/orders/${order._id}`,
-          relatedId: order._id,
-        });
-        await notifyCustomer({
-          customerId: order.customer,
-          type: 'payment_confirmed',
-          title: 'Pembayaran dikonfirmasi',
-          message: 'Pembayaran untuk pesanan kamu telah dikonfirmasi',
-          link: `/pesanan/${order._id}`,
-          relatedId: order._id,
-        });
-      } else if (['failed', 'expired'].includes(newPaymentStatus) && previousPaymentStatus !== newPaymentStatus) {
-        const expired = newPaymentStatus === 'expired';
-        await notifyAdmin({
-          type: 'payment_failed',
-          title: 'Pembayaran gagal',
-          message: `Pembayaran pesanan ${order.orderCode} ${expired ? 'kedaluwarsa' : 'gagal'}`,
-          link: `/admin/orders/${order._id}`,
-          relatedId: order._id,
-        });
-        await notifyCustomer({
-          customerId: order.customer,
-          type: 'payment_failed',
-          title: 'Pembayaran gagal',
-          message: `Pembayaran untuk pesanan kamu ${expired ? 'kedaluwarsa' : 'gagal'}`,
-          link: `/pesanan/${order._id}`,
-          relatedId: order._id,
-        });
+      } catch (voucherErr) {
+        console.error('[Voucher] Release on expired payment failed:', voucherErr.message);
       }
-    } catch (notifyErr) {
-      console.error('[Notify] webhook notify failed:', notifyErr.message);
+      order.voucherReserved = false;
+    }
+    order.orderStatus = 'cancelled';
+    order.cancelledAt = new Date();
+  }
+
+  await order.save();
+
+  try {
+    if (newPaymentStatus === 'paid') {
+      for (const item of order.items) {
+        await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
+      }
+      await notifyAdmin({
+        type: 'payment_paid',
+        title: 'Pembayaran diterima',
+        message: `Pesanan ${order.orderCode} telah dibayar`,
+        link: `/admin/orders/${order._id}`,
+        relatedId: order._id,
+      });
+      await notifyCustomer({
+        customerId: order.customer,
+        type: 'payment_confirmed',
+        title: 'Pembayaran dikonfirmasi',
+        message: 'Pembayaran untuk pesanan kamu telah dikonfirmasi',
+        link: `/pesanan/${order._id}`,
+        relatedId: order._id,
+      });
+    } else if (newPaymentStatus === 'expired') {
+      await notifyAdmin({
+        type: 'payment_failed',
+        title: 'Pembayaran kedaluwarsa',
+        message: `Pembayaran pesanan ${order.orderCode} kedaluwarsa`,
+        link: `/admin/orders/${order._id}`,
+        relatedId: order._id,
+      });
+      await notifyCustomer({
+        customerId: order.customer,
+        type: 'payment_failed',
+        title: 'Pembayaran kedaluwarsa',
+        message: 'Pembayaran untuk pesanan kamu kedaluwarsa',
+        link: `/pesanan/${order._id}`,
+        relatedId: order._id,
+      });
+    }
+  } catch (notifyErr) {
+    console.error('[Notify] syncPaymentStatus notify failed:', notifyErr.message);
+  }
+
+  return order;
+};
+
+// ─── Webhook Mayar ───
+// Payload tidak diverifikasi — docs Mayar tidak mendokumentasikan signature maupun header
+// Authorization apa pun. Karena itu payload hanya dipakai untuk mengetahui transaksi MANA
+// yang berubah; status sebenarnya selalu diambil ulang dari API Mayar memakai API key kita.
+const webhookHandler = async (req, res) => {
+  try {
+    const payload = req.body ?? {};
+    // Rantai nama field ini sengaja longgar: payload asli Mayar belum pernah tertangkap
+    // (verifikasi #3 belum tuntas). Sederhanakan jadi satu nama begitu payloadnya terlihat.
+    const transactionId =
+      payload.transactionId ??
+      payload.data?.transactionId ??
+      payload.id ??
+      payload.data?.id ??
+      null;
+
+    if (!transactionId) {
+      console.error('[Webhook Mayar] payload tanpa transactionId:', JSON.stringify(payload));
+      return res.status(200).json({ message: 'OK' });
     }
 
+    const order = await Order.findOne({ paymentRef: transactionId });
+    if (!order) {
+      console.error(`[Webhook Mayar] order untuk paymentRef ${transactionId} tidak ditemukan`);
+      return res.status(200).json({ message: 'OK' });
+    }
+
+    await syncPaymentStatus(order);
     res.status(200).json({ message: 'OK' });
   } catch (err) {
-    console.error('[Webhook] Error:', err.message);
-    res.status(200).json({ message: 'OK' }); // always 200 to stop Midtrans retries
+    console.error('[Webhook Mayar] Error:', err.message);
+    // Selalu 200, termasuk saat order tidak ditemukan — status non-2xx mengundang
+    // percobaan ulang berulang dari Mayar.
+    res.status(200).json({ message: 'OK' });
   }
 };
 
@@ -435,6 +482,7 @@ router.post('/', customerAuth, async (req, res) => {
     });
 
     order.paymentRef = payment.transactionId;
+    order.paymentLinkId = payment.id;
     order.paymentLink = payment.link;
     order.paymentExpiredAt = paymentExpiredAt;
     await order.save();
@@ -497,81 +545,14 @@ router.get('/my/:id', customerAuth, async (req, res) => {
   }
 });
 
-// ─── POST /api/orders/my/:id/verify-payment — pull fresh status from Midtrans ───
+// ─── POST /api/orders/my/:id/verify-payment — tarik status terbaru dari Mayar ───
 router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
   try {
     const order = await Order.findOne({ _id: req.params.id, customer: req.customer._id });
     if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
     if (order.paymentStatus === 'paid') return res.json(order);
 
-    const coreApi = new midtransClient.CoreApi({
-      isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
-      serverKey: process.env.MIDTRANS_SERVER_KEY,
-      clientKey: process.env.MIDTRANS_CLIENT_KEY,
-    });
-
-    const statusResponse = await coreApi.transaction.status(order.orderCode);
-    const { transaction_status, fraud_status, payment_type } = statusResponse;
-
-    let newPaymentStatus = order.paymentStatus;
-    if (transaction_status === 'capture' && fraud_status === 'accept') newPaymentStatus = 'paid';
-    else if (transaction_status === 'settlement') newPaymentStatus = 'paid';
-    else if (transaction_status === 'pending') newPaymentStatus = 'pending';
-    else if (['deny', 'cancel', 'failure'].includes(transaction_status)) newPaymentStatus = 'failed';
-    else if (transaction_status === 'expire') newPaymentStatus = 'expired';
-
-    if (newPaymentStatus === order.paymentStatus) return res.json(order);
-
-    const previousPaymentStatus = order.paymentStatus;
-    order.paymentStatus = newPaymentStatus;
-    order.paymentMethod = payment_type ?? '';
-
-    if (newPaymentStatus === 'paid' && order.orderStatus === 'awaiting_payment') {
-      order.orderStatus = 'processing';
-      try {
-        const biteshipResult = await biteshipCreateOrder(order);
-        order.biteshipOrderId = biteshipResult.id ?? '';
-        order.biteshipTrackingCode = biteshipResult.courier?.tracking_id ?? '';
-        order.biteshipWaybillId = biteshipResult.courier?.waybill_id ?? '';
-      } catch (bErr) {
-        console.error('[Biteship] verify-payment auto-create failed:', bErr.message);
-      }
-    }
-
-    if (order.voucherCode && order.voucherReserved && !order.voucherConsumed) {
-      if (newPaymentStatus === 'paid') {
-        order.voucherReserved = false;
-        order.voucherConsumed = true;
-      }
-    }
-
-    await order.save();
-
-    if (newPaymentStatus === 'paid' && previousPaymentStatus !== 'paid') {
-      try {
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(item.product, { $inc: { soldCount: item.quantity, stock: -item.quantity } });
-        }
-        await notifyAdmin({
-          type: 'payment_paid',
-          title: 'Pembayaran diterima',
-          message: `Pesanan ${order.orderCode} telah dibayar`,
-          link: `/admin/orders/${order._id}`,
-          relatedId: order._id,
-        });
-        await notifyCustomer({
-          customerId: order.customer,
-          type: 'payment_confirmed',
-          title: 'Pembayaran dikonfirmasi',
-          message: 'Pembayaran untuk pesanan kamu telah dikonfirmasi',
-          link: `/pesanan/${order._id}`,
-          relatedId: order._id,
-        });
-      } catch (notifyErr) {
-        console.error('[Notify] verify-payment notify failed:', notifyErr.message);
-      }
-    }
-
+    await syncPaymentStatus(order);
     res.json(order);
   } catch (err) {
     console.error('[Verify Payment]', err);
@@ -582,7 +563,7 @@ router.post('/my/:id/verify-payment', customerAuth, async (req, res) => {
 // ─── GET /api/orders — admin: all orders ───
 router.get('/', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 20, orderStatus, paymentStatus, search } = req.query;
+    const { page = 1, limit = 20, orderStatus, paymentStatus, search, deleted } = req.query;
     const filter = {};
     if (orderStatus) filter.orderStatus = orderStatus;
     if (paymentStatus) filter.paymentStatus = paymentStatus;
@@ -592,8 +573,13 @@ router.get('/', auth, async (req, res) => {
         { orderCode: { $regex: search, $options: 'i' } },
       ];
     }
-    const total = await Order.countDocuments(filter);
+    // Kotak sampah: satu-satunya tampilan yang menembus filter soft-delete skema.
+    const showDeleted = deleted === '1';
+    if (showDeleted) filter.deletedAt = { $ne: null };
+
+    const total = await Order.countDocuments(filter).setOptions({ withDeleted: showDeleted });
     const orders = await Order.find(filter)
+      .setOptions({ withDeleted: showDeleted })
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit));
@@ -608,6 +594,53 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── DELETE /api/orders/:id — admin: soft delete + tutup payment request di Mayar ───
+// Soft delete, bukan hapus baris: laporan lama tetap bisa direkonsiliasi dan order bisa
+// dipulihkan. Mayar sendiri tidak punya endpoint hapus — transaksi di sana permanen,
+// yang bisa dilakukan hanya menutup link pembayarannya agar tidak bisa dibayar lagi.
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+
+    let mayarWarning = '';
+    if (order.paymentLinkId && order.paymentStatus !== 'paid') {
+      try {
+        await closePayment(order.paymentLinkId);
+      } catch (err) {
+        // Gagal menutup link tidak boleh membatalkan penghapusan — admin diberi tahu
+        // supaya bisa menutupnya manual dari dashboard Mayar.
+        mayarWarning = `Order dihapus, tapi link pembayaran gagal ditutup di Mayar: ${err.message}`;
+        console.error(`[Mayar] close ${order.paymentLinkId} gagal:`, err.message);
+      }
+    }
+
+    order.deletedAt = new Date();
+    await order.save();
+
+    res.json({ message: mayarWarning || 'Order dihapus', warning: Boolean(mayarWarning) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── POST /api/orders/:id/restore — admin: pulihkan order yang dihapus ───
+// Link pembayaran yang sudah ditutup tidak ikut dibuka kembali; pembeli harus checkout ulang.
+router.post('/:id/restore', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).setOptions({ withDeleted: true });
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (!order.deletedAt) return res.status(400).json({ message: 'Order ini tidak dalam keadaan terhapus' });
+
+    order.deletedAt = null;
+    await order.save();
+
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -697,30 +730,17 @@ router.post('/my/:id/cancel', customerAuth, async (req, res) => {
       return res.status(400).json({ message: 'Pesanan tidak dapat dibatalkan pada tahap ini' });
     }
 
-    const coreApi = new midtransClient.CoreApi({
-      isProduction: process.env.MIDTRANS_IS_PRODUCTION === 'true',
-      serverKey: process.env.MIDTRANS_SERVER_KEY,
-      clientKey: process.env.MIDTRANS_CLIENT_KEY,
-    });
-
     if (order.paymentStatus === 'paid') {
-      try {
-        await coreApi.transaction.refund(order.orderCode, {
-          refund_key: `refund-${order._id}`,
-          amount: order.total,
-          reason: 'Customer request',
-        });
-        order.paymentStatus = 'refunded';
-      } catch (refundErr) {
-        console.error('[Cancel] Midtrans refund failed:', refundErr.message);
-        return res.status(502).json({ message: 'Gagal memproses refund. Hubungi admin.' });
-      }
+      // Mayar tidak menyediakan endpoint refund — dana dikembalikan manual oleh admin,
+      // lalu ditandai 'refunded' dari panel admin.
+      order.paymentStatus = 'refund_pending';
     } else if (order.paymentStatus === 'pending') {
-      try {
-        await coreApi.transaction.cancel(order.orderCode);
-      } catch (cancelErr) {
-        if (!cancelErr.message?.includes('404')) {
-          console.error('[Cancel] Midtrans cancel failed:', cancelErr.message);
+      // Tutup link pembayarannya supaya pesanan yang sudah dibatalkan tidak bisa dibayar.
+      if (order.paymentLinkId) {
+        try {
+          await closePayment(order.paymentLinkId);
+        } catch (closeErr) {
+          console.error('[Cancel] Mayar close payment failed:', closeErr.message);
         }
       }
       order.paymentStatus = 'expired';
@@ -754,7 +774,9 @@ router.post('/my/:id/cancel', customerAuth, async (req, res) => {
       await notifyAdmin({
         type: 'order_cancelled',
         title: 'Pesanan dibatalkan',
-        message: `Pesanan ${order.orderCode} dibatalkan oleh customer`,
+        message: order.paymentStatus === 'refund_pending'
+          ? `Pesanan ${order.orderCode} dibatalkan — wajib transfer refund Rp${order.total.toLocaleString('id-ID')}`
+          : `Pesanan ${order.orderCode} dibatalkan oleh customer`,
         link: `/admin/orders/${order._id}`,
         relatedId: order._id,
       });
@@ -1036,3 +1058,4 @@ module.exports = router;
 module.exports.webhookHandler = webhookHandler;
 module.exports.biteshipWebhookHandler = biteshipWebhookHandler;
 module.exports.markOrderDelivered = markOrderDelivered;
+module.exports.syncPaymentStatus = syncPaymentStatus;

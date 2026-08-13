@@ -52,8 +52,9 @@ app.use('/api', async (req, res, next) => {
   }
 });
 
-// Midtrans webhook needs raw body for signature verification — must come before express.json()
-app.post('/api/orders/webhook/midtrans', express.raw({ type: '*/*' }), require('./routes/orderRoutes').webhookHandler);
+// Webhook Mayar tidak perlu raw body — tidak ada signature untuk dihitung. Keaslian
+// dipastikan dengan menanyakan ulang status ke API Mayar (routes/orderRoutes.js).
+app.post('/api/orders/webhook/mayar', express.json(), require('./routes/orderRoutes').webhookHandler);
 app.post('/api/orders/webhook/biteship', express.json(), require('./routes/orderRoutes').biteshipWebhookHandler);
 
 app.use(express.json());
@@ -206,17 +207,45 @@ async function syncBiteshipDeliveries() {
   }
 }
 
+// ─── Scheduled check: reconcile awaiting_payment orders with Mayar ───
+// Backstop for the Mayar webhook, which can silently fail to arrive. Without this an
+// order can sit in awaiting_payment while the money has already been received.
+async function syncPendingPayments() {
+  try {
+    const Order = require('./models/Order');
+    const { syncPaymentStatus } = require('./routes/orderRoutes');
+
+    const orders = await Order.find({
+      orderStatus: 'awaiting_payment',
+      paymentRef: { $exists: true, $ne: '' },
+      paymentExpiredAt: { $gt: new Date() },
+    });
+
+    for (const order of orders) {
+      try {
+        await syncPaymentStatus(order);
+      } catch (err) {
+        console.error(`[Payment Sync] order ${order._id} failed:`, err.message);
+      }
+    }
+  } catch (err) {
+    console.error('[Payment Sync] syncPendingPayments failed:', err.message);
+  }
+}
+
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
   mongoose.connection.once('connected', checkExpiringPromos);
   mongoose.connection.once('connected', syncBiteshipDeliveries);
+  mongoose.connection.once('connected', syncPendingPayments);
   connectDB().catch((error) => {
     console.error(`Initial MongoDB connection error: ${error.message}`);
   });
   setInterval(checkExpiringPromos, 60 * 60 * 1000);
   setInterval(syncBiteshipDeliveries, 15 * 60 * 1000);
+  setInterval(syncPendingPayments, 15 * 60 * 1000);
 }
 
 module.exports = app;

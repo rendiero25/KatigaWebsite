@@ -11,21 +11,21 @@ import ReviewForm from '../components/ReviewForm'
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n)
 
-const PAYMENT_METHOD_LABEL: Record<string, string> = {
-  bank_transfer: 'Transfer Bank',
-  gopay: 'GoPay',
+const PAYMENT_CHANNEL_LABEL: Record<string, string> = {
   qris: 'QRIS',
+  va: 'Transfer Bank',
+  ewallet: 'E-Wallet',
+  retail: 'Gerai Retail',
   credit_card: 'Kartu Kredit',
-  cstore: 'Gerai Retail (Alfamart/Indomaret)',
-  shopeepay: 'ShopeePay',
-  bca_va: 'Transfer Bank BCA',
-  bni_va: 'Transfer Bank BNI',
-  bri_va: 'Transfer Bank BRI',
-  permata_va: 'Transfer Bank Permata',
-  other_va: 'Transfer Bank (VA)',
-  akulaku: 'Akulaku PayLater',
-  kredivo: 'Kredivo',
-  echannel: 'Mandiri Bill',
+}
+
+// Mayar memakai bentuk "kanal/penerbit", mis. "va/MANDIRI" atau "qris" — diamati di
+// sandbox 2026-08-13. Daftar kanal lengkapnya tidak didokumentasikan, jadi kanal asing
+// ditampilkan apa adanya alih-alih disembunyikan.
+const formatPaymentMethod = (raw: string): string => {
+  const [channel, issuer] = raw.split('/')
+  const label = PAYMENT_CHANNEL_LABEL[channel] ?? channel.toUpperCase()
+  return issuer ? `${label} ${issuer}` : label
 }
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
@@ -727,7 +727,7 @@ export default function PesananDetail() {
               <div className="flex items-center justify-between py-1.5 text-[13px] text-[#6F6F71]">
                 <span>Metode Pembayaran</span>
                 <span className="text-[#1E1E1E]">
-                  {PAYMENT_METHOD_LABEL[order.paymentMethod] ?? order.paymentMethod}
+                  {formatPaymentMethod(order.paymentMethod)}
                 </span>
               </div>
             )}

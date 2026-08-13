@@ -125,6 +125,7 @@ export interface Order {
   orderStatus: 'awaiting_payment' | 'processing' | 'packing' | 'shipped' | 'delivered' | 'cancelled';
   cancelledAt?: string;
   orderCode: string;
+  paymentLinkId?: string;
   paymentLink: string;
   paymentExpiredAt?: string;
   paymentMethod?: string;
@@ -132,6 +133,7 @@ export interface Order {
   biteshipTrackingCode?: string;
   biteshipWaybillId?: string;
   adminNote?: string;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

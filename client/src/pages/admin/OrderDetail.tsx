@@ -18,11 +18,12 @@ const ORDER_STATUS_OPTIONS = [
 ];
 
 const PAYMENT_STATUS_OPTIONS = [
-  { value: 'pending',  label: 'Pending' },
-  { value: 'paid',     label: 'Lunas' },
-  { value: 'failed',   label: 'Gagal' },
-  { value: 'expired',  label: 'Expired' },
-  { value: 'refunded', label: 'Refund' },
+  { value: 'pending',         label: 'Pending' },
+  { value: 'paid',            label: 'Lunas' },
+  { value: 'failed',          label: 'Gagal' },
+  { value: 'expired',         label: 'Expired' },
+  { value: 'refund_pending',  label: 'Menunggu Refund' },
+  { value: 'refunded',        label: 'Refund' },
 ];
 
 const ORDER_STATUS_COLOR: Record<string, string> = {
@@ -35,11 +36,12 @@ const ORDER_STATUS_COLOR: Record<string, string> = {
 };
 
 const PAYMENT_STATUS_COLOR: Record<string, string> = {
-  pending:  'bg-yellow-100 text-yellow-700',
-  paid:     'bg-green-100 text-green-700',
-  failed:   'bg-red-100 text-red-700',
-  expired:  'bg-gray-100 text-gray-600',
-  refunded: 'bg-purple-100 text-purple-700',
+  pending:         'bg-yellow-100 text-yellow-700',
+  paid:            'bg-green-100 text-green-700',
+  failed:          'bg-red-100 text-red-700',
+  expired:         'bg-gray-100 text-gray-600',
+  refund_pending:  'bg-orange-100 text-orange-700',
+  refunded:        'bg-purple-100 text-purple-700',
 };
 
 export default function AdminOrderDetail() {
@@ -55,6 +57,7 @@ export default function AdminOrderDetail() {
   const [shipLoading, setShipLoading] = useState(false);
   const [fetchingResi, setFetchingResi] = useState(false);
   const [delivering, setDelivering] = useState(false);
+  const [markingRefunded, setMarkingRefunded] = useState(false);
   const [tracking, setTracking] = useState<BiteshipTracking | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState('');
@@ -132,6 +135,23 @@ export default function AdminOrderDetail() {
       setSaveMsg(err instanceof Error ? err.message : 'Gagal menerima pesanan');
     } finally {
       setAccepting(false);
+    }
+  };
+
+  const handleMarkRefunded = async () => {
+    if (!id) return;
+    const confirmed = window.confirm('Konfirmasi bahwa dana sudah ditransfer ke customer?');
+    if (!confirmed) return;
+    setMarkingRefunded(true);
+    setSaveMsg('');
+    try {
+      const data = await api.updateOrderStatus(id, { paymentStatus: 'refunded' });
+      setOrder(data);
+      setForm((f) => ({ ...f, paymentStatus: 'refunded' }));
+    } catch (err) {
+      setSaveMsg(err instanceof Error ? err.message : 'Gagal menandai refund');
+    } finally {
+      setMarkingRefunded(false);
     }
   };
 
@@ -374,6 +394,22 @@ export default function AdminOrderDetail() {
             <h2 className="font-semibold text-gray-700 mb-3">Pembayaran</h2>
             {order.orderCode && <p className="text-sm text-gray-600">Kode Pesanan: <span className="font-mono">{order.orderCode}</span></p>}
             {order.paymentMethod && <p className="text-sm text-gray-600">Metode: {order.paymentMethod}</p>}
+            {order.paymentStatus === 'refund_pending' && (
+              <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3">
+                <p className="text-sm text-yellow-800">
+                  Menunggu refund manual sebesar <span className="font-semibold">{fmt(order.total)}</span>.
+                  Mayar tidak memproses refund otomatis — transfer dulu ke rekening customer.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleMarkRefunded}
+                  disabled={markingRefunded}
+                  className="mt-3 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {markingRefunded ? 'Menyimpan...' : 'Tandai sudah direfund'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

@@ -410,6 +410,29 @@ export const api = {
     return res.json();
   },
 
+  deleteAdminOrder: async (id: string): Promise<{ message: string; warning: boolean }> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/orders/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body?.message ?? 'Gagal menghapus pesanan');
+    return body;
+  },
+
+  restoreAdminOrder: async (id: string): Promise<void> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/orders/${id}/restore`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      throw new Error(body?.message ?? 'Gagal memulihkan pesanan');
+    }
+  },
+
   // Reports — admin
   getReportsSummary: async (range: ReportsRange): Promise<ReportsSummary> => {
     const token = localStorage.getItem('adminToken');

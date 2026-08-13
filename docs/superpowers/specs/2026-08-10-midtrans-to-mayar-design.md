@@ -259,3 +259,74 @@ Ditutup dengan `cd client && npx tsc -b && npm run lint`.
 - Akun sandbox Mayar + API key sandbox, diisi ke `.env`
 - MCP server Mayar terpasang (`https://mcp.mayar.id/sse`, Bearer API key)
 - URL webhook terdaftar via `POST /hl/v2/webhooks/update`; untuk pengujian lokal butuh tunnel publik
+
+## Hasil verifikasi (2026-08-13)
+
+Dijalankan dengan curl terhadap akun sandbox `katigasandbox`. MCP server Mayar tidak dipasang — tidak diperlukan untuk keempat verifikasi ini.
+
+### Verifikasi #4 — base URL sandbox
+
+`api.mayar.io` (yang tertulis di docs Mayar) tidak reachable: connection timeout. Sandbox yang hidup adalah **`api.mayar.club`**, dashboard **`web.mayar.club`**.
+
+| Base URL | Key sandbox | Key produksi |
+|---|---|---|
+| `https://api.mayar.club/hl/v2` | 200 | 401 |
+| `https://api.mayar.id/hl/v2` | 401 | 200 |
+| `https://api.mayar.io/hl/v2` | timeout | timeout |
+
+Key terikat ke satu environment; tidak ada toggle. Satu alamat email bisa dipakai untuk akun produksi dan sandbox sekaligus (`accountId` berbeda).
+
+Nilai env: `MAYAR_API_URL=https://api.mayar.club/hl/v2` (sandbox), `https://api.mayar.id/hl/v2` (produksi).
+
+### Verifikasi #1 — v2 menerima `redirectUrl`
+
+**Ya.** `POST /hl/v2/payments/create` mengembalikan 200 dengan `data.link`, dan menerima `redirectUrl`, `expiredAt`, serta `extraData`. Tidak perlu turun ke v1 `POST /hl/v1/payment/create`; pemetaan order lewat `extraData.orderId` tetap tersedia di samping `paymentRef`.
+
+Respons: `data.id` (= `paymentLinkId`), `data.transactionId`, `data.link`, `data.status` (`unpaid`), `data.extraData` (object).
+
+Redirect kembali ke `redirectUrl` sesudah bayar belum diamati — menunggu satu pembayaran sandbox diselesaikan.
+
+### Verifikasi #2 — nilai status transaksi
+
+Ini menyimpang dari asumsi spec dan mengubah Task 5.
+
+`GET /transactions/{id}` punya **dua** field status yang bergerak sendiri-sendiri:
+
+| Tahap | `data.status` | `data.paymentLink.status` |
+|---|---|---|
+| Sebelum bayar | `created` | `unpaid` |
+| Sesudah kedaluwarsa | `created` | `closed` |
+| Sesudah bayar | belum diamati | belum diamati |
+
+**`data.status` tidak pernah menjadi `expired`.** Kedaluwarsa hanya terbaca dari `paymentLink.status === 'closed'`. `MAYAR_STATUS_MAP` yang hanya membaca `data.status` akan membiarkan pesanan kedaluwarsa selamanya `pending`, sehingga sapuan Task 6 tidak pernah menutupnya dan voucher tidak pernah dilepas.
+
+Konsekuensi untuk Task 3 dan 5: `getTransaction` wajib mengembalikan `paymentLink.status` juga, dan pemetaan disimpulkan dari kedua nilai — `paid` dari `data.status`, `expired` dari `linkStatus === 'closed'` saat belum `paid`, sisanya `pending`.
+
+Catatan bentuk respons lain:
+- `data.extraData` kembali sebagai **string JSON**, bukan object seperti pada respons create. Wajib `JSON.parse`.
+- `data.expirationDate` selalu `null`; kedaluwarsa sebenarnya di `data.paymentLink.expiredAt` (epoch ms).
+- `data.paymentMethod` `null` sebelum dibayar.
+- `data.createdAt` / `updatedAt` epoch ms, bukan ISO string.
+
+### Verifikasi #3 — payload webhook
+
+Belum dijalankan; butuh URL penampung publik.
+
+### Metode pembayaran aktif di sandbox
+
+QRIS, Transfer Bank (VA), E-Wallet, Mini Market.
+
+### Tambahan temuan (2026-08-13, lanjutan)
+
+**`paymentMethod` terisi sebelum lunas.** Begitu pembeli memilih kanal (mis. VA Mandiri), `data.paymentMethod` berubah jadi `va/MANDIRI` padahal `status` masih `created` dan dana belum masuk. `paymentMethod` tidak boleh dipakai sebagai penanda lunas.
+
+**Daftar transaksi terbelah dua.** `GET /transactions` hanya memuat transaksi yang sudah dibayar — inilah sebabnya dashboard sandbox tampak kosong. Yang belum dibayar ada di `GET /transactions/unpaid`, dan di sana status memakai kosakata ketiga: `active`, dengan `type: "payment_request"`. Jadi satu objek yang sama dilaporkan sebagai `created` (detail transaksi), `unpaid`/`closed` (paymentLink), atau `active` (daftar unpaid), tergantung endpoint.
+
+**Tidak ada endpoint hapus.** Seluruh API Mayar hanya mengenal `close`/`reopen` untuk product, invoice, dan payment request. Transaksi permanen. Yang terdekat dengan "membatalkan" adalah menutup payment request:
+
+```
+POST /payments/{paymentLinkId}/close   → {"statusCode":200,"messages":"success"}
+efek: paymentLink.status unpaid → closed; data.status transaksi tetap created
+```
+
+Diverifikasi di sandbox. Konsekuensi untuk Task 7: `close` memakai **`paymentLinkId`**, bukan `transactionId`, sedangkan `paymentLinkId` sebelumnya dibuang saat membuat order. Sudah ditambahkan sebagai kolom `paymentLinkId` di `models/Order.js` dan diisi dari `payment.id`.
