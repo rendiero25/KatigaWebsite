@@ -175,6 +175,7 @@ export default function CartDrawer() {
 
               <Link
                 to="/checkout"
+                state={{ selectedIds: items.map((item) => item.cartItemId) }}
                 onClick={() => setIsOpen(false)}
                 className="bg-[#4F68AF] text-white text-center uppercase tracking-[0.18em] text-[13px] px-6 py-4 hover:bg-[#2B3A67] transition"
               >

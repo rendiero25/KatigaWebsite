@@ -82,20 +82,21 @@ export default function Checkout() {
     const allCart = getCart();
     const selectedIds = state?.selectedIds?.length ? state.selectedIds : getStoredSelectedIds();
 
-    if (!selectedIds.length) {
-      navigate('/keranjang');
-      return;
-    }
-
-    sessionStorage.setItem(CHECKOUT_SELECTED_IDS_KEY, JSON.stringify(selectedIds));
-
-    const filtered = allCart.filter((c) => selectedIds.includes(c.cartItemId));
+    // Checkout langsung dari drawer tidak membawa pilihan item, dan pilihan tersimpan bisa basi
+    // setelah item dihapus — keduanya jatuh ke seluruh isi keranjang, bukan dilempar balik.
+    const scoped = allCart.filter((c) => selectedIds.includes(c.cartItemId));
+    const filtered = scoped.length ? scoped : allCart;
 
     if (!filtered.length) {
       sessionStorage.removeItem(CHECKOUT_SELECTED_IDS_KEY);
-      navigate('/keranjang');
+      navigate('/produk');
       return;
     }
+
+    sessionStorage.setItem(
+      CHECKOUT_SELECTED_IDS_KEY,
+      JSON.stringify(filtered.map((c) => c.cartItemId))
+    );
     setCart(filtered);
   }, [navigate, location.state]);
 
@@ -201,10 +202,10 @@ export default function Checkout() {
                       Coba lagi
                     </button>
                     <button
-                      onClick={() => navigate('/keranjang')}
+                      onClick={() => window.dispatchEvent(new Event('cartDrawerOpen'))}
                       className="uppercase tracking-[0.12em] text-[12px] underline underline-offset-2 cursor-pointer"
                     >
-                      Kembali ke keranjang
+                      Buka keranjang
                     </button>
                   </div>
                 </div>

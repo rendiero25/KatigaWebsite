@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
 const Home = lazy(() => import('./pages/Home'));
@@ -45,7 +45,6 @@ const SyaratKetentuan = lazy(() => import('./pages/SyaratKetentuan'));
 const KebijakanPrivasi = lazy(() => import('./pages/KebijakanPrivasi'));
 const KebijakanPengembalian = lazy(() => import('./pages/KebijakanPengembalian'));
 const FAQ = lazy(() => import('./pages/FAQ'));
-const Keranjang = lazy(() => import('./pages/Keranjang'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const Pesanan = lazy(() => import('./pages/Pesanan'));
 const PesananDetail = lazy(() => import('./pages/PesananDetail'));
@@ -104,7 +103,8 @@ function App() {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/daftar" element={<Daftar />} />
         <Route path="/masuk" element={<Masuk />} />
-        <Route path="/keranjang" element={<Keranjang />} />
+        {/* Halaman keranjang sudah digantikan drawer; tautan lama jangan jadi halaman kosong. */}
+        <Route path="/keranjang" element={<Navigate to="/produk" replace />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/pesanan" element={<Pesanan />} />
         <Route path="/pesanan/:id" element={<PesananDetail />} />

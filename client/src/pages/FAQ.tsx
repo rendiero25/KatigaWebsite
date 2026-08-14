@@ -146,7 +146,7 @@ export default function FAQ() {
                 <div>
                   <FaqItem
                     question="Bagaimana cara menggunakan kode voucher?"
-                    answer="Masukkan kode voucher pada halaman Keranjang atau Checkout sebelum menyelesaikan pembayaran. Diskon akan otomatis diterapkan pada total pesanan jika kode valid."
+                    answer="Masukkan kode voucher pada halaman Checkout sebelum menyelesaikan pembayaran. Diskon akan otomatis diterapkan pada total pesanan jika kode valid."
                   />
                   <FaqItem
                     question="Apakah voucher saya hangus jika pesanan dibatalkan?"

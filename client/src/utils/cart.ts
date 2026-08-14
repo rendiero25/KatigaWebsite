@@ -218,9 +218,3 @@ export function getCartCount(): number {
 export function getCartTotal(): number {
   return getCart().reduce((sum, c) => sum + c.priceNumeric * c.quantity, 0);
 }
-
-export function getSelectedTotal(selectedIds: Set<string>, cart?: CartItem[]): number {
-  return (cart ?? getCart())
-    .filter((c) => selectedIds.has(c.cartItemId))
-    .reduce((sum, c) => sum + c.priceNumeric * c.quantity, 0);
-}
