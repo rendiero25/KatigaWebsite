@@ -37,6 +37,74 @@ const categoryId = (category: Product['category']): string =>
 const categoryName = (category: Product['category']): string =>
   typeof category === 'string' ? '' : category?.name ?? '';
 
+// Kurir menagih berat terbesar antara berat aktual dan berat volumetrik (P x L x T / 6000),
+// jadi dimensi yang diisi harus ukuran paket terkemas, bukan ukuran barang terbentang.
+const VOLUMETRIC_DIVISOR = 6000;
+
+interface ShippingWeightPreview {
+  actualKg: number;
+  volumetricKg: number;
+  chargeableKg: number;
+  volumetricDominates: boolean;
+}
+
+const formatKg = (value: number): string =>
+  `${value.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg`;
+
+const getShippingWeightPreview = (
+  weightGrams: string,
+  length: string,
+  width: string,
+  height: string
+): ShippingWeightPreview | null => {
+  const grams = Number(weightGrams);
+  const dims = [Number(length), Number(width), Number(height)];
+
+  if (!Number.isFinite(grams) || grams <= 0) return null;
+  if (!dims.every((value) => Number.isFinite(value) && value > 0)) return null;
+
+  const actualKg = grams / 1000;
+  const volumetricKg = (dims[0] * dims[1] * dims[2]) / VOLUMETRIC_DIVISOR;
+
+  return {
+    actualKg,
+    volumetricKg,
+    chargeableKg: Math.max(actualKg, volumetricKg),
+    volumetricDominates: volumetricKg > actualKg,
+  };
+};
+
+const renderShippingWeightPreview = (preview: ShippingWeightPreview | null) => {
+  if (!preview) {
+    return (
+      <p className="text-xs text-gray-400">
+        Isi berat dan dimensi paket untuk melihat berat yang ditagih kurir.
+      </p>
+    );
+  }
+
+  return (
+    <div
+      className={`rounded-md border px-3 py-2 text-xs ${
+        preview.volumetricDominates
+          ? 'border-amber-200 bg-amber-50 text-amber-800'
+          : 'border-gray-200 bg-gray-50 text-gray-600'
+      }`}
+    >
+      <p>
+        Berat ditagih <span className="font-semibold">{formatKg(preview.chargeableKg)}</span>
+        {' '}&mdash; aktual {formatKg(preview.actualKg)}, volumetrik {formatKg(preview.volumetricKg)}
+      </p>
+      {preview.volumetricDominates && (
+        <p className="mt-1">
+          Berat volumetrik melampaui berat aktual, ongkir mengikuti angka ini. Pastikan dimensi diisi
+          ukuran paket terkemas (terlipat/dus), bukan ukuran barang terbentang.
+        </p>
+      )}
+    </div>
+  );
+};
+
 interface Product {
   _id: string;
   name: string;
@@ -749,7 +817,7 @@ export default function AdminProducts() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-gray-500">Dimensi (cm) — P × L × T</Label>
+                  <Label className="text-xs text-gray-500">Dimensi paket terkemas (cm) — P × L × T</Label>
                   <div className="grid grid-cols-3 gap-2">
                     <Input type="number" min="1" value={formData.dimensionLength}
                       onChange={(e) => setMainDimension('dimensionLength', e.target.value)}
@@ -761,6 +829,14 @@ export default function AdminProducts() {
                       onChange={(e) => setMainDimension('dimensionHeight', e.target.value)}
                       placeholder="Tinggi" className="h-9 text-sm" />
                   </div>
+                  {renderShippingWeightPreview(
+                    getShippingWeightPreview(
+                      formData.weightGrams,
+                      formData.dimensionLength,
+                      formData.dimensionWidth,
+                      formData.dimensionHeight
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -911,7 +987,7 @@ export default function AdminProducts() {
                           </div>
                         </div>
                         <div className="space-y-1.5">
-                          <Label className="text-xs text-gray-400">Dimensi (cm)</Label>
+                          <Label className="text-xs text-gray-400">Dimensi paket terkemas (cm)</Label>
                           <div className="grid grid-cols-3 gap-2">
                             <div className="space-y-1">
                               <Label className="text-xs text-gray-400">Panjang</Label>
@@ -932,6 +1008,14 @@ export default function AdminProducts() {
                                 placeholder={formData.dimensionHeight || "1"} className="h-8 text-sm" />
                             </div>
                           </div>
+                          {renderShippingWeightPreview(
+                            getShippingWeightPreview(
+                              v.weightGrams || formData.weightGrams,
+                              v.dimensionLength || formData.dimensionLength,
+                              v.dimensionWidth || formData.dimensionWidth,
+                              v.dimensionHeight || formData.dimensionHeight
+                            )
+                          )}
                         </div>
 
                         {/* Variant image picker */}
