@@ -222,7 +222,7 @@ router.put('/:id', auth, async (req, res) => {
     // Mayar tidak punya endpoint refund, jadi uangnya dikirim manual. Order dipindah ke
     // refund_pending supaya kewajiban itu muncul di panel admin, sama seperti jalur
     // pembatalan pesanan — tanpa ini resolusi refund hanya jadi catatan di komplain.
-    if (status === 'resolved' && complaint.resolution?.type === 'refund') {
+    if (status === 'resolved' && previousStatus !== 'resolved' && complaint.resolution?.type === 'refund') {
       const order = await Order.findById(complaint.order);
       if (order && order.paymentStatus === 'paid') {
         order.paymentStatus = 'refund_pending';
