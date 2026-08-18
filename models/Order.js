@@ -75,6 +75,9 @@ const orderSchema = new mongoose.Schema({
   biteshipWaybillId:    { type: String, default: '' },
 
   adminNote: { type: String, default: '' },
+  // Tenggat komplain dihitung dari sini. Sebelumnya memakai updatedAt, yang bergeser
+  // setiap kali order ditulis ulang — misalnya admin mengubah catatan.
+  deliveredAt: { type: Date, default: null },
   deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 

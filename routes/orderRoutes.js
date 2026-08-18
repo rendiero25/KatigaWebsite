@@ -1028,6 +1028,7 @@ async function markOrderShipped(order, trackingCode) {
 async function markOrderDelivered(order) {
   if (order.orderStatus === 'delivered') return;
   order.orderStatus = 'delivered';
+  order.deliveredAt = new Date();
   await order.save();
   try {
     await notifyCustomer({

@@ -6,6 +6,7 @@ const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customerAuth');
 const upload = require('../middleware/upload');
 const { notifyAdmin, notifyCustomer } = require('../utils/notify');
+const { createOrder: biteshipCreateOrder } = require('../services/biteshipService');
 
 const COMPLAINT_WINDOW_DAYS = 3;
 
@@ -40,7 +41,8 @@ router.post('/', customerAuth, upload.array('photos', 5), async (req, res) => {
       return res.status(400).json({ message: 'Komplain hanya bisa dibuat setelah pesanan diterima' });
     }
 
-    const deliveredAt = order.updatedAt;
+    // Order lama belum punya deliveredAt, jadi updatedAt tetap dipakai sebagai cadangan.
+    const deliveredAt = order.deliveredAt ?? order.updatedAt;
     const windowMs = COMPLAINT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
     if (Date.now() - new Date(deliveredAt).getTime() > windowMs) {
       return res.status(400).json({ message: `Batas waktu komplain (${COMPLAINT_WINDOW_DAYS} hari setelah diterima) telah berlewat` });
@@ -199,6 +201,28 @@ router.put('/:id', auth, async (req, res) => {
 
     await complaint.save();
 
+    // Mayar tidak punya endpoint refund, jadi uangnya dikirim manual. Order dipindah ke
+    // refund_pending supaya kewajiban itu muncul di panel admin, sama seperti jalur
+    // pembatalan pesanan — tanpa ini resolusi refund hanya jadi catatan di komplain.
+    if (status === 'resolved' && complaint.resolution?.type === 'refund') {
+      const order = await Order.findById(complaint.order);
+      if (order && order.paymentStatus === 'paid') {
+        order.paymentStatus = 'refund_pending';
+        await order.save();
+        try {
+          await notifyAdmin({
+            type: 'complaint_update',
+            title: 'Refund komplain menunggu transfer',
+            message: `Pesanan ${order.orderCode} — transfer refund Rp${order.total.toLocaleString('id-ID')}`,
+            link: `/admin/orders/${order._id}`,
+            relatedId: order._id,
+          });
+        } catch (notifyErr) {
+          console.error('[Notify] refund pending notify failed:', notifyErr.message);
+        }
+      }
+    }
+
     if (status && status !== previousStatus) {
       try {
         await notifyCustomer({
@@ -217,6 +241,60 @@ router.put('/:id', auth, async (req, res) => {
     res.json(complaint);
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── POST /api/complaints/:id/ship-replacement — admin: kirim barang pengganti ───
+router.post('/:id/ship-replacement', auth, async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) return res.status(404).json({ message: 'Komplain tidak ditemukan' });
+    if (complaint.resolution?.type !== 'replace') {
+      return res.status(400).json({ message: 'Hanya komplain dengan resolusi ganti barang yang bisa dikirim penggantinya' });
+    }
+    if (complaint.replacementShipment?.biteshipOrderId) {
+      return res.status(400).json({ message: 'Barang pengganti untuk komplain ini sudah dikirim' });
+    }
+
+    const order = await Order.findById(complaint.order);
+    if (!order) return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
+
+    // Barang pengganti memakai alamat, kurir, dan item yang sama dengan pesanan asli.
+    const shipment = await biteshipCreateOrder(order);
+
+    complaint.replacementShipment = {
+      biteshipOrderId: shipment.id ?? '',
+      trackingCode: shipment.courier?.tracking_id ?? '',
+      waybillId: shipment.courier?.waybill_id ?? '',
+      courier: order.shippingCourier,
+      service: order.shippingServiceName || order.shippingService,
+      shippedAt: new Date(),
+    };
+    await complaint.save();
+
+    try {
+      await notifyCustomer({
+        customerId: complaint.customer,
+        type: 'complaint_update',
+        title: 'Barang pengganti dikirim',
+        message: complaint.replacementShipment.trackingCode
+          ? `Barang pengganti dalam perjalanan — resi: ${complaint.replacementShipment.trackingCode}`
+          : 'Barang pengganti sedang disiapkan kurir',
+        link: `/pesanan/${complaint.order}`,
+        relatedId: complaint._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] replacement notify failed:', notifyErr.message);
+    }
+
+    res.json(complaint);
+  } catch (err) {
+    if (err.response || err.request) {
+      console.error('[Complaint Ship-Replacement] Biteship error:', JSON.stringify(err.response?.data ?? err.message));
+      return res.status(502).json({ message: 'Gagal memesan pengiriman pengganti ke Biteship' });
+    }
+    console.error('[Complaint Ship-Replacement]', err);
+    res.status(500).json({ message: 'Gagal mengirim barang pengganti' });
   }
 });
 
