@@ -200,10 +200,12 @@ interface SectionProps {
 
 function Section({ title, children }: SectionProps) {
   return (
-    <div className="border-t border-[#E9E9EA] pt-8 mt-8">
-      <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] mb-4">{title}</p>
+    <section>
+      <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] pb-2 mb-3 border-b border-[#E9E9EA]">
+        {title}
+      </p>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -379,7 +381,9 @@ export default function PesananDetail() {
   const canDownloadInvoice = order.paymentStatus === 'paid' || order.orderStatus === 'cancelled'
   const currentStep = STATUS_STEP_INDEX[order.orderStatus] ?? 0
 
-  const deliveredAt = order.orderStatus === 'delivered' ? new Date(order.updatedAt).getTime() : null
+  const deliveredAt = order.orderStatus === 'delivered'
+    ? new Date(order.deliveredAt ?? order.updatedAt).getTime()
+    : null
   const complaintWindowExpired = deliveredAt
     ? nowMs - deliveredAt > COMPLAINT_WINDOW_DAYS * 24 * 60 * 60 * 1000
     : true
@@ -400,10 +404,10 @@ export default function PesananDetail() {
         </Link>
 
         {/* Order header */}
-        <div className="flex items-start justify-between pb-2">
-          <div>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[#E9E9EA] pb-4">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p className="uppercase text-[13px] text-[#1E1E1E]">#{order._id.slice(-8).toUpperCase()}</p>
-            <p className="text-[13px] text-[#6F6F71] mt-1">
+            <p className="text-[13px] text-[#6F6F71]">
               {new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
@@ -425,7 +429,7 @@ export default function PesananDetail() {
 
         {/* Status stepper */}
         {order.orderStatus !== 'cancelled' ? (
-          <div className="mt-6">
+          <div className="mt-5">
             <div className="flex items-end">
               {STEPS.map((step, i) => (
                 <div key={step} className="flex items-end flex-1 last:flex-none">
@@ -449,10 +453,13 @@ export default function PesananDetail() {
             </div>
           </div>
         ) : (
-          <div className="border border-[#AE4B4B]/40 px-4 py-3 mt-6 text-[13px] text-[#AE4B4B] text-center">
+          <div className="border border-[#AE4B4B]/40 px-4 py-3 mt-5 text-[13px] text-[#AE4B4B] text-center">
             Pesanan Dibatalkan
           </div>
         )}
+
+        <div className="mt-8 grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="min-w-0 flex flex-col gap-8">
 
         {/* Complaint status */}
         {complaint && complaint._id && (
@@ -517,6 +524,36 @@ export default function PesananDetail() {
                 {complaint.resolution.note && (
                   <p className="text-[13px] text-[#6F6F71] mt-0.5">{complaint.resolution.note}</p>
                 )}
+                {complaint.resolution.type === 'refund' && order.paymentStatus === 'refund_pending' && (
+                  <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                    Dana sedang diproses dan akan ditransfer ke rekening kamu.
+                  </p>
+                )}
+                {complaint.resolution.type === 'replace' && (
+                  complaint.replacementShipment?.trackingCode ? (
+                    <div className="flex items-center gap-2 mt-3 px-3 py-2 border border-[#E9E9EA]">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] text-[#6F6F71] uppercase tracking-[0.1em]">
+                          Resi Pengganti — {complaint.replacementShipment.courier.toUpperCase()}
+                        </p>
+                        <p className="text-[13px] text-[#1E1E1E] font-mono truncate">
+                          {complaint.replacementShipment.trackingCode}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(complaint.replacementShipment?.trackingCode ?? '')}
+                        className="text-[12px] uppercase tracking-[0.08em] text-[#6F6F71] border border-[#E9E9EA] px-2 py-1 hover:text-[#1E1E1E] hover:border-[#1E1E1E]/40 transition-colors shrink-0 cursor-pointer"
+                      >
+                        Salin
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                      Barang pengganti sedang disiapkan. Nomor resi muncul di sini setelah kurir menjemput.
+                    </p>
+                  )
+                )}
               </div>
             )}
 
@@ -535,38 +572,6 @@ export default function PesananDetail() {
             )}
           </Section>
         )}
-
-        {/* Shipping address */}
-        <Section title="Alamat Kirim">
-          <p className="text-[13px] text-[#1E1E1E]">{order.shippingAddress.recipientName}</p>
-          <p className="text-[13px] text-[#6F6F71] mt-1">{order.shippingAddress.phone}</p>
-          <p className="text-[13px] text-[#6F6F71]">{order.shippingAddress.street}</p>
-          <p className="text-[13px] text-[#6F6F71]">
-            {order.shippingAddress.areaName}{order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ''}
-          </p>
-          <div className="pt-3 mt-3 border-t border-[#E9E9EA]">
-            <p className="text-[13px] text-[#6F6F71]">
-              <span className="text-[#1E1E1E]">{order.shippingCourier.toUpperCase()}</span>
-              {' — '}{order.shippingServiceName}
-              {order.estimatedDays ? ` (${order.estimatedDays})` : ''}
-            </p>
-            {order.biteshipTrackingCode && ['shipped', 'delivered'].includes(order.orderStatus) && (
-              <div className="flex items-center gap-2 mt-3 px-3 py-2 border border-[#E9E9EA]">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-[#6F6F71] uppercase tracking-[0.1em]">No. Resi</p>
-                  <p className="text-[13px] text-[#1E1E1E] font-mono truncate">{order.biteshipTrackingCode}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard.writeText(order.biteshipTrackingCode ?? '')}
-                  className="text-[12px] uppercase tracking-[0.08em] text-[#6F6F71] border border-[#E9E9EA] px-2 py-1 hover:text-[#1E1E1E] hover:border-[#1E1E1E]/40 transition-colors shrink-0 cursor-pointer"
-                >
-                  Salin
-                </button>
-              </div>
-            )}
-          </div>
-        </Section>
 
         {/* Tracking */}
         {hasTrackingSection && (
@@ -644,18 +649,17 @@ export default function PesananDetail() {
                 && reviewFormItem?.productId === item.product
               return (
                 <div key={i} className="border-b border-[#E9E9EA] last:border-0">
-                  <div className="flex items-center gap-4 py-4">
+                  <div className="flex items-center gap-4 py-3">
                     <img
                       src={api.getImageUrl(item.image)}
                       alt={item.name}
-                      className="w-24 h-24 object-cover bg-[#F9F7F2] shrink-0"
+                      className="w-16 h-16 object-cover bg-[#F9F7F2] shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="uppercase text-[13px] text-[#1E1E1E] truncate">{item.name}</p>
-                      {item.variantName && (
-                        <p className="text-[13px] text-[#6F6F71] mt-1">{item.variantName}</p>
-                      )}
-                      <p className="text-[13px] text-[#6F6F71]">{item.quantity} × {fmt(item.priceNumeric)}</p>
+                      <p className="text-[13px] text-[#6F6F71]">
+                        {item.variantName ? `${item.variantName} · ` : ''}{item.quantity} × {fmt(item.priceNumeric)}
+                      </p>
                       {order.orderStatus === 'delivered' && status?.canReview && (
                         <button
                           type="button"
@@ -706,6 +710,10 @@ export default function PesananDetail() {
           </div>
         </Section>
 
+        </div>
+
+        <aside className="flex flex-col gap-8 lg:sticky lg:top-24">
+
         {/* Cost summary */}
         <Section title="Ringkasan Biaya">
           <div>
@@ -740,7 +748,7 @@ export default function PesananDetail() {
 
         {/* Actions */}
         <Section title="Aksi">
-          <div className="flex flex-col gap-3 sm:max-w-xs">
+          <div className="flex flex-col gap-2.5">
             {canRepay && (
               <button
                 type="button"
@@ -798,6 +806,39 @@ export default function PesananDetail() {
             )}
           </div>
         </Section>
+
+        {/* Shipping */}
+        <Section title="Pengiriman">
+          <p className="text-[13px] text-[#1E1E1E]">{order.shippingAddress.recipientName}</p>
+          <p className="text-[13px] text-[#6F6F71]">{order.shippingAddress.phone}</p>
+          <p className="text-[13px] text-[#6F6F71] mt-1">{order.shippingAddress.street}</p>
+          <p className="text-[13px] text-[#6F6F71]">
+            {order.shippingAddress.areaName}{order.shippingAddress.postalCode ? ` ${order.shippingAddress.postalCode}` : ''}
+          </p>
+          <p className="text-[13px] text-[#6F6F71] pt-3 mt-3 border-t border-[#E9E9EA]">
+            <span className="text-[#1E1E1E]">{order.shippingCourier.toUpperCase()}</span>
+            {' — '}{order.shippingServiceName}
+            {order.estimatedDays ? ` (${order.estimatedDays})` : ''}
+          </p>
+          {order.biteshipTrackingCode && ['shipped', 'delivered'].includes(order.orderStatus) && (
+            <div className="flex items-center gap-2 mt-3 px-3 py-2 border border-[#E9E9EA]">
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-[#6F6F71] uppercase tracking-[0.1em]">No. Resi</p>
+                <p className="text-[13px] text-[#1E1E1E] font-mono truncate">{order.biteshipTrackingCode}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(order.biteshipTrackingCode ?? '')}
+                className="text-[12px] uppercase tracking-[0.08em] text-[#6F6F71] border border-[#E9E9EA] px-2 py-1 hover:text-[#1E1E1E] hover:border-[#1E1E1E]/40 transition-colors shrink-0 cursor-pointer"
+              >
+                Salin
+              </button>
+            </div>
+          )}
+        </Section>
+
+        </aside>
+        </div>
       </div>
 
       {showComplaintForm && order && (
