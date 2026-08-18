@@ -33,7 +33,12 @@
       "mcp__Claude_in_Chrome__computer",
       "mcp__Claude_in_Chrome__read_console_messages",
       "mcp__Claude_in_Chrome__browser_batch",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
+      "mcp__claude-in-chrome__computer",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__read_page"
     ]
   }
 }

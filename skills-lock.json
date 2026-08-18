@@ -36,6 +36,12 @@
       "sourceType": "github",
       "skillPath": "higgsfield-soul-id/SKILL.md",
       "computedHash": "6d468aafc15bacee9f4e86c2726e8351e18fe588301974332535db5a666de7c6"
+    },
+    "mayar-v2": {
+      "source": "mayarid/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mayar-v2/SKILL.md",
+      "computedHash": "dfcb351e2cbb0d97093e2bc49eb9692a5079423c2d43af09f840b2fbeab7a9da"
     }
   }
 }

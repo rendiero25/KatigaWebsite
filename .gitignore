@@ -5,6 +5,10 @@ node_modules/
 # MCP config berisi API key Mayar
 .mcp.json
 
+# Skill terpasang di .agents/skills; folder ini cuma junction ke sana
+.claude/skills/
+*.local.bak
+
 # Frontend
 client/node_modules/
 client/dist/
