@@ -60,6 +60,33 @@ app.post('/api/orders/webhook/biteship', express.json(), require('./routes/order
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ─── Sapuan terjadwal ───
+// setInterval di bawah hanya hidup saat server dijalankan sebagai proses sendiri. Di Vercel
+// modul ini dimuat sebagai fungsi serverless yang mati begitu request selesai, jadi jaring
+// pengaman untuk webhook yang meleset harus dipanggil dari luar — lihat "crons" di vercel.json.
+app.get('/api/cron/sweep', async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    console.error('[Cron] CRON_SECRET belum diset — endpoint sapuan dinonaktifkan');
+    return res.status(503).json({ message: 'CRON_SECRET belum dikonfigurasi di server' });
+  }
+  if (req.header('Authorization')?.replace('Bearer ', '') !== secret) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const results = await Promise.allSettled([
+    checkExpiringPromos(),
+    syncBiteshipDeliveries(),
+    syncPendingPayments(),
+  ]);
+  const failed = results
+    .map((r, i) => (r.status === 'rejected' ? ['promo', 'biteship', 'payment'][i] : null))
+    .filter(Boolean);
+
+  if (failed.length) console.error('[Cron] sapuan gagal:', failed.join(', '));
+  res.json({ ok: failed.length === 0, failed, ranAt: new Date().toISOString() });
+});
+
 // Serve uploaded files with loose CORS (Images are usually public)
 app.use('/uploads', cors({ origin: '*', credentials: false }), express.static(path.join(__dirname, 'uploads')));
 
