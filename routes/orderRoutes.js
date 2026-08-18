@@ -237,14 +237,10 @@ const syncPaymentStatus = async (order) => {
 const webhookHandler = async (req, res) => {
   try {
     const payload = req.body ?? {};
-    // Rantai nama field ini sengaja longgar: payload asli Mayar belum pernah tertangkap
-    // (verifikasi #3 belum tuntas). Sederhanakan jadi satu nama begitu payloadnya terlihat.
-    const transactionId =
-      payload.transactionId ??
-      payload.data?.transactionId ??
-      payload.id ??
-      payload.data?.id ??
-      null;
+    // Bentuk payload diverifikasi dari riwayat webhook Mayar 14 Agt 2026:
+    // { event: 'payment.received', data: { transactionId, status, extraData: { orderId } } }.
+    // data.transactionId sama dengan paymentRef yang kita simpan.
+    const transactionId = payload.data?.transactionId ?? null;
 
     if (!transactionId) {
       console.error('[Webhook Mayar] payload tanpa transactionId:', JSON.stringify(payload));
@@ -952,22 +948,7 @@ router.put('/:id/ship', auth, async (req, res) => {
     if (order.orderStatus !== 'packing') {
       return res.status(400).json({ message: 'Hanya pesanan berstatus "Dikemas" yang dapat dikirim' });
     }
-    const { trackingCode } = req.body;
-    order.orderStatus = 'shipped';
-    if (trackingCode) order.biteshipTrackingCode = trackingCode;
-    await order.save();
-    try {
-      await notifyCustomer({
-        customerId: order.customer,
-        type: 'order_shipped',
-        title: 'Pesanan sedang dikirim',
-        message: `Pesananmu sedang dalam perjalanan${trackingCode ? ` — resi: ${trackingCode}` : ''}`,
-        link: `/pesanan/${order._id}`,
-        relatedId: order._id,
-      });
-    } catch (notifyErr) {
-      console.error('[Notify] ship notify failed:', notifyErr.message);
-    }
+    await markOrderShipped(order, req.body.trackingCode);
     res.json(order);
   } catch (err) {
     console.error('[Ship Order]', err);
@@ -1017,6 +998,32 @@ router.post('/:id/sync-biteship', auth, async (req, res) => {
   }
 });
 
+// Status Biteship yang berarti barang sudah di tangan kurir. 'confirmed', 'allocated', dan
+// 'picking_up' belum — kurir baru dijadwalkan menjemput, barang masih di gudang.
+const BITESHIP_SHIPPED_STATUSES = new Set(['picked', 'dropping_off']);
+
+// ─── Shared: mark an order shipped + notify customer (used by the admin route and the webhook) ───
+async function markOrderShipped(order, trackingCode) {
+  if (['shipped', 'delivered', 'cancelled'].includes(order.orderStatus)) return;
+  order.orderStatus = 'shipped';
+  if (trackingCode) order.biteshipTrackingCode = trackingCode;
+  await order.save();
+  try {
+    await notifyCustomer({
+      customerId: order.customer,
+      type: 'order_shipped',
+      title: 'Pesanan sedang dikirim',
+      message: `Pesananmu sedang dalam perjalanan${
+        order.biteshipTrackingCode ? ` — resi: ${order.biteshipTrackingCode}` : ''
+      }`,
+      link: `/pesanan/${order._id}`,
+      relatedId: order._id,
+    });
+  } catch (notifyErr) {
+    console.error('[Notify] ship notify failed:', notifyErr.message);
+  }
+}
+
 // ─── Shared: mark an order delivered + notify customer (used by webhook and the Biteship sync job) ───
 async function markOrderDelivered(order) {
   if (order.orderStatus === 'delivered') return;
@@ -1043,10 +1050,25 @@ const biteshipWebhookHandler = async (req, res) => {
     if (event !== 'order.status_update' || !data?.id) {
       return res.status(200).json({ message: 'OK' });
     }
-    if (data.status === 'delivered') {
-      const order = await Order.findOne({ biteshipOrderId: data.id });
-      if (order) await markOrderDelivered(order);
+
+    const isDelivered = data.status === 'delivered';
+    const isShipped = BITESHIP_SHIPPED_STATUSES.has(data.status);
+    if (!isDelivered && !isShipped) {
+      return res.status(200).json({ message: 'OK' });
     }
+
+    const order = await Order.findOne({ biteshipOrderId: data.id });
+    if (!order) {
+      console.error(`[Biteship Webhook] order untuk biteshipOrderId ${data.id} tidak ditemukan`);
+      return res.status(200).json({ message: 'OK' });
+    }
+
+    if (isDelivered) {
+      await markOrderDelivered(order);
+    } else {
+      await markOrderShipped(order, data.courier_waybill_id ?? data.courier_tracking_id);
+    }
+
     res.status(200).json({ message: 'OK' });
   } catch (err) {
     console.error('[Biteship Webhook]', err.message);
