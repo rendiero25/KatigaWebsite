@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     enum: [
       'order_new', 'payment_paid', 'payment_failed', 'review_new', 'contact_new', 'promo_expiring',
-      'payment_confirmed', 'promo_new', 'order_cancelled', 'order_packing',
+      'payment_confirmed', 'promo_new', 'order_cancelled', 'order_packing', 'order_shipped', 'order_delivered',
       'complaint_new', 'complaint_update',
     ],
     required: true,
