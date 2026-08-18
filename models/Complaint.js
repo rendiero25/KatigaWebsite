@@ -26,6 +26,15 @@ const complaintSchema = new mongoose.Schema({
     type: { type: String, enum: ['refund', 'replace'] },
     note: { type: String, default: '' },
   },
+  // Pengiriman barang pengganti ke pembeli, dipesan lewat Biteship saat resolusi 'replace'.
+  replacementShipment: {
+    biteshipOrderId: { type: String, default: '' },
+    trackingCode:    { type: String, default: '' },
+    waybillId:       { type: String, default: '' },
+    courier:         { type: String, default: '' },
+    service:         { type: String, default: '' },
+    shippedAt:       { type: Date },
+  },
 }, { timestamps: true });
 
 complaintSchema.index({ customer: 1 });

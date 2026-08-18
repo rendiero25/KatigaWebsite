@@ -115,6 +115,22 @@ export default function AdminComplaints() {
     }
   };
 
+  const handleShipReplacement = async () => {
+    if (!selected) return;
+    setUpdating(true);
+    setUpdateMsg('');
+    try {
+      const updated = await api.shipReplacementComplaint(selected._id);
+      setComplaints((prev) => prev.map((c) => c._id === updated._id ? { ...c, ...updated } : c));
+      setSelected({ ...selected, ...updated });
+      setUpdateMsg('Pengiriman pengganti dipesan.');
+    } catch (err) {
+      setUpdateMsg(err instanceof Error ? err.message : 'Gagal mengirim barang pengganti');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return (
     <AdminLayout title="Komplain & Retur">
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -355,6 +371,28 @@ export default function AdminComplaints() {
                       ? `Resolusi: ${selected.resolution.type === 'refund' ? 'Refund' : 'Ganti Barang'}`
                       : 'Retur ditolak.'}
                   </div>
+                )}
+
+                {selected.resolution?.type === 'refund' && (
+                  <p className="text-sm text-gray-500">
+                    Refund ditransfer manual. Pesanannya sudah ditandai menunggu refund di halaman pesanan.
+                  </p>
+                )}
+
+                {selected.resolution?.type === 'replace' && (
+                  selected.replacementShipment?.biteshipOrderId ? (
+                    <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                      <p className="text-xs font-medium text-gray-500 mb-1">Resi Barang Pengganti</p>
+                      <p className="text-gray-800">
+                        {selected.replacementShipment.courier.toUpperCase()}
+                        {selected.replacementShipment.trackingCode ? ` — ${selected.replacementShipment.trackingCode}` : ''}
+                      </p>
+                    </div>
+                  ) : (
+                    <Button type="button" disabled={updating} onClick={handleShipReplacement} className="w-full">
+                      {updating ? 'Memesan kurir...' : 'Kirim Barang Pengganti'}
+                    </Button>
+                  )
                 )}
               </div>
             ) : (

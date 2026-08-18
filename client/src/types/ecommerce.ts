@@ -133,6 +133,7 @@ export interface Order {
   biteshipTrackingCode?: string;
   biteshipWaybillId?: string;
   adminNote?: string;
+  deliveredAt?: string | null;
   deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -353,6 +354,14 @@ export interface Complaint {
   resolvedAt?: string;
   returnShipment?: { courier: string; trackingNumber: string; shippedAt: string };
   resolution?: { type: 'refund' | 'replace'; note: string };
+  replacementShipment?: {
+    biteshipOrderId: string;
+    trackingCode: string;
+    waybillId: string;
+    courier: string;
+    service: string;
+    shippedAt?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }

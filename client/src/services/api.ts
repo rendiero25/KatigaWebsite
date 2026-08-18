@@ -660,6 +660,19 @@ export const api = {
     return res.json();
   },
 
+  shipReplacementComplaint: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/${id}/ship-replacement`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengirim barang pengganti');
+    }
+    return res.json();
+  },
+
   // Admin Customer Management
   getAdminCustomers: async (params?: { search?: string; page?: number; limit?: number }) => {
     const token = localStorage.getItem('adminToken');
