@@ -352,9 +352,18 @@ export interface Complaint {
   status: 'open' | 'processing' | 'awaiting_return_shipment' | 'return_shipped' | 'return_received' | 'resolved' | 'rejected';
   adminNote: string;
   resolvedAt?: string;
-  returnShipment?: { courier: string; trackingNumber: string; shippedAt: string };
+  returnShipment?: {
+    bookedBy: 'merchant' | 'customer';
+    courier: string;
+    trackingNumber: string;
+    biteshipOrderId?: string;
+    waybillId?: string;
+    photos?: string[];
+    shippedAt: string;
+  };
   resolution?: { type: 'refund' | 'replace'; note: string };
-  replacementShipment?: {
+  outboundShipment?: {
+    kind: 'replacement' | 'return_to_buyer';
     biteshipOrderId: string;
     trackingCode: string;
     waybillId: string;

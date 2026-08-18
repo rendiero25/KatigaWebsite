@@ -115,17 +115,21 @@ export default function AdminComplaints() {
     }
   };
 
-  const handleShipReplacement = async () => {
+  const runShipmentAction = async (
+    action: (id: string) => Promise<ComplaintWithOrder>,
+    successMsg: string,
+    fallbackMsg: string,
+  ) => {
     if (!selected) return;
     setUpdating(true);
     setUpdateMsg('');
     try {
-      const updated = await api.shipReplacementComplaint(selected._id);
+      const updated = await action(selected._id);
       setComplaints((prev) => prev.map((c) => c._id === updated._id ? { ...c, ...updated } : c));
       setSelected({ ...selected, ...updated });
-      setUpdateMsg('Pengiriman pengganti dipesan.');
+      setUpdateMsg(successMsg);
     } catch (err) {
-      setUpdateMsg(err instanceof Error ? err.message : 'Gagal mengirim barang pengganti');
+      setUpdateMsg(err instanceof Error ? err.message : fallbackMsg);
     } finally {
       setUpdating(false);
     }
@@ -313,13 +317,49 @@ export default function AdminComplaints() {
                 )}
 
                 {selected.status === 'awaiting_return_shipment' && (
-                  <p className="text-sm text-gray-500">Menunggu customer mengirim barang retur.</p>
+                  <div className="space-y-2">
+                    <Button
+                      type="button"
+                      disabled={updating}
+                      onClick={() => runShipmentAction(
+                        api.pickupReturnComplaint,
+                        'Penjemputan dipesan.',
+                        'Gagal memesan penjemputan',
+                      )}
+                      className="w-full"
+                    >
+                      {updating ? 'Memesan kurir...' : 'Pesan Penjemputan ke Alamat Pembeli'}
+                    </Button>
+                    <p className="text-sm text-gray-500">
+                      Ongkirnya masuk tagihan Biteship kita. Kalau pembeli memilih kurir sendiri, dia bisa
+                      mengisi resi dan mengunggah foto bukti dari halaman pesanannya.
+                    </p>
+                  </div>
                 )}
 
                 {(selected.status === 'return_shipped' || selected.status === 'return_received') && selected.returnShipment && (
-                  <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Resi Kirim Balik</p>
-                    <p className="text-gray-800">{selected.returnShipment.courier} — {selected.returnShipment.trackingNumber}</p>
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-2">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-1">
+                        Resi Kirim Balik — {selected.returnShipment.bookedBy === 'merchant' ? 'dijemput atas biaya Katiga' : 'kurir pilihan pembeli'}
+                      </p>
+                      <p className="text-gray-800">
+                        {selected.returnShipment.courier.toUpperCase()} — {selected.returnShipment.trackingNumber || 'menunggu resi'}
+                      </p>
+                    </div>
+                    {(selected.returnShipment.photos?.length ?? 0) > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {selected.returnShipment.photos?.map((photo, i) => (
+                          <a key={i} href={api.getImageUrl(photo)} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={api.getImageUrl(photo)}
+                              alt={`Bukti kirim balik ${i + 1}`}
+                              className="size-16 rounded-lg object-cover border border-gray-200"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -379,18 +419,31 @@ export default function AdminComplaints() {
                   </p>
                 )}
 
-                {selected.resolution?.type === 'replace' && (
-                  selected.replacementShipment?.biteshipOrderId ? (
+                {(selected.resolution?.type === 'replace' || selected.status === 'rejected') && (
+                  selected.outboundShipment?.biteshipOrderId ? (
                     <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Resi Barang Pengganti</p>
+                      <p className="text-xs font-medium text-gray-500 mb-1">
+                        {selected.outboundShipment.kind === 'replacement' ? 'Resi Barang Pengganti' : 'Resi Pemulangan Barang'}
+                      </p>
                       <p className="text-gray-800">
-                        {selected.replacementShipment.courier.toUpperCase()}
-                        {selected.replacementShipment.trackingCode ? ` — ${selected.replacementShipment.trackingCode}` : ''}
+                        {selected.outboundShipment.courier.toUpperCase()}
+                        {selected.outboundShipment.trackingCode ? ` — ${selected.outboundShipment.trackingCode}` : ''}
                       </p>
                     </div>
                   ) : (
-                    <Button type="button" disabled={updating} onClick={handleShipReplacement} className="w-full">
-                      {updating ? 'Memesan kurir...' : 'Kirim Barang Pengganti'}
+                    <Button
+                      type="button"
+                      disabled={updating}
+                      onClick={() => runShipmentAction(
+                        api.shipComplaintToBuyer,
+                        'Pengiriman ke pembeli dipesan.',
+                        'Gagal mengirim barang ke pembeli',
+                      )}
+                      className="w-full"
+                    >
+                      {updating
+                        ? 'Memesan kurir...'
+                        : selected.resolution?.type === 'replace' ? 'Kirim Barang Pengganti' : 'Kirim Barang Balik ke Pembeli'}
                     </Button>
                   )
                 )}

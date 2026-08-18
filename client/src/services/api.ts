@@ -606,12 +606,12 @@ export const api = {
     return res.json();
   },
 
-  shipReturnComplaint: async (id: string, data: { courier: string; trackingNumber: string }) => {
+  shipReturnComplaint: async (id: string, data: FormData) => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/complaints/${id}/ship-return`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
+      body: data,
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({})) as { message?: string };
@@ -660,15 +660,28 @@ export const api = {
     return res.json();
   },
 
-  shipReplacementComplaint: async (id: string) => {
+  shipComplaintToBuyer: async (id: string) => {
     const token = localStorage.getItem('adminToken');
-    const res = await fetch(`${API_BASE_URL}/complaints/${id}/ship-replacement`, {
+    const res = await fetch(`${API_BASE_URL}/complaints/${id}/ship-to-buyer`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({})) as { message?: string };
-      throw new Error(err.message || 'Gagal mengirim barang pengganti');
+      throw new Error(err.message || 'Gagal mengirim barang ke pembeli');
+    }
+    return res.json();
+  },
+
+  pickupReturnComplaint: async (id: string) => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/${id}/pickup-return`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal memesan penjemputan barang retur');
     }
     return res.json();
   },

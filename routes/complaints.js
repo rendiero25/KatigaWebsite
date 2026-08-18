@@ -107,7 +107,7 @@ router.get('/my/order/:orderId', customerAuth, async (req, res) => {
 });
 
 // ─── PUT /api/complaints/:id/ship-return — customer: confirm return shipment ───
-router.put('/:id/ship-return', customerAuth, async (req, res) => {
+router.put('/:id/ship-return', customerAuth, upload.array('photos', 5), async (req, res) => {
   try {
     const { courier, trackingNumber } = req.body;
     if (!courier?.trim() || !trackingNumber?.trim()) {
@@ -124,8 +124,12 @@ router.put('/:id/ship-return', customerAuth, async (req, res) => {
     }
 
     complaint.returnShipment = {
+      bookedBy: 'customer',
       courier: courier.trim(),
       trackingNumber: trackingNumber.trim(),
+      biteshipOrderId: '',
+      waybillId: '',
+      photos: (req.files || []).map((f) => f.path || f.filename || ''),
       shippedAt: new Date(),
     };
     complaint.status = 'return_shipped';
@@ -244,25 +248,103 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// ─── POST /api/complaints/:id/ship-replacement — admin: kirim barang pengganti ───
-router.post('/:id/ship-replacement', auth, async (req, res) => {
+// ─── POST /api/complaints/:id/pickup-return — admin: pesan penjemputan barang retur ───
+// Ongkirnya masuk tagihan Biteship kita, jadi pembeli tidak menalangi apa pun. Untuk retur
+// yang salahnya di pembeli, biaya ini dipotong dari nominal refund saat resolusi disimpan.
+router.post('/:id/pickup-return', auth, async (req, res) => {
   try {
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) return res.status(404).json({ message: 'Komplain tidak ditemukan' });
-    if (complaint.resolution?.type !== 'replace') {
-      return res.status(400).json({ message: 'Hanya komplain dengan resolusi ganti barang yang bisa dikirim penggantinya' });
+    if (complaint.type !== 'return') {
+      return res.status(400).json({ message: 'Hanya komplain retur yang perlu penjemputan barang' });
     }
-    if (complaint.replacementShipment?.biteshipOrderId) {
-      return res.status(400).json({ message: 'Barang pengganti untuk komplain ini sudah dikirim' });
+    if (complaint.status !== 'awaiting_return_shipment') {
+      return res.status(400).json({ message: 'Setujui retur ini dulu sebelum memesan penjemputan' });
+    }
+    if (complaint.returnShipment?.biteshipOrderId || complaint.returnShipment?.trackingNumber) {
+      return res.status(400).json({ message: 'Pengiriman balik untuk komplain ini sudah tercatat' });
     }
 
     const order = await Order.findById(complaint.order);
     if (!order) return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
 
-    // Barang pengganti memakai alamat, kurir, dan item yang sama dengan pesanan asli.
-    const shipment = await biteshipCreateOrder(order);
+    const shipment = await biteshipCreateOrder(order, {
+      reverse: true,
+      note: `Retur pesanan ${order.orderCode}`,
+    });
 
-    complaint.replacementShipment = {
+    complaint.returnShipment = {
+      bookedBy: 'merchant',
+      courier: order.shippingCourier,
+      trackingNumber: shipment.courier?.tracking_id ?? '',
+      biteshipOrderId: shipment.id ?? '',
+      waybillId: shipment.courier?.waybill_id ?? '',
+      photos: [],
+      shippedAt: new Date(),
+    };
+    complaint.status = 'return_shipped';
+    await complaint.save();
+
+    try {
+      await notifyCustomer({
+        customerId: complaint.customer,
+        type: 'complaint_update',
+        title: 'Penjemputan barang retur dipesan',
+        message: complaint.returnShipment.trackingNumber
+          ? `Kurir akan menjemput barang retur — resi: ${complaint.returnShipment.trackingNumber}`
+          : 'Kurir akan menjemput barang retur dari alamatmu',
+        link: `/pesanan/${complaint.order}`,
+        relatedId: complaint._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] pickup return notify failed:', notifyErr.message);
+    }
+
+    res.json(complaint);
+  } catch (err) {
+    if (err.response || err.request) {
+      console.error('[Complaint Pickup-Return] Biteship error:', JSON.stringify(err.response?.data ?? err.message));
+      return res.status(502).json({ message: 'Gagal memesan penjemputan ke Biteship' });
+    }
+    console.error('[Complaint Pickup-Return]', err);
+    res.status(500).json({ message: 'Gagal memesan penjemputan barang retur' });
+  }
+});
+
+// ─── POST /api/complaints/:id/ship-to-buyer — admin: kirim barang ke pembeli ───
+// Dipakai dua keadaan: barang pengganti saat resolusi 'replace', dan pemulangan barang
+// saat retur ditolak.
+router.post('/:id/ship-to-buyer', auth, async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) return res.status(404).json({ message: 'Komplain tidak ditemukan' });
+
+    const kind = complaint.resolution?.type === 'replace'
+      ? 'replacement'
+      : complaint.status === 'rejected'
+        ? 'return_to_buyer'
+        : null;
+
+    if (!kind) {
+      return res.status(400).json({
+        message: 'Kirim ke pembeli hanya untuk resolusi ganti barang atau retur yang ditolak',
+      });
+    }
+    if (complaint.outboundShipment?.biteshipOrderId) {
+      return res.status(400).json({ message: 'Pengiriman ke pembeli untuk komplain ini sudah dipesan' });
+    }
+
+    const order = await Order.findById(complaint.order);
+    if (!order) return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
+
+    const shipment = await biteshipCreateOrder(order, {
+      note: kind === 'replacement'
+        ? `Barang pengganti pesanan ${order.orderCode}`
+        : `Pemulangan barang retur pesanan ${order.orderCode}`,
+    });
+
+    complaint.outboundShipment = {
+      kind,
       biteshipOrderId: shipment.id ?? '',
       trackingCode: shipment.courier?.tracking_id ?? '',
       waybillId: shipment.courier?.waybill_id ?? '',
@@ -276,25 +358,25 @@ router.post('/:id/ship-replacement', auth, async (req, res) => {
       await notifyCustomer({
         customerId: complaint.customer,
         type: 'complaint_update',
-        title: 'Barang pengganti dikirim',
-        message: complaint.replacementShipment.trackingCode
-          ? `Barang pengganti dalam perjalanan — resi: ${complaint.replacementShipment.trackingCode}`
-          : 'Barang pengganti sedang disiapkan kurir',
+        title: kind === 'replacement' ? 'Barang pengganti dikirim' : 'Barang retur dikirim balik',
+        message: complaint.outboundShipment.trackingCode
+          ? `Dalam perjalanan — resi: ${complaint.outboundShipment.trackingCode}`
+          : 'Kurir sedang menjemput barang dari gudang kami',
         link: `/pesanan/${complaint.order}`,
         relatedId: complaint._id,
       });
     } catch (notifyErr) {
-      console.error('[Notify] replacement notify failed:', notifyErr.message);
+      console.error('[Notify] ship to buyer notify failed:', notifyErr.message);
     }
 
     res.json(complaint);
   } catch (err) {
     if (err.response || err.request) {
-      console.error('[Complaint Ship-Replacement] Biteship error:', JSON.stringify(err.response?.data ?? err.message));
-      return res.status(502).json({ message: 'Gagal memesan pengiriman pengganti ke Biteship' });
+      console.error('[Complaint Ship-To-Buyer] Biteship error:', JSON.stringify(err.response?.data ?? err.message));
+      return res.status(502).json({ message: 'Gagal memesan pengiriman ke Biteship' });
     }
-    console.error('[Complaint Ship-Replacement]', err);
-    res.status(500).json({ message: 'Gagal mengirim barang pengganti' });
+    console.error('[Complaint Ship-To-Buyer]', err);
+    res.status(500).json({ message: 'Gagal mengirim barang ke pembeli' });
   }
 });
 

@@ -225,6 +225,7 @@ export default function PesananDetail() {
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [shipCourier, setShipCourier] = useState('')
   const [shipTrackingNumber, setShipTrackingNumber] = useState('')
+  const [shipPhotos, setShipPhotos] = useState<FileList | null>(null)
   const [shipSubmitting, setShipSubmitting] = useState(false)
   const [nowMs] = useState(() => Date.now())
   const [reviewStatuses, setReviewStatuses] = useState<Record<string, CanReviewResponse>>({})
@@ -310,10 +311,13 @@ export default function PesananDetail() {
     if (!complaint || !shipCourier.trim() || !shipTrackingNumber.trim()) return
     setShipSubmitting(true)
     try {
-      const updated = await api.shipReturnComplaint(complaint._id, {
-        courier: shipCourier.trim(),
-        trackingNumber: shipTrackingNumber.trim(),
-      })
+      const fd = new FormData()
+      fd.append('courier', shipCourier.trim())
+      fd.append('trackingNumber', shipTrackingNumber.trim())
+      if (shipPhotos) {
+        for (let i = 0; i < shipPhotos.length; i++) fd.append('photos', shipPhotos[i])
+      }
+      const updated = await api.shipReturnComplaint(complaint._id, fd)
       setComplaint(updated)
       toast.success('Data resi retur berhasil dikirim')
     } catch (err) {
@@ -481,7 +485,10 @@ export default function PesananDetail() {
 
             {complaint.type === 'return' && complaint.status === 'awaiting_return_shipment' && (
               <div className="mt-4 pt-4 border-t border-[#E9E9EA] space-y-2">
-                <p className="text-[13px] text-[#6F6F71]">Retur disetujui. Kirim barang balik lalu isi data resi di bawah ini.</p>
+                <p className="text-[13px] text-[#6F6F71]">
+                  Retur disetujui. Kami akan memesan kurir untuk menjemput barang dari alamatmu, tanpa
+                  biaya di muka. Kalau kamu lebih suka mengirim sendiri, isi data resi di bawah ini.
+                </p>
                 <input
                   type="text"
                   value={shipCourier}
@@ -496,6 +503,18 @@ export default function PesananDetail() {
                   placeholder="Nomor resi"
                   className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
                 />
+                <div>
+                  <label className="block text-[12px] text-[#6F6F71] mb-1.5">
+                    Foto resi dan kondisi barang (maks. 5)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => setShipPhotos(e.target.files)}
+                    className="text-[13px] text-[#6F6F71]"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleShipReturn}
@@ -509,10 +528,18 @@ export default function PesananDetail() {
 
             {complaint.type === 'return' && ['return_shipped', 'return_received'].includes(complaint.status) && complaint.returnShipment && (
               <div className="mt-4 pt-4 border-t border-[#E9E9EA]">
-                <p className="text-[13px] text-[#6F6F71]">
-                  Resi: {complaint.returnShipment.courier} — {complaint.returnShipment.trackingNumber}
+                <p className="text-[13px] text-[#1E1E1E]">
+                  {complaint.returnShipment.bookedBy === 'merchant'
+                    ? 'Kurir dipesan Katiga untuk menjemput dari alamatmu'
+                    : 'Kamu mengirim barang dengan kurir sendiri'}
                 </p>
-                <p className="text-[13px] text-[#6F6F71] mt-0.5">Menunggu verifikasi admin.</p>
+                <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                  {complaint.returnShipment.courier.toUpperCase()}
+                  {complaint.returnShipment.trackingNumber ? ` — ${complaint.returnShipment.trackingNumber}` : ''}
+                </p>
+                <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                  {complaint.status === 'return_received' ? 'Barang sudah diterima admin.' : 'Menunggu verifikasi admin.'}
+                </p>
               </div>
             )}
 
@@ -529,31 +556,38 @@ export default function PesananDetail() {
                     Dana sedang diproses dan akan ditransfer ke rekening kamu.
                   </p>
                 )}
-                {complaint.resolution.type === 'replace' && (
-                  complaint.replacementShipment?.trackingCode ? (
-                    <div className="flex items-center gap-2 mt-3 px-3 py-2 border border-[#E9E9EA]">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] text-[#6F6F71] uppercase tracking-[0.1em]">
-                          Resi Pengganti — {complaint.replacementShipment.courier.toUpperCase()}
-                        </p>
-                        <p className="text-[13px] text-[#1E1E1E] font-mono truncate">
-                          {complaint.replacementShipment.trackingCode}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => navigator.clipboard.writeText(complaint.replacementShipment?.trackingCode ?? '')}
-                        className="text-[12px] uppercase tracking-[0.08em] text-[#6F6F71] border border-[#E9E9EA] px-2 py-1 hover:text-[#1E1E1E] hover:border-[#1E1E1E]/40 transition-colors shrink-0 cursor-pointer"
-                      >
-                        Salin
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-[13px] text-[#6F6F71] mt-0.5">
-                      Barang pengganti sedang disiapkan. Nomor resi muncul di sini setelah kurir menjemput.
-                    </p>
-                  )
+                {complaint.resolution.type === 'replace' && !complaint.outboundShipment?.trackingCode && (
+                  <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                    Barang pengganti sedang disiapkan. Nomor resi muncul di sini setelah kurir menjemput.
+                  </p>
                 )}
+              </div>
+            )}
+
+            {complaint.outboundShipment?.trackingCode && (
+              <div className="mt-4 pt-4 border-t border-[#E9E9EA]">
+                <p className="text-[13px] text-[#1E1E1E]">
+                  {complaint.outboundShipment.kind === 'replacement'
+                    ? 'Barang pengganti dikirim'
+                    : 'Barang retur dikirim balik ke alamatmu'}
+                </p>
+                <div className="flex items-center gap-2 mt-2 px-3 py-2 border border-[#E9E9EA]">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-[#6F6F71] uppercase tracking-[0.1em]">
+                      Resi — {complaint.outboundShipment.courier.toUpperCase()}
+                    </p>
+                    <p className="text-[13px] text-[#1E1E1E] font-mono truncate">
+                      {complaint.outboundShipment.trackingCode}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(complaint.outboundShipment?.trackingCode ?? '')}
+                    className="text-[12px] uppercase tracking-[0.08em] text-[#6F6F71] border border-[#E9E9EA] px-2 py-1 hover:text-[#1E1E1E] hover:border-[#1E1E1E]/40 transition-colors shrink-0 cursor-pointer"
+                  >
+                    Salin
+                  </button>
+                </div>
               </div>
             )}
 

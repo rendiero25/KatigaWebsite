@@ -17,17 +17,26 @@ const complaintSchema = new mongoose.Schema({
   },
   adminNote: { type: String, default: '' },
   resolvedAt: { type: Date },
+  // Barang dari pembeli menuju gudang. bookedBy 'merchant' berarti Katiga yang memesan
+  // penjemputan lewat Biteship; 'customer' berarti pembeli memakai kurir sendiri dan
+  // mengisi resi plus foto bukti secara manual.
   returnShipment: {
+    bookedBy: { type: String, enum: ['merchant', 'customer'], default: 'customer' },
     courier: { type: String, default: '' },
     trackingNumber: { type: String, default: '' },
+    biteshipOrderId: { type: String, default: '' },
+    waybillId: { type: String, default: '' },
+    photos: [{ type: String }],
     shippedAt: { type: Date },
   },
   resolution: {
     type: { type: String, enum: ['refund', 'replace'] },
     note: { type: String, default: '' },
   },
-  // Pengiriman barang pengganti ke pembeli, dipesan lewat Biteship saat resolusi 'replace'.
-  replacementShipment: {
+  // Barang dari gudang menuju pembeli: barang pengganti saat resolusi 'replace', atau
+  // barang yang dipulangkan saat retur ditolak.
+  outboundShipment: {
+    kind: { type: String, enum: ['replacement', 'return_to_buyer'] },
     biteshipOrderId: { type: String, default: '' },
     trackingCode:    { type: String, default: '' },
     waybillId:       { type: String, default: '' },

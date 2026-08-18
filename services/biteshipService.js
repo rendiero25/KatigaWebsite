@@ -78,25 +78,48 @@ async function getRates({ destinationAreaId, items, courierCodes }) {
   return res.data.pricing ?? [];
 }
 
-async function createOrder(order) {
+// Arah kirim dibalik untuk penjemputan retur: barang berangkat dari alamat pembeli
+// menuju gudang. Pihak pengirim (yang ditagih Biteship) tetap Katiga di kedua arah —
+// itu yang membuat pembeli tidak perlu membayar apa pun di muka.
+const warehouseParty = () => ({
+  contactName: process.env.SHIPPER_NAME || 'Katiga',
+  contactPhone: process.env.SHIPPER_PHONE,
+  address: process.env.ORIGIN_ADDRESS,
+  postalCode: process.env.ORIGIN_POSTAL_CODE,
+  areaId: process.env.BITESHIP_ORIGIN_AREA_ID,
+});
+
+const buyerParty = (order) => ({
+  contactName: order.shippingAddress.recipientName,
+  contactPhone: order.shippingAddress.phone,
+  address: order.shippingAddress.street,
+  postalCode: order.shippingAddress.postalCode,
+  areaId: order.shippingAddress.areaId,
+});
+
+async function createOrder(order, { reverse = false, note } = {}) {
+  const origin = reverse ? buyerParty(order) : warehouseParty();
+  const destination = reverse ? warehouseParty() : buyerParty(order);
+
   const payload = {
     shipper_contact_name: process.env.SHIPPER_NAME || 'Katiga',
     shipper_contact_phone: process.env.SHIPPER_PHONE,
     shipper_contact_email: process.env.SHIPPER_EMAIL,
     shipper_organization: process.env.SHIPPER_NAME || 'Katiga',
-    origin_contact_name: process.env.SHIPPER_NAME || 'Katiga',
-    origin_contact_phone: process.env.SHIPPER_PHONE,
-    origin_address: process.env.ORIGIN_ADDRESS,
-    origin_area_id: process.env.BITESHIP_ORIGIN_AREA_ID,
-    destination_contact_name: order.shippingAddress.recipientName,
-    destination_contact_phone: order.shippingAddress.phone,
-    destination_address: order.shippingAddress.street,
-    destination_postal_code: order.shippingAddress.postalCode,
-    destination_area_id: order.shippingAddress.areaId,
+    origin_contact_name: origin.contactName,
+    origin_contact_phone: origin.contactPhone,
+    origin_address: origin.address,
+    origin_postal_code: origin.postalCode,
+    origin_area_id: origin.areaId,
+    destination_contact_name: destination.contactName,
+    destination_contact_phone: destination.contactPhone,
+    destination_address: destination.address,
+    destination_postal_code: destination.postalCode,
+    destination_area_id: destination.areaId,
     courier_company: order.shippingCourier,
     courier_type: order.shippingService,
     delivery_type: 'now',
-    order_note: `Order ID: ${order._id}`,
+    order_note: note ?? `Order ID: ${order._id}`,
     items: order.items.map((item) => {
       const dimensions = normalizeDimensions(item.dimensions);
 
