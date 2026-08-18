@@ -195,7 +195,21 @@ router.put('/:id', auth, async (req, res) => {
       if (!resolution || !['refund', 'replace'].includes(resolution.type)) {
         return res.status(400).json({ message: 'Pilih jenis resolusi: refund atau ganti barang' });
       }
-      complaint.resolution = { type: resolution.type, note: resolution.note || '' };
+
+      // Ongkir penjemputan hanya bisa dipotong kalau kita yang memesan kurirnya —
+      // untuk kurir pilihan pembeli, nominalnya tidak pernah sampai ke kita.
+      const returnCost = complaint.returnShipment?.bookedBy === 'merchant'
+        ? complaint.returnShipment?.cost ?? 0
+        : 0;
+      const deducted = resolution.type === 'refund' && resolution.deductReturnShipping ? returnCost : 0;
+      const order = await Order.findById(complaint.order);
+
+      complaint.resolution = {
+        type: resolution.type,
+        note: resolution.note || '',
+        refundAmount: resolution.type === 'refund' ? Math.max(0, (order?.total ?? 0) - deducted) : 0,
+        returnShippingDeducted: deducted,
+      };
     }
 
     const previousStatus = complaint.status;
@@ -213,11 +227,15 @@ router.put('/:id', auth, async (req, res) => {
       if (order && order.paymentStatus === 'paid') {
         order.paymentStatus = 'refund_pending';
         await order.save();
+        const refundAmount = complaint.resolution?.refundAmount || order.total;
+        const deducted = complaint.resolution?.returnShippingDeducted ?? 0;
         try {
           await notifyAdmin({
             type: 'complaint_update',
             title: 'Refund komplain menunggu transfer',
-            message: `Pesanan ${order.orderCode} — transfer refund Rp${order.total.toLocaleString('id-ID')}`,
+            message: `Pesanan ${order.orderCode} — transfer refund Rp${refundAmount.toLocaleString('id-ID')}${
+              deducted ? ` (total Rp${order.total.toLocaleString('id-ID')} dipotong ongkir retur Rp${deducted.toLocaleString('id-ID')})` : ''
+            }`,
             link: `/admin/orders/${order._id}`,
             relatedId: order._id,
           });
@@ -279,6 +297,7 @@ router.post('/:id/pickup-return', auth, async (req, res) => {
       trackingNumber: shipment.courier?.tracking_id ?? '',
       biteshipOrderId: shipment.id ?? '',
       waybillId: shipment.courier?.waybill_id ?? '',
+      cost: Number(shipment.price ?? shipment.courier?.price ?? 0) || 0,
       photos: [],
       shippedAt: new Date(),
     };

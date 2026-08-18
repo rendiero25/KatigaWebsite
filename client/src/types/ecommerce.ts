@@ -358,10 +358,16 @@ export interface Complaint {
     trackingNumber: string;
     biteshipOrderId?: string;
     waybillId?: string;
+    cost?: number;
     photos?: string[];
     shippedAt: string;
   };
-  resolution?: { type: 'refund' | 'replace'; note: string };
+  resolution?: {
+    type: 'refund' | 'replace';
+    note: string;
+    refundAmount?: number;
+    returnShippingDeducted?: number;
+  };
   outboundShipment?: {
     kind: 'replacement' | 'return_to_buyer';
     biteshipOrderId: string;

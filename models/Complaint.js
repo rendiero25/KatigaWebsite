@@ -26,12 +26,19 @@ const complaintSchema = new mongoose.Schema({
     trackingNumber: { type: String, default: '' },
     biteshipOrderId: { type: String, default: '' },
     waybillId: { type: String, default: '' },
+    // Ongkir yang ditagih Biteship untuk leg penjemputan. Hanya terisi saat kita yang
+    // memesan; kalau pembeli pakai kurir sendiri, nominalnya tidak kita ketahui.
+    cost: { type: Number, default: 0 },
     photos: [{ type: String }],
     shippedAt: { type: Date },
   },
   resolution: {
     type: { type: String, enum: ['refund', 'replace'] },
     note: { type: String, default: '' },
+    // Nominal yang benar-benar ditransfer ke pembeli: total pesanan, dikurangi ongkir
+    // penjemputan bila retur terjadi karena kesalahan pembeli.
+    refundAmount: { type: Number, default: 0 },
+    returnShippingDeducted: { type: Number, default: 0 },
   },
   // Barang dari gudang menuju pembeli: barang pengganti saat resolusi 'replace', atau
   // barang yang dipulangkan saat retur ditolak.

@@ -646,7 +646,7 @@ export const api = {
     return res.json();
   },
 
-  updateComplaint: async (id: string, data: { status?: string; adminNote?: string; resolution?: { type: 'refund' | 'replace'; note: string } }) => {
+  updateComplaint: async (id: string, data: { status?: string; adminNote?: string; resolution?: { type: 'refund' | 'replace'; note: string; deductReturnShipping?: boolean } }) => {
     const token = localStorage.getItem('adminToken');
     const res = await fetch(`${API_BASE_URL}/complaints/${id}`, {
       method: 'PUT',

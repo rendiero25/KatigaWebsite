@@ -551,10 +551,22 @@ export default function PesananDetail() {
                 {complaint.resolution.note && (
                   <p className="text-[13px] text-[#6F6F71] mt-0.5">{complaint.resolution.note}</p>
                 )}
-                {complaint.resolution.type === 'refund' && order.paymentStatus === 'refund_pending' && (
-                  <p className="text-[13px] text-[#6F6F71] mt-0.5">
-                    Dana sedang diproses dan akan ditransfer ke rekening kamu.
-                  </p>
+                {complaint.resolution.type === 'refund' && (
+                  <>
+                    {(complaint.resolution.refundAmount ?? 0) > 0 && (
+                      <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                        Nominal refund {fmt(complaint.resolution.refundAmount ?? 0)}
+                        {(complaint.resolution.returnShippingDeducted ?? 0) > 0
+                          ? ` — sudah dipotong ongkir retur ${fmt(complaint.resolution.returnShippingDeducted ?? 0)}`
+                          : ''}
+                      </p>
+                    )}
+                    {order.paymentStatus === 'refund_pending' && (
+                      <p className="text-[13px] text-[#6F6F71] mt-0.5">
+                        Dana sedang diproses dan akan ditransfer ke rekening kamu.
+                      </p>
+                    )}
+                  </>
                 )}
                 {complaint.resolution.type === 'replace' && !complaint.outboundShipment?.trackingCode && (
                   <p className="text-[13px] text-[#6F6F71] mt-0.5">

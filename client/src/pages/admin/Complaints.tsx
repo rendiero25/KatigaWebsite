@@ -55,6 +55,7 @@ export default function AdminComplaints() {
   const [selected, setSelected] = useState<ComplaintWithOrder | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [resolutionType, setResolutionType] = useState<'refund' | 'replace' | ''>('');
+  const [deductReturnShipping, setDeductReturnShipping] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState('');
 
@@ -99,7 +100,10 @@ export default function AdminComplaints() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUpdate = async (status: string, resolution?: { type: 'refund' | 'replace'; note: string }) => {
+  const handleUpdate = async (
+    status: string,
+    resolution?: { type: 'refund' | 'replace'; note: string; deductReturnShipping?: boolean },
+  ) => {
     if (!selected) return;
     setUpdating(true);
     setUpdateMsg('');
@@ -114,6 +118,12 @@ export default function AdminComplaints() {
       setUpdating(false);
     }
   };
+
+  // Ongkir hanya bisa dipotong kalau kita yang memesan penjemputannya.
+  const returnPickupCost = selected?.returnShipment?.bookedBy === 'merchant'
+    ? selected?.returnShipment?.cost ?? 0
+    : 0;
+  const orderTotal = typeof selected?.order === 'object' ? selected.order.total : 0;
 
   const runShipmentAction = async (
     action: (id: string) => Promise<ComplaintWithOrder>,
@@ -394,10 +404,31 @@ export default function AdminComplaints() {
                         </button>
                       ))}
                     </div>
+                    {resolutionType === 'refund' && returnPickupCost > 0 && (
+                      <label className="flex items-start gap-2 text-sm text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={deductReturnShipping}
+                          onChange={(e) => setDeductReturnShipping(e.target.checked)}
+                          className="mt-0.5 size-4 accent-indigo-600"
+                        />
+                        <span>
+                          Potong ongkir penjemputan Rp{returnPickupCost.toLocaleString('id-ID')} dari refund.
+                          Centang kalau retur ini karena kesalahan pembeli.
+                          <span className="block text-gray-500">
+                            Ditransfer: Rp{Math.max(0, orderTotal - (deductReturnShipping ? returnPickupCost : 0)).toLocaleString('id-ID')}
+                          </span>
+                        </span>
+                      </label>
+                    )}
                     <Button
                       type="button"
                       disabled={updating || !resolutionType}
-                      onClick={() => resolutionType && handleUpdate('resolved', { type: resolutionType, note: adminNote })}
+                      onClick={() => resolutionType && handleUpdate('resolved', {
+                        type: resolutionType,
+                        note: adminNote,
+                        deductReturnShipping,
+                      })}
                       className="w-full"
                     >
                       Simpan Resolusi
@@ -414,9 +445,18 @@ export default function AdminComplaints() {
                 )}
 
                 {selected.resolution?.type === 'refund' && (
-                  <p className="text-sm text-gray-500">
-                    Refund ditransfer manual. Pesanannya sudah ditandai menunggu refund di halaman pesanan.
-                  </p>
+                  <div className="text-sm text-gray-500">
+                    <p>
+                      Transfer manual Rp{(selected.resolution.refundAmount || 0).toLocaleString('id-ID')} ke pembeli.
+                      Pesanannya sudah ditandai menunggu refund.
+                    </p>
+                    {(selected.resolution.returnShippingDeducted ?? 0) > 0 && (
+                      <p>
+                        Sudah dipotong ongkir penjemputan Rp
+                        {(selected.resolution.returnShippingDeducted ?? 0).toLocaleString('id-ID')}.
+                      </p>
+                    )}
+                  </div>
                 )}
 
                 {(selected.resolution?.type === 'replace' || selected.status === 'rejected') && (
