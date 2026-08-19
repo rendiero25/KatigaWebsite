@@ -60,9 +60,16 @@ CLOUDINARY_API_SECRET=...
 CRON_SECRET=...
 ```
 
-`CRON_SECRET` melindungi `GET /api/cron/sweep`, endpoint yang dipanggil Vercel Cron (lihat `crons` di `vercel.json`) untuk menjalankan `checkExpiringPromos`, `syncBiteshipDeliveries`, dan `syncPendingPayments`. Tanpa variabel ini endpoint membalas 503 — sengaja, supaya sapuan tidak bisa dipicu siapa pun. Vercel mengirimkannya sebagai `Authorization: Bearer <CRON_SECRET>`, jadi nilainya harus sama persis dengan yang disimpan di Environment Variables proyek.
+`CRON_SECRET` melindungi `GET /api/cron/sweep`, endpoint yang menjalankan `checkExpiringPromos`, `syncBiteshipDeliveries`, dan `syncPendingPayments`. Tanpa variabel ini endpoint membalas 503 — sengaja, supaya sapuan tidak bisa dipicu siapa pun. Nilainya harus sama persis di tiga tempat: `.env` lokal, Environment Variables proyek Vercel, dan repository secret GitHub bernama `CRON_SECRET`.
 
-`setInterval` di `server.js` hanya hidup saat aplikasi dijalankan sebagai proses sendiri (`npm start`, `nodemon`). Di Vercel timer itu tidak pernah berjalan, jadi cron adalah satu-satunya jaring pengaman ketika webhook Mayar atau Biteship tidak sampai.
+`setInterval` di `server.js` hanya hidup saat aplikasi dijalankan sebagai proses sendiri (`npm start`, `nodemon`). Di Vercel timer itu tidak pernah berjalan, jadi endpoint sapuan adalah satu-satunya jaring pengaman ketika webhook Mayar atau Biteship tidak sampai.
+
+Dua penjadwal memanggilnya:
+
+- **`.github/workflows/sweep.yml`** — tiap 15 menit, ini yang jadi andalan. Base URL diambil dari repository variable `PRODUCTION_URL`, dengan cadangan `https://katiga-website.vercel.app`. GitHub menonaktifkan jadwal ini kalau repo 60 hari tanpa aktivitas.
+- **`crons` di `vercel.json`** — sekali sehari (`0 19 * * *` UTC = 02.00 WIB), jaring kedua. Vercel mengirim `Authorization: Bearer <CRON_SECRET>` sendiri asal nama variabelnya persis `CRON_SECRET`.
+
+Jadwal Vercel harus tetap harian selama proyek ada di paket **Hobby**: ekspresi yang jalan lebih sering dari sekali sehari **menggagalkan deployment**, bukan cuma cron-nya. Kalau nanti pindah ke Pro, `vercel.json` boleh dikembalikan ke `*/15 * * * *` dan workflow GitHub-nya dihapus.
 
 The three `CLOUDINARY_*` keys are required — `middleware/upload.js` configures the Cloudinary SDK at import time, so every upload route fails without them.
 
