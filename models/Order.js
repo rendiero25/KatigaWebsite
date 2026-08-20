@@ -57,6 +57,15 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed', 'expired', 'refunded', 'refund_pending'],
     default: 'pending',
   },
+  // Rekening tujuan refund, diisi pembeli setelah pesanan masuk 'refund_pending'. Ditaruh di
+  // Order, bukan Complaint, karena refund juga lahir dari pembatalan sebelum kirim — jalur itu
+  // tidak punya komplain sama sekali.
+  refundAccount: {
+    bankName:      { type: String, default: '' },
+    accountName:   { type: String, default: '' },
+    accountNumber: { type: String, default: '' },
+    submittedAt:   { type: Date },
+  },
   orderCode:        { type: String, unique: true, sparse: true },
   paymentRef:       { type: String, unique: true, sparse: true },
   paymentLinkId:    { type: String, default: '' },

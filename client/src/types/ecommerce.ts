@@ -124,6 +124,12 @@ export interface Order {
   paymentStatus: 'pending' | 'paid' | 'failed' | 'expired' | 'refunded' | 'refund_pending';
   orderStatus: 'awaiting_payment' | 'processing' | 'packing' | 'shipped' | 'delivered' | 'cancelled';
   cancelledAt?: string;
+  refundAccount?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    submittedAt?: string;
+  };
   orderCode: string;
   paymentLinkId?: string;
   paymentLink: string;
@@ -395,7 +401,7 @@ export interface AppNotification {
   type:
     | 'order_new' | 'payment_paid' | 'payment_failed' | 'review_new' | 'contact_new' | 'promo_expiring'
     | 'payment_confirmed' | 'promo_new' | 'order_cancelled' | 'order_packing' | 'order_shipped' | 'order_delivered'
-    | 'complaint_new' | 'complaint_update';
+    | 'complaint_new' | 'complaint_update' | 'refund_account';
   title: string;
   message: string;
   link: string;

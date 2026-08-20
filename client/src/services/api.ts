@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse, Order, BiteshipTracking } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse, Order, BiteshipTracking, Complaint } from '../types/ecommerce';
 
 interface ShippingRateRequestItem {
   name: string;
@@ -493,6 +493,23 @@ export const api = {
     return res.json();
   },
 
+  submitRefundAccount: async (
+    id: string,
+    data: { bankName: string; accountName: string; accountNumber: string },
+  ): Promise<Order> => {
+    const token = localStorage.getItem('customerToken');
+    const res = await fetch(`${API_BASE_URL}/orders/my/${id}/refund-account`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal menyimpan rekening refund');
+    }
+    return res.json();
+  },
+
   getOrderTracking: async (id: string) => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/orders/my/${id}/tracking`, {
@@ -642,6 +659,18 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({})) as { message?: string };
       throw new Error(err.message || 'Gagal mengambil detail komplain');
+    }
+    return res.json();
+  },
+
+  getAdminComplaintByOrder: async (orderId: string): Promise<Complaint | null> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/complaints/order/${orderId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({})) as { message?: string };
+      throw new Error(err.message || 'Gagal mengambil komplain pesanan');
     }
     return res.json();
   },

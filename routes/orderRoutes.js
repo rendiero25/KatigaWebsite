@@ -787,6 +787,56 @@ router.post('/my/:id/cancel', customerAuth, async (req, res) => {
   }
 });
 
+// ─── PUT /api/orders/my/:id/refund-account — customer: rekening tujuan refund ───
+// Masih bisa diperbarui selama uangnya belum ditransfer, supaya salah ketik nomor rekening
+// tidak mengunci pembeli. Begitu admin menandai 'refunded', formulirnya tertutup.
+router.put('/my/:id/refund-account', customerAuth, async (req, res) => {
+  try {
+    const { bankName, accountName, accountNumber } = req.body;
+    const number = String(accountNumber ?? '').replace(/[\s-]/g, '');
+
+    if (!bankName?.trim() || !accountName?.trim() || !number) {
+      return res.status(400).json({ message: 'Nama bank, nama pemilik, dan nomor rekening wajib diisi' });
+    }
+    if (!/^\d{6,20}$/.test(number)) {
+      return res.status(400).json({ message: 'Nomor rekening harus 6–20 digit angka' });
+    }
+
+    const order = await Order.findOne({ _id: req.params.id, customer: req.customer._id });
+    if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
+    if (order.paymentStatus !== 'refund_pending') {
+      return res.status(400).json({ message: 'Pesanan ini tidak sedang menunggu refund' });
+    }
+
+    const isFirst = !order.refundAccount?.submittedAt;
+    order.refundAccount = {
+      bankName: bankName.trim(),
+      accountName: accountName.trim(),
+      accountNumber: number,
+      submittedAt: new Date(),
+    };
+    await order.save();
+
+    try {
+      // Nomor rekening sengaja tidak ikut ke notifikasi — cukup tautan ke halaman pesanan.
+      await notifyAdmin({
+        type: 'refund_account',
+        title: isFirst ? 'Rekening refund diterima' : 'Rekening refund diperbarui',
+        message: `Pesanan ${order.orderCode} — rekening tujuan refund sudah diisi pembeli`,
+        link: `/admin/orders/${order._id}`,
+        relatedId: order._id,
+      });
+    } catch (notifyErr) {
+      console.error('[Notify] refund account notify failed:', notifyErr.message);
+    }
+
+    res.json(order);
+  } catch (err) {
+    console.error('[Refund Account]', err);
+    res.status(500).json({ message: 'Gagal menyimpan rekening refund' });
+  }
+});
+
 // ─── GET /api/orders/my/:id/tracking — Biteship live tracking ───
 router.get('/my/:id/tracking', customerAuth, async (req, res) => {
   try {

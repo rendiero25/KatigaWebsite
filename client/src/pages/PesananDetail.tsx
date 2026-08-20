@@ -227,6 +227,11 @@ export default function PesananDetail() {
   const [shipTrackingNumber, setShipTrackingNumber] = useState('')
   const [shipPhotos, setShipPhotos] = useState<FileList | null>(null)
   const [shipSubmitting, setShipSubmitting] = useState(false)
+  const [refundBank, setRefundBank] = useState('')
+  const [refundHolder, setRefundHolder] = useState('')
+  const [refundNumber, setRefundNumber] = useState('')
+  const [refundSaving, setRefundSaving] = useState(false)
+  const [refundEditing, setRefundEditing] = useState(false)
   const [nowMs] = useState(() => Date.now())
   const [reviewStatuses, setReviewStatuses] = useState<Record<string, CanReviewResponse>>({})
   const [reviewFormItem, setReviewFormItem] = useState<{
@@ -304,6 +309,25 @@ export default function PesananDetail() {
       toast.error(err instanceof Error ? err.message : 'Gagal membatalkan pesanan')
     } finally {
       setCancelling(false)
+    }
+  }
+
+  const handleSaveRefundAccount = async () => {
+    if (!id) return
+    setRefundSaving(true)
+    try {
+      const updated = await api.submitRefundAccount(id, {
+        bankName: refundBank.trim(),
+        accountName: refundHolder.trim(),
+        accountNumber: refundNumber.trim(),
+      })
+      setOrder(updated)
+      setRefundEditing(false)
+      toast.success('Rekening refund tersimpan')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Gagal menyimpan rekening refund')
+    } finally {
+      setRefundSaving(false)
     }
   }
 
@@ -400,6 +424,9 @@ export default function PesananDetail() {
 
   const hasTrackingSection = !!order.biteshipOrderId && ['packing', 'shipped', 'delivered'].includes(order.orderStatus)
 
+  const savedRefundAccount = order.refundAccount?.submittedAt ? order.refundAccount : null
+  const refundFormFilled = Boolean(refundBank.trim() && refundHolder.trim() && refundNumber.trim())
+
   return (
     <UserLayout title="Detail Pesanan">
       <div className="w-full">
@@ -428,6 +455,85 @@ export default function PesananDetail() {
               <p className="text-[12px] text-[#AE4B4B]/70 mt-0.5">Pesanan akan otomatis dibatalkan jika melewati batas waktu</p>
             </div>
             <p className="text-lg font-mono text-[#AE4B4B] shrink-0 ml-4 tabular-nums">{countdown}</p>
+          </div>
+        )}
+
+        {/* Rekening tujuan refund */}
+        {order.paymentStatus === 'refund_pending' && (
+          <div className="border border-[#E9E9EA] px-4 py-4 mt-4">
+            <p className="uppercase tracking-[0.18em] text-[13px] text-[#1E1E1E]">Rekening tujuan refund</p>
+            {savedRefundAccount && !refundEditing ? (
+              <>
+                <p className="text-[13px] text-[#1E1E1E] mt-2">
+                  {savedRefundAccount.bankName} — {savedRefundAccount.accountNumber}
+                </p>
+                <p className="text-[13px] text-[#6F6F71] mt-0.5">a.n. {savedRefundAccount.accountName}</p>
+                <p className="text-[12px] text-[#6F6F71] mt-2">
+                  Dana ditransfer ke rekening ini paling lambat 7 hari kerja. Selama dana belum kami
+                  kirim, datanya masih bisa kamu perbaiki.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRefundBank(savedRefundAccount.bankName)
+                    setRefundHolder(savedRefundAccount.accountName)
+                    setRefundNumber(savedRefundAccount.accountNumber)
+                    setRefundEditing(true)
+                  }}
+                  className="mt-3 border border-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] px-4 py-2 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
+                >
+                  Ubah rekening
+                </button>
+              </>
+            ) : (
+              <div className="mt-2 space-y-2">
+                <p className="text-[13px] text-[#6F6F71]">
+                  Isi rekening tujuan supaya dana bisa kami kirim. Hitungan 7 hari kerja dimulai
+                  setelah data ini kami terima.
+                </p>
+                <input
+                  type="text"
+                  value={refundBank}
+                  onChange={(e) => setRefundBank(e.target.value)}
+                  placeholder="Nama bank (mis. BCA)"
+                  className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                />
+                <input
+                  type="text"
+                  value={refundHolder}
+                  onChange={(e) => setRefundHolder(e.target.value)}
+                  placeholder="Nama pemilik rekening"
+                  className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={refundNumber}
+                  onChange={(e) => setRefundNumber(e.target.value)}
+                  placeholder="Nomor rekening"
+                  className="w-full border border-[#E9E9EA] px-3 py-2 text-[13px] text-[#1E1E1E] focus:outline-none focus:border-[#1E1E1E]"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveRefundAccount}
+                    disabled={refundSaving || !refundFormFilled}
+                    className="bg-[#4F68AF] text-white uppercase tracking-[0.12em] text-[12px] px-4 py-2.5 hover:bg-[#2B3A67] transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    {refundSaving ? 'Menyimpan...' : 'Simpan rekening'}
+                  </button>
+                  {savedRefundAccount && (
+                    <button
+                      type="button"
+                      onClick={() => setRefundEditing(false)}
+                      className="border border-[#E9E9EA] uppercase tracking-[0.12em] text-[12px] px-4 py-2.5 text-[#6F6F71] hover:border-[#1E1E1E] hover:text-[#1E1E1E] transition-colors cursor-pointer"
+                    >
+                      Batal
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -563,7 +669,9 @@ export default function PesananDetail() {
                     )}
                     {order.paymentStatus === 'refund_pending' && (
                       <p className="text-[13px] text-[#6F6F71] mt-0.5">
-                        Dana sedang diproses dan akan ditransfer ke rekening kamu.
+                        {savedRefundAccount
+                          ? `Dana sedang diproses menuju rekening ${savedRefundAccount.bankName} yang kamu isi di atas.`
+                          : 'Isi rekening tujuan refund di bagian atas halaman ini supaya dana bisa kami kirim.'}
                       </p>
                     )}
                   </>

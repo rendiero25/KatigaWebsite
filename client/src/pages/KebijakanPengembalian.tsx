@@ -80,7 +80,13 @@ export default function KebijakanPengembalian() {
                 <div>
                   <h2 className="text-2xl md:text-3xl mb-4">7. Opsi Resolusi</h2>
                   <p className="text-sm text-[#6F6F71] leading-relaxed">
-                    Setelah barang retur diterima dan diverifikasi, atau untuk kasus komplain yang disetujui tanpa pengiriman balik fisik, tim kami akan menawarkan salah satu dari dua opsi resolusi: pengembalian dana (refund) penuh melalui transfer bank ke rekening yang Anda konfirmasikan kepada tim kami, atau penggantian barang (replace) dengan produk yang sama.
+                    Setelah barang retur diterima dan diverifikasi, atau untuk kasus komplain yang disetujui tanpa pengiriman balik fisik, tim kami akan menawarkan salah satu dari dua opsi resolusi: pengembalian dana (refund) melalui transfer bank, atau penggantian barang (replace) dengan produk yang sama.
+                  </p>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed mt-4">
+                    Refund dikembalikan penuh sebesar nilai pesanan. Pengecualiannya satu: apabila retur terjadi karena kesalahan pemesanan dari sisi Anda dan penjemputan barang dipesan oleh tim kami, biaya penjemputan tersebut dipotong dari nominal refund. Nominal akhir beserta rinciannya selalu ditampilkan pada halaman detail pesanan sebelum dana dikirim.
+                  </p>
+                  <p className="text-sm text-[#6F6F71] leading-relaxed mt-4">
+                    Rekening tujuan refund Anda isi sendiri melalui halaman Pesanan Saya setelah resolusi refund disetujui. Dana kami transfer paling lambat 7 (tujuh) hari kerja, dihitung sejak barang retur kami terima dan verifikasi selesai, atau sejak data rekening lengkap kami terima — mana yang lebih akhir.
                   </p>
                 </div>
 

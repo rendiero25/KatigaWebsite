@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import api, { API_BASE_URL } from '../../services/api';
-import type { Order, BiteshipTracking } from '../../types/ecommerce';
+import type { Order, BiteshipTracking, Complaint } from '../../types/ecommerce';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -58,6 +58,9 @@ export default function AdminOrderDetail() {
   const [fetchingResi, setFetchingResi] = useState(false);
   const [delivering, setDelivering] = useState(false);
   const [markingRefunded, setMarkingRefunded] = useState(false);
+  const [refundComplaint, setRefundComplaint] = useState<Complaint | null>(null);
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundError, setRefundError] = useState('');
   const [tracking, setTracking] = useState<BiteshipTracking | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState('');
@@ -88,6 +91,25 @@ export default function AdminOrderDetail() {
       })
       .finally(() => setLoading(false));
   }, [id, token]);
+
+  // Refund yang lahir dari resolusi retur bisa dipotong ongkir penjemputan, jadi nominal
+  // yang wajib ditransfer belum tentu sama dengan total pesanan. Refund dari pembatalan
+  // tidak punya komplain, dan di situ total pesanan memang angka yang benar.
+  useEffect(() => {
+    if (!id || order?.paymentStatus !== 'refund_pending') return;
+    const load = async () => {
+      setRefundLoading(true);
+      setRefundError('');
+      try {
+        setRefundComplaint(await api.getAdminComplaintByOrder(id));
+      } catch (err) {
+        setRefundError(err instanceof Error ? err.message : 'Gagal memuat data komplain');
+      } finally {
+        setRefundLoading(false);
+      }
+    };
+    void load();
+  }, [id, order?.paymentStatus]);
 
   useEffect(() => {
     if (!id || !order?.biteshipOrderId) return;
@@ -241,6 +263,10 @@ export default function AdminOrderDetail() {
 
   const osColor = ORDER_STATUS_COLOR[order.orderStatus] ?? 'bg-gray-100 text-gray-600';
   const psColor = PAYMENT_STATUS_COLOR[order.paymentStatus] ?? 'bg-gray-100 text-gray-600';
+
+  const refundResolution = refundComplaint?.resolution?.type === 'refund' ? refundComplaint.resolution : null;
+  const refundAmount = refundResolution?.refundAmount ?? order.total;
+  const refundDeducted = refundResolution?.returnShippingDeducted ?? 0;
 
   return (
     <AdminLayout title="Detail Pesanan">
@@ -396,14 +422,40 @@ export default function AdminOrderDetail() {
             {order.paymentMethod && <p className="text-sm text-gray-600">Metode: {order.paymentMethod}</p>}
             {order.paymentStatus === 'refund_pending' && (
               <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 p-3">
-                <p className="text-sm text-yellow-800">
-                  Menunggu refund manual sebesar <span className="font-semibold">{fmt(order.total)}</span>.
-                  Mayar tidak memproses refund otomatis — transfer dulu ke rekening customer.
-                </p>
+                {refundLoading ? (
+                  <p className="text-sm text-yellow-800">Menghitung nominal refund...</p>
+                ) : refundError ? (
+                  <p className="text-sm text-red-700">
+                    Nominal refund belum bisa dipastikan: {refundError}. Buka komplain pesanan ini
+                    di menu Komplain sebelum mentransfer — retur bisa memotong ongkir penjemputan.
+                  </p>
+                ) : (
+                  <p className="text-sm text-yellow-800">
+                    Menunggu refund manual sebesar <span className="font-semibold">{fmt(refundAmount)}</span>.
+                    Mayar tidak memproses refund otomatis — transfer dulu ke rekening customer.
+                    {refundDeducted > 0 && (
+                      <> Total pesanan {fmt(order.total)} dipotong ongkir retur {fmt(refundDeducted)}.</>
+                    )}
+                  </p>
+                )}
+                {order.refundAccount?.submittedAt ? (
+                  <div className="mt-3 rounded-md bg-white border border-yellow-200 p-3">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Rekening tujuan</p>
+                    <p className="mt-1 text-sm text-gray-800">
+                      {order.refundAccount.bankName} — <span className="font-mono">{order.refundAccount.accountNumber}</span>
+                    </p>
+                    <p className="text-sm text-gray-600">a.n. {order.refundAccount.accountName}</p>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-red-700">
+                    Customer belum mengisi rekening tujuan. Tombol terkunci sampai datanya masuk —
+                    tanpa rekening, transfer tidak bisa dilakukan.
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleMarkRefunded}
-                  disabled={markingRefunded}
+                  disabled={markingRefunded || refundLoading || !order.refundAccount?.submittedAt}
                   className="mt-3 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {markingRefunded ? 'Menyimpan...' : 'Tandai sudah direfund'}

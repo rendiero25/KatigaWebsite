@@ -173,6 +173,19 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// ─── GET /api/complaints/order/:orderId — admin: komplain milik satu pesanan ───
+// Harus di atas '/:id', kalau tidak Express membaca 'order' sebagai id komplain. Halaman
+// detail pesanan memakainya untuk menampilkan nominal refund yang benar: resolusi retur
+// bisa memotong ongkir penjemputan, jadi angkanya tidak selalu sama dengan total pesanan.
+router.get('/order/:orderId', auth, async (req, res) => {
+  try {
+    const complaint = await Complaint.findOne({ order: req.params.orderId });
+    res.json(complaint ?? null);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ─── GET /api/complaints/:id — admin: single complaint ───
 router.get('/:id', auth, async (req, res) => {
   try {
