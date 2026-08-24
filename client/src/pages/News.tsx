@@ -7,6 +7,7 @@ import api from '../services/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductPagination from '../components/products/ProductPagination';
+import ResponsiveBanner from '../components/ResponsiveBanner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,15 +61,7 @@ export default function News() {
           <h1 className="text-center text-2xl md:text-3xl">Berita</h1>
         </div>
 
-        <div className="w-full h-[320px] md:h-[440px] bg-[#F9F7F2] overflow-hidden">
-          {sectionContent?.bannerImage && (
-            <img
-              src={api.getImageUrl(sectionContent.bannerImage)}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          )}
-        </div>
+        <ResponsiveBanner image={sectionContent?.bannerImage} alt="" />
 
         <div className="sticky top-20 z-30 bg-white border-y border-[#E9E9EA]">
           <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 py-4">

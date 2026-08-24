@@ -3,13 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 
 import { useProducts, useCategories, useWishlist, useProductPageSettings } from '../hooks/useApi';
 
-import api from '../services/api';
-
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ProductFilterBar from '../components/products/ProductFilterBar';
 import ProductGrid from '../components/products/ProductGrid';
 import ProductPagination from '../components/products/ProductPagination';
+import ResponsiveBanner from '../components/ResponsiveBanner';
 import type { SortKey, FilterOption } from '../components/products/ProductFilterBar';
 import type { CatalogProduct } from '../components/products/ProductCard';
 
@@ -115,15 +114,7 @@ export default function Products() {
           <h1 className="text-center text-2xl md:text-3xl">Produk</h1>
         </div>
 
-        <div className="w-full h-[320px] md:h-[440px] bg-[#F9F7F2] overflow-hidden">
-          {settings?.bannerImage && (
-            <img
-              src={api.getImageUrl(settings.bannerImage)}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          )}
-        </div>
+        <ResponsiveBanner image={settings?.bannerImage} alt="" />
 
         <ProductFilterBar
           sort={sort}

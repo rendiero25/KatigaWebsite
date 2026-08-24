@@ -1,28 +1,19 @@
-import api from '../../services/api';
+import ResponsiveBanner from '../ResponsiveBanner';
 
 interface Props {
   image?: string;
   quote?: string;
   label?: string;
+  boxed?: boolean;
 }
 
-const BANNER_HEIGHT = 'h-[320px] md:h-[440px]';
-
-export default function AboutBanner({ image, quote, label }: Props) {
+export default function AboutBanner({ image, quote, label, boxed }: Props) {
   if (!image && !quote) {
     return null;
   }
 
   return (
-    <section className={`relative ${BANNER_HEIGHT} overflow-hidden bg-[#F9F7F2]`}>
-      {image && (
-        <img
-          src={api.getImageUrl(image)}
-          alt={label || quote || ''}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      )}
-
+    <ResponsiveBanner image={image} alt={label || quote || ''} boxed={boxed}>
       {quote && (
         <div
           className={`absolute inset-0 flex flex-col items-center justify-center text-center px-4 ${
@@ -45,6 +36,6 @@ export default function AboutBanner({ image, quote, label }: Props) {
           </p>
         </div>
       )}
-    </section>
+    </ResponsiveBanner>
   );
 }

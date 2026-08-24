@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { useActivePromotions } from '../hooks/useApi';
 
-import api from '../services/api';
+import ResponsiveBanner from './ResponsiveBanner';
 
 interface ActivePromotion {
   _id: string;
@@ -27,12 +27,7 @@ export default function PromosiSection() {
   }
 
   return (
-    <section className={`relative ${BANNER_HEIGHT} overflow-hidden`}>
-      <img
-        src={api.getImageUrl(promo.bannerImage)}
-        alt={promo.name}
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+    <ResponsiveBanner image={promo.bannerImage} alt={promo.name}>
       <div className="absolute inset-0 bg-black/25" />
 
       <div className="relative h-full flex flex-col items-center justify-center text-center px-4 gap-8">
@@ -49,6 +44,6 @@ export default function PromosiSection() {
           Lihat Produk
         </Link>
       </div>
-    </section>
+    </ResponsiveBanner>
   );
 }

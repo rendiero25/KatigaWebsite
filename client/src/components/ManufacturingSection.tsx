@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { useManufacturing } from '../hooks/useApi';
 
-import api from '../services/api';
+import ResponsiveBanner from './ResponsiveBanner';
 
 interface ManufacturingData {
   tagline?: string;
@@ -33,19 +33,8 @@ export default function ManufacturingSection() {
   }
 
   return (
-    <section className={`relative ${BANNER_HEIGHT} overflow-hidden`}>
-      {backgroundImage ? (
-        <>
-          <img
-            src={api.getImageUrl(backgroundImage)}
-            alt="Tentang Kami"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/30" />
-        </>
-      ) : (
-        <div className="absolute inset-0 bg-[#F9F7F2]" />
-      )}
+    <ResponsiveBanner image={backgroundImage} alt="Tentang Kami">
+      {backgroundImage && <div className="absolute inset-0 bg-black/30" />}
 
       <div className="relative h-full flex flex-col items-center justify-center text-center px-4 gap-8">
         {label && (
@@ -79,6 +68,6 @@ export default function ManufacturingSection() {
           </Link>
         )}
       </div>
-    </section>
+    </ResponsiveBanner>
   );
 }

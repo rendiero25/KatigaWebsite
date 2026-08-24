@@ -2,9 +2,9 @@ import { useParams, Link } from 'react-router-dom';
 
 import { useNewsDetail } from '../hooks/useApi';
 
-import api from '../services/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ResponsiveBanner from '../components/ResponsiveBanner';
 
 interface NewsArticle {
   _id: string;
@@ -26,7 +26,7 @@ export default function NewsDetail() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="grow">
-          <div className="h-[440px] w-full bg-gray-200 animate-pulse" />
+          <div className="h-[320px] md:h-[440px] w-full bg-gray-200 animate-pulse" />
           <div className="max-w-3xl mx-auto px-4 py-16 animate-pulse">
             <div className="h-3 bg-gray-200 rounded w-1/4 mb-4" />
             <div className="h-8 bg-gray-200 rounded w-3/4 mb-8" />
@@ -64,13 +64,7 @@ export default function NewsDetail() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="grow pb-20">
-        <div className="w-full h-[440px] overflow-hidden bg-[#F9F7F2]">
-          <img
-            src={api.getImageUrl(newsItem.image)}
-            alt={newsItem.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
+        <ResponsiveBanner image={newsItem.image} alt={newsItem.title} />
 
         <div className="max-w-3xl mx-auto px-4 py-16">
           <p className="text-[11px] uppercase tracking-[0.12em] text-[#6F6F71] mb-4">

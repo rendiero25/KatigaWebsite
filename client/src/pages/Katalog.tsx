@@ -4,6 +4,7 @@ import api from '../services/api';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import ResponsiveBanner from '../components/ResponsiveBanner';
 
 interface CatalogData {
   title?: string;
@@ -59,15 +60,7 @@ export default function Katalog() {
           <h1 className="text-center text-2xl md:text-3xl">Katalog</h1>
         </div>
 
-        <div className="w-full h-[320px] md:h-[440px] bg-[#F9F7F2] overflow-hidden">
-          {catalog?.backgroundImage && (
-            <img
-              src={api.getImageUrl(catalog.backgroundImage)}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          )}
-        </div>
+        <ResponsiveBanner image={catalog?.backgroundImage} alt="" />
 
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-16">
           <div className="max-w-3xl">

@@ -51,15 +51,12 @@ export default function AboutUs() {
           <AboutTechSection />
         </motion.div>
 
-        {/* Banner visi dibatasi lebar container seperti section lain; dua banner gambar
-            di atas sengaja tetap full-bleed. */}
-        <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-          <AboutBanner
-            image={content?.vision?.backgroundImage}
-            label={content?.vision?.title}
-            quote={content?.vision?.content}
-          />
-        </div>
+        <AboutBanner
+          image={content?.vision?.backgroundImage}
+          label={content?.vision?.title}
+          quote={content?.vision?.content}
+          boxed
+        />
 
         <motion.div {...reveal}>
           <AboutBehindBrandSection />
