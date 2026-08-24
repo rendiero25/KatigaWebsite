@@ -15,6 +15,19 @@ router.get("/", async (req, res) => {
       aboutContent = new AboutContent({});
       await aboutContent.save();
     }
+
+    if (
+      !aboutContent.bannerTop &&
+      !aboutContent.bannerBottom &&
+      aboutContent.images.length > 0
+    ) {
+      const [first, second, ...rest] = aboutContent.images;
+      aboutContent.bannerTop = first || "";
+      aboutContent.bannerBottom = second || "";
+      aboutContent.images = rest;
+      await aboutContent.save();
+    }
+
     res.json(aboutContent);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -28,7 +41,8 @@ router.put(
   "/",
   auth,
   upload.fields([
-    { name: "images", maxCount: 10 },
+    { name: "bannerTop", maxCount: 1 },
+    { name: "bannerBottom", maxCount: 1 },
     { name: "missionBg", maxCount: 1 },
     { name: "visionBg", maxCount: 1 },
   ]),
@@ -73,14 +87,22 @@ router.put(
         aboutContent.markModified("vision");
       }
 
-      if (req.files["images"] && req.files["images"].length > 0) {
-        const newImages = req.files["images"].map(
-          (file) => file.path,
-        );
-        aboutContent.images = [...aboutContent.images, ...newImages].slice(
-          0,
-          10,
-        );
+      if (req.files["bannerTop"] && req.files["bannerTop"][0]) {
+        aboutContent.bannerTop = req.files["bannerTop"][0].path;
+      } else if (
+        req.body.keptBannerTop !== undefined &&
+        req.body.keptBannerTop === ""
+      ) {
+        aboutContent.bannerTop = "";
+      }
+
+      if (req.files["bannerBottom"] && req.files["bannerBottom"][0]) {
+        aboutContent.bannerBottom = req.files["bannerBottom"][0].path;
+      } else if (
+        req.body.keptBannerBottom !== undefined &&
+        req.body.keptBannerBottom === ""
+      ) {
+        aboutContent.bannerBottom = "";
       }
 
       const saved = await aboutContent.save();
@@ -90,22 +112,5 @@ router.put(
     }
   },
 );
-
-// Helper route to clear images if needed or delete specific image
-router.put("/images/delete", auth, async (req, res) => {
-  try {
-    const { imageUrl } = req.body;
-    let aboutContent = await AboutContent.findOne();
-    if (aboutContent) {
-      aboutContent.images = aboutContent.images.filter(
-        (img) => img !== imageUrl,
-      );
-      await aboutContent.save();
-    }
-    res.json(aboutContent);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 module.exports = router;

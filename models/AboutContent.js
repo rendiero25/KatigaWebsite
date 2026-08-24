@@ -15,6 +15,14 @@ const aboutContentSchema = new mongoose.Schema(
         type: String,
       },
     ],
+    bannerTop: {
+      type: String,
+      default: "",
+    },
+    bannerBottom: {
+      type: String,
+      default: "",
+    },
     history: {
       type: String,
       default: "",

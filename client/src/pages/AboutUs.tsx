@@ -13,7 +13,8 @@ import AboutBehindBrandSection from '../components/about/AboutBehindBrandSection
 import AboutDistributionSection from '../components/about/AboutDistributionSection';
 
 interface AboutContent {
-  images?: string[];
+  bannerTop?: string;
+  bannerBottom?: string;
   history?: string;
   mission?: { title?: string; points?: string[] };
   vision?: { title?: string; content?: string; backgroundImage?: string };
@@ -29,19 +30,18 @@ const reveal = {
 export default function AboutUs() {
   const { data } = useAboutContent();
   const content = (data as AboutContent | null) ?? null;
-  const images = content?.images ?? [];
 
   return (
     <div className="min-h-screen">
       <Header />
       <main className="flex flex-col gap-8 md:gap-12 mb-8 md:mb-12">
-        <AboutBanner image={images[0]} />
+        <AboutBanner image={content?.bannerTop} />
 
         <motion.div {...reveal}>
           <AboutStorySection history={content?.history} />
         </motion.div>
 
-        <AboutBanner image={images[1]} />
+        <AboutBanner image={content?.bannerBottom} />
 
         <motion.div {...reveal}>
           <AboutValuesSection title={content?.mission?.title} points={content?.mission?.points} />

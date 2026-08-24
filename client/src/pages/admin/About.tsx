@@ -16,14 +16,19 @@ export default function AdminAbout() {
     visionContent: "",
     missionPoints: [""],
   });
-  const [existingImages, setExistingImages] = useState<string[]>([]);
-  const [newImageFiles, setNewImageFiles] = useState<FileList | null>(null);
-
   // Background Images
   const [missionBg, setMissionBg] = useState<File | null>(null);
   const [visionBg, setVisionBg] = useState<File | null>(null);
   const [missionBgPreview, setMissionBgPreview] = useState("");
   const [visionBgPreview, setVisionBgPreview] = useState("");
+
+  // Page Banners
+  const [bannerTopFile, setBannerTopFile] = useState<File | null>(null);
+  const [bannerBottomFile, setBannerBottomFile] = useState<File | null>(null);
+  const [bannerTopPreview, setBannerTopPreview] = useState("");
+  const [bannerBottomPreview, setBannerBottomPreview] = useState("");
+  const [bannerTopStored, setBannerTopStored] = useState("");
+  const [bannerBottomStored, setBannerBottomStored] = useState("");
 
   const token = localStorage.getItem("adminToken");
 
@@ -40,11 +45,16 @@ export default function AdminAbout() {
           missionPoints:
             data.mission?.points?.length > 0 ? data.mission.points : [""],
         });
-        setExistingImages(data.images || []);
         if (data.mission?.backgroundImage)
           setMissionBgPreview(api.getImageUrl(data.mission.backgroundImage));
         if (data.vision?.backgroundImage)
           setVisionBgPreview(api.getImageUrl(data.vision.backgroundImage));
+        setBannerTopStored(data.bannerTop || "");
+        setBannerTopPreview(data.bannerTop ? api.getImageUrl(data.bannerTop) : "");
+        setBannerBottomStored(data.bannerBottom || "");
+        setBannerBottomPreview(
+          data.bannerBottom ? api.getImageUrl(data.bannerBottom) : "",
+        );
       }
       setLoading(false);
     } catch (e) {
@@ -76,20 +86,15 @@ export default function AdminAbout() {
     setFormData({ ...formData, missionPoints: newPoints });
   };
 
-  const handleDeleteImage = async (imageUrl: string) => {
-    if (!confirm("Hapus gambar ini?")) return;
-    try {
-      await fetch(`${API_URL}/about/images/delete`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageUrl }),
-      });
-      setExistingImages(existingImages.filter((img) => img !== imageUrl));
-    } catch (e) {
-      console.error("Failed to delete image", e);
+  const handleRemoveBanner = (which: "top" | "bottom") => {
+    if (which === "top") {
+      setBannerTopFile(null);
+      setBannerTopPreview("");
+      setBannerTopStored("");
+    } else {
+      setBannerBottomFile(null);
+      setBannerBottomPreview("");
+      setBannerBottomStored("");
     }
   };
 
@@ -105,16 +110,14 @@ export default function AdminAbout() {
       JSON.stringify(formData.missionPoints.filter((p) => p.trim() !== "")),
     );
 
-    if (newImageFiles) {
-      if (existingImages.length + newImageFiles.length > 10) {
-        toast.warning("Maksimal 10 gambar diperbolehkan.");
-        return;
-      }
-      Array.from(newImageFiles).forEach((file) => data.append("images", file));
-    }
-
     if (missionBg) data.append("missionBg", missionBg);
     if (visionBg) data.append("visionBg", visionBg);
+
+    if (bannerTopFile) data.append("bannerTop", bannerTopFile);
+    else data.append("keptBannerTop", bannerTopStored);
+
+    if (bannerBottomFile) data.append("bannerBottom", bannerBottomFile);
+    else data.append("keptBannerBottom", bannerBottomStored);
 
     try {
       const res = await fetch(`${API_URL}/about`, {
@@ -125,12 +128,8 @@ export default function AdminAbout() {
       if (res.ok) {
         toast.success("Perubahan berhasil disimpan!");
         fetchData();
-        setNewImageFiles(null);
-        // Reset file input value if possible, or just let page refresh reload data
-        const fileInput = document.getElementById(
-          "fileInput",
-        ) as HTMLInputElement;
-        if (fileInput) fileInput.value = "";
+        setBannerTopFile(null);
+        setBannerBottomFile(null);
       } else {
         toast.error("Gagal menyimpan perubahan");
       }
@@ -185,53 +184,86 @@ export default function AdminAbout() {
             </div>
           </div>
 
-          {/* Images Section */}
+          {/* Banner Section */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">
-              Gallery Images (Max 10)
+              Banner Halaman
             </h3>
-
-            {existingImages.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                {existingImages.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden"
-                  >
-                    <img
-                      src={api.getImageUrl(img)}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => handleDeleteImage(img)}
-                      className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700"
-                    >
-                      <FaTrash size={12} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Upload New Images
+                Banner Atas — tampil di atas section Cerita Kami
               </label>
-              <input
-                id="fileInput"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => setNewImageFiles(e.target.files)}
-                className="w-full px-4 py-2 border rounded-lg"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Select multiple images. Max total 10.
-              </p>
+              {bannerTopPreview && (
+                <img
+                  src={bannerTopPreview}
+                  alt="Preview banner atas"
+                  className="w-full h-32 object-cover rounded border mb-2"
+                />
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setBannerTopFile(e.target.files[0]);
+                      setBannerTopPreview(
+                        URL.createObjectURL(e.target.files[0]),
+                      );
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                {bannerTopPreview && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleRemoveBanner("top")}
+                  >
+                    <FaTrash />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Banner Bawah — tampil di bawah section Cerita Kami
+              </label>
+              {bannerBottomPreview && (
+                <img
+                  src={bannerBottomPreview}
+                  alt="Preview banner bawah"
+                  className="w-full h-32 object-cover rounded border mb-2"
+                />
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setBannerBottomFile(e.target.files[0]);
+                      setBannerBottomPreview(
+                        URL.createObjectURL(e.target.files[0]),
+                      );
+                    }
+                  }}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                />
+                {bannerBottomPreview && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleRemoveBanner("bottom")}
+                  >
+                    <FaTrash />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
 
