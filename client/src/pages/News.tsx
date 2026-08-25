@@ -57,10 +57,6 @@ export default function News() {
       <Header />
 
       <main className="grow">
-        <div className="border-b border-[#E9E9EA] py-6">
-          <h1 className="text-center text-2xl md:text-3xl">Berita</h1>
-        </div>
-
         <ResponsiveBanner image={sectionContent?.bannerImage} alt="" />
 
         <div className="sticky top-20 z-30 bg-white border-y border-[#E9E9EA]">

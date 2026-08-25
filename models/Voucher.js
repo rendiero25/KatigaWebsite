@@ -14,6 +14,13 @@ const voucherSchema = new mongoose.Schema({
   startDate:      { type: Date, required: true },
   endDate:        { type: Date, required: true },
   isActive:       { type: Boolean, default: true },
+
+  // Cakupan: voucher berlaku untuk seluruh keranjang, atau hanya item yang
+  // produknya / kategorinya terdaftar. Diskon dihitung dari subtotal item yang
+  // memenuhi syarat saja, bukan subtotal keseluruhan.
+  appliesTo:      { type: String, enum: ['all', 'products', 'categories'], default: 'all' },
+  products:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  categories:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProductCategory' }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('Voucher', voucherSchema);

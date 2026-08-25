@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useProducts } from '../hooks/useApi';
@@ -24,6 +25,7 @@ const formatRp = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
 
 export default function ProductsSection() {
   const { data, loading } = useProducts();
+  const [brokenImages, setBrokenImages] = useState<string[]>([]);
   const products = data as Product[];
 
   const filtered = products?.filter((p) => p.isFeatured) ?? [];
@@ -61,20 +63,23 @@ export default function ProductsSection() {
             return (
               <Link key={product._id} to={`/produk/${product._id}`} className="group block">
                 <div className="w-full aspect-square bg-[#F9F7F2] overflow-hidden mb-4">
-                  <img
-                    src={api.getImageUrl(product.image)}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400';
-                    }}
-                  />
+                  {product.image && !brokenImages.includes(product._id) && (
+                    <img
+                      src={api.getImageUrl(product.image)}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
+                      onError={() =>
+                        setBrokenImages((prev) =>
+                          prev.includes(product._id) ? prev : [...prev, product._id]
+                        )
+                      }
+                    />
+                  )}
                 </div>
                 <h3 className="uppercase text-[13px] text-[#1E1E1E] mb-1">{product.name}</h3>
                 {basePrice > 0 && (
                   <p className="text-[13px] mb-2 flex flex-wrap items-baseline gap-2">
-                    <span className="text-[#6F6F71]">{formatRp(finalPrice)}</span>
+                    <span className="text-[#6F6F71] text-base">{formatRp(finalPrice)}</span>
                     {discount > 0 && (
                       <>
                         <span className="text-[#6F6F71]/50 line-through">{formatRp(basePrice)}</span>

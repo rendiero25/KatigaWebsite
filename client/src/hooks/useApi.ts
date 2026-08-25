@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { UnauthorizedError } from '../services/api';
-import type { WishlistProduct, SavedAddress, CustomerProfile, VoucherValidation, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification } from '../types/ecommerce';
+import type { WishlistProduct, SavedAddress, CustomerProfile, VoucherValidation, VoucherScopeItem, ReportsSummary, ReportsRange, ShippingSettings, Order, CartItem, ItemDimensions, MyReviewsResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification } from '../types/ecommerce';
 import { getCartCount, clearCart, normalizeDimensions, syncCartItems } from '../utils/cart';
 import { resolveProductPrice } from '../utils/price';
 
@@ -970,11 +970,15 @@ export function useVoucher() {
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apply = async (code: string, subtotal: number): Promise<void> => {
+  const apply = async (
+    code: string,
+    subtotal: number,
+    items: VoucherScopeItem[] = [],
+  ): Promise<void> => {
     setApplying(true);
     setError(null);
     try {
-      const result = await api.validateVoucher(code, subtotal);
+      const result = await api.validateVoucher(code, subtotal, items);
       if (result.valid) {
         setVoucher(result);
       } else {

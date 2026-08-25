@@ -4,6 +4,7 @@ const ContactInfo = require('../models/ContactInfo');
 const ContactSubmission = require('../models/ContactSubmission');
 const auth = require('../middleware/auth');
 const { notifyAdmin } = require('../utils/notify');
+const { sendContactNotification } = require('../services/emailService');
 
 // @route   GET /api/contact/info
 // @desc    Get contact info
@@ -70,7 +71,9 @@ router.post('/submit', async (req, res) => {
       console.error('[Notify] contact_new failed:', notifyErr.message);
     }
 
-    res.status(201).json({ message: 'Message sent successfully' });
+    const emailed = await sendContactNotification({ name, email, phone, subject, message });
+
+    res.status(201).json({ message: 'Message sent successfully', emailed });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

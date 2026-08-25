@@ -7,30 +7,24 @@ interface Props {
   alt?: string;
   children?: ReactNode;
   className?: string;
-  /** Keeps the image boxed to the page container at every breakpoint instead of going full-bleed from xl up. */
-  boxed?: boolean;
 }
 
-const HEIGHT = 'h-[320px] md:h-[440px]';
+const PLACEHOLDER_HEIGHT = 'h-[320px] md:h-[440px]';
 
-export default function ResponsiveBanner({ image, alt = '', children, className = '', boxed = false }: Props) {
+// Every public banner reads the same way: edge to edge at all widths, with the
+// height following the image's own ratio below xl and settling into a fixed
+// 440px band from xl up. Overlay content is positioned by the caller.
+export default function ResponsiveBanner({ image, alt = '', children, className = '' }: Props) {
   return (
-    <section className={`relative ${HEIGHT} overflow-hidden bg-[#F9F7F2] ${className}`}>
+    <section className={`relative overflow-hidden bg-[#F9F7F2] xl:h-[440px] ${className}`}>
       {image && (
-        <div
-          className={
-            boxed
-              ? 'container mx-auto h-full px-4 sm:px-10 lg:px-20 xl:px-30'
-              : 'container mx-auto h-full px-4 sm:px-10 lg:px-20 xl:px-0 xl:max-w-none'
-          }
-        >
-          <img
-            src={api.getImageUrl(image)}
-            alt={alt}
-            className={`w-full h-full object-contain ${boxed ? '' : 'xl:object-cover'}`}
-          />
-        </div>
+        <img
+          src={api.getImageUrl(image)}
+          alt={alt}
+          className="block w-full h-auto xl:h-full xl:object-cover"
+        />
       )}
+      {!image && !children && <div className={PLACEHOLDER_HEIGHT} />}
       {children}
     </section>
   );

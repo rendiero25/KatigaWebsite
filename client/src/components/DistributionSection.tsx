@@ -1,8 +1,11 @@
+import { useState } from 'react';
+
 import { useDistribution } from '../hooks/useApi';
 import api from '../services/api';
 
 export default function DistributionSection() {
   const { data, loading } = useDistribution();
+  const [mapBroken, setMapBroken] = useState(false);
 
   if (loading || !data) {
     return null;
@@ -22,14 +25,14 @@ export default function DistributionSection() {
 
         <div className="relative bg-white rounded-3xl shadow-sm p-4 sm:p-8 overflow-hidden">
           <div className="aspect-[2/1] relative">
-            <img 
-              src={api.getImageUrl(data.mapImage)}
-              alt="Distribution Map"
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Indonesia_location_map.svg';
-              }}
-            />
+            {data.mapImage && !mapBroken && (
+              <img
+                src={api.getImageUrl(data.mapImage)}
+                alt="Distribution Map"
+                className="w-full h-full object-contain"
+                onError={() => setMapBroken(true)}
+              />
+            )}
             
             {/* Animated Dots (Dummy locations) */}
             <div className="absolute top-[30%] left-[20%] w-3 h-3 bg-red-500 rounded-full animate-ping"></div>

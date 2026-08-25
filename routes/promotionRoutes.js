@@ -24,7 +24,8 @@ router.get('/active', async (req, res) => {
       isVisible: true,
       startDate: { $lte: now },
       endDate: { $gte: now },
-    }).sort({ displayOrder: 1 });
+      // Newest first: the home banner shows the most recently added promotion.
+    }).sort({ createdAt: -1 });
     res.json(promotions);
   } catch (err) {
     res.status(500).json({ message: err.message });

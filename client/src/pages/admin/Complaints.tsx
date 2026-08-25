@@ -46,12 +46,18 @@ interface ComplaintWithOrder extends Complaint {
   order: { _id: string; orderCode: string; total: number };
 }
 
+// Baris per halaman untuk daftar admin.
+const PAGE_SIZE = 25;
+
 export default function AdminComplaints() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [complaints, setComplaints] = useState<ComplaintWithOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<ComplaintWithOrder | null>(null);
   const [adminNote, setAdminNote] = useState('');
   const [resolutionType, setResolutionType] = useState<'refund' | 'replace' | ''>('');
@@ -64,18 +70,25 @@ export default function AdminComplaints() {
     const fetch = async () => {
       setLoading(true);
       try {
-        const params: Record<string, string> = {};
+        const params: Record<string, string> = {
+          page: String(page),
+          limit: String(PAGE_SIZE),
+        };
         if (filterStatus) params.status = filterStatus;
         if (filterType) params.type = filterType;
         const res = await api.getAdminComplaints(params);
-        if (!cancelled) setComplaints(res.data ?? []);
+        if (!cancelled) {
+          setComplaints(res.data ?? []);
+          setPages(res.pagination?.pages ?? 1);
+          setTotal(res.pagination?.total ?? 0);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
     fetch();
     return () => { cancelled = true; };
-  }, [filterStatus, filterType]);
+  }, [filterStatus, filterType, page]);
 
   const openDetail = (c: ComplaintWithOrder) => {
     setSelected(c);
@@ -150,14 +163,14 @@ export default function AdminComplaints() {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <select
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
+          onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
+          onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -229,6 +242,34 @@ export default function AdminComplaints() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Halaman {page} dari {pages} &middot; {total} komplain
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              Sebelumnya
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page >= pages || loading}
+              onClick={() => setPage((p) => Math.min(pages, p + 1))}
+            >
+              Berikutnya
+            </Button>
+          </div>
         </div>
       )}
 

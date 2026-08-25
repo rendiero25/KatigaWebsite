@@ -29,6 +29,9 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Baris per halaman untuk daftar admin.
+const PAGE_SIZE = 25
+
 export default function AdminReviews() {
   const token = localStorage.getItem('adminToken');
   const [reviews, setReviews]         = useState<AdminReview[]>([]);
@@ -48,7 +51,7 @@ export default function AdminReviews() {
   const fetchReviews = useCallback(async (p: number) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(p), limit: '20' });
+      const params = new URLSearchParams({ page: String(p), limit: String(PAGE_SIZE) });
       if (search)        params.set('search',    search);
       if (filterRating)  params.set('rating',    filterRating);
       if (filterVisible) params.set('isVisible', filterVisible);

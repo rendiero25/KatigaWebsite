@@ -153,22 +153,32 @@ export default function AdminNews() {
           <form onSubmit={handleSectionSubmit}>
             <div className="flex flex-wrap gap-5">
               {/* Banner preview */}
-              <div className="flex-1 min-w-[200px]">
+              <div className="shrink-0">
                 <Label className="text-xs text-gray-500 mb-1.5 block">Banner Image</Label>
                 <div
-                  className="aspect-video rounded-lg bg-gray-100 overflow-hidden border-2 border-dashed border-gray-200 cursor-pointer hover:border-indigo-300 transition-colors"
+                  className="aspect-video w-48 rounded-md bg-gray-100 overflow-hidden border border-dashed border-gray-300 cursor-pointer hover:border-indigo-400 transition-colors"
                   onClick={() => document.getElementById("banner-input")?.click()}
                 >
                   {bannerFile ? (
-                    <img src={URL.createObjectURL(bannerFile)} className="w-full h-full object-cover" />
+                    <img src={URL.createObjectURL(bannerFile)} alt="" className="w-full h-full object-cover" />
                   ) : sectionContent.bannerImage ? (
-                    <img src={api.getImageUrl(sectionContent.bannerImage)} className="w-full h-full object-cover" />
+                    // Thumbnail, not the original: the stored banner is a
+                    // multi-megabyte image and this box is only 192px wide.
+                    <img
+                      src={api.getThumbnailUrl(sectionContent.bannerImage, 384, 216)}
+                      alt=""
+                      width={384}
+                      height={216}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
-                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex flex-col items-center justify-center h-full gap-1.5 text-gray-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-xs">Klik untuk upload banner</span>
+                      <span className="text-[11px]">Pilih banner</span>
                     </div>
                   )}
                 </div>

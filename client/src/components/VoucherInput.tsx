@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import type { VoucherValidation } from '../types/ecommerce';
+import type { VoucherValidation, VoucherScopeItem } from '../types/ecommerce';
 import { useVoucher } from '../hooks/useApi';
 
 interface Props {
   subtotal: number;
+  /** Rincian item; wajib agar voucher bercakupan produk/kategori dihitung benar. */
+  items: VoucherScopeItem[];
   onApply: (validation: VoucherValidation, code: string) => void;
   onClear: () => void;
 }
@@ -12,7 +14,7 @@ interface Props {
 const fmt = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
 
-export default function VoucherInput({ subtotal, onApply, onClear }: Props) {
+export default function VoucherInput({ subtotal, items, onApply, onClear }: Props) {
   const [code, setCode] = useState('');
   const { voucher, applying, error, apply, clear } = useVoucher();
 
@@ -25,7 +27,7 @@ export default function VoucherInput({ subtotal, onApply, onClear }: Props) {
 
   const handleApply = async () => {
     if (!code.trim()) return;
-    await apply(code.trim(), subtotal);
+    await apply(code.trim(), subtotal, items);
   };
 
   const handleClear = () => {

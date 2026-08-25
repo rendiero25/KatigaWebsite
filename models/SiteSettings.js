@@ -28,6 +28,10 @@ const siteSettingsSchema = new mongoose.Schema({
   instagramUrl: {
     type: String,
     default: ''
+  },
+  tiktokUrl: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

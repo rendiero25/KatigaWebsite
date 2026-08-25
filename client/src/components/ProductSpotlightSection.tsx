@@ -78,7 +78,7 @@ export default function ProductSpotlightSection() {
             </div>
             <h3 className="uppercase text-[13px] text-[#1E1E1E] mt-4">{lead.name}</h3>
             {priceLabel(lead) && (
-              <p className="text-[#6F6F71] text-[13px]">{priceLabel(lead)}</p>
+              <p className="text-[#6F6F71] text-base mt-1">{priceLabel(lead)}</p>
             )}
           </Link>
 
@@ -103,7 +103,7 @@ export default function ProductSpotlightSection() {
                   <div className="min-w-0 pt-1">
                     <h3 className="uppercase text-[13px] text-[#1E1E1E] mb-1">{product.name}</h3>
                     {priceLabel(product) && (
-                      <p className="text-[#6F6F71] text-[13px]">{priceLabel(product)}</p>
+                      <p className="text-[#6F6F71] text-base">{priceLabel(product)}</p>
                     )}
                   </div>
                 </Link>

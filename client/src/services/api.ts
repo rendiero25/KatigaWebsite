@@ -1,4 +1,4 @@
-import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse, Order, BiteshipTracking, Complaint } from '../types/ecommerce';
+import type { WishlistProduct, Review, ReviewsResponse, CanReviewResponse, MyReviewsResponse, SavedAddress, VoucherValidation, VoucherScopeItem, VoucherPayload, AdminVoucher, CreateOrderPayload, ReportsSummary, ReportsRange, ShippingSettings, ShippingRatesResponse, ProductsReport, CustomersReport, PromotionsReport, NotificationRole, AppNotification, NotificationsResponse, Order, BiteshipTracking, Complaint } from '../types/ecommerce';
 
 interface ShippingRateRequestItem {
   name: string;
@@ -39,6 +39,14 @@ export class UnauthorizedError extends Error {
     this.name = 'UnauthorizedError';
   }
 }
+
+// Cloudinary serves derived assets by injecting a transformation segment after
+// /upload/. Anything not on Cloudinary (legacy /uploads/ paths, blob: previews)
+// has no CDN resizer, so it is returned untouched.
+const withCloudinaryTransform = (url: string, transform: string): string | null => {
+  if (!url.includes('res.cloudinary.com') || !url.includes('/upload/')) return null;
+  return url.replace('/upload/', `/upload/${transform}/`);
+};
 
 export const api = {
   // Site Settings
@@ -808,6 +816,39 @@ export const api = {
     return `${baseUrl}${path}`;
   },
 
+  // CDN-resized still, for admin lists and any other place that shows a small
+  // preview. Stored hero media are multi-megabyte PNGs; rendering the original
+  // into a 192px box downloads ~700x more bytes than the box can show.
+  // Pass the intended CSS size in device pixels (2x for retina).
+  getThumbnailUrl: (path: string, width = 320, height = 180): string => {
+    const url = api.getImageUrl(path);
+    return withCloudinaryTransform(url, `c_fill,w_${width},h_${height},q_auto,f_auto`) ?? url;
+  },
+
+  // Logo lockups are uploaded with wildly different amounts of transparent
+  // padding baked in (one partner mark fills 10% of its canvas, others 100%),
+  // so object-contain sizes the padding rather than the mark. e_trim crops to
+  // the visible pixels first, which is what makes a row of logos look evenly
+  // sized. Pass the intended CSS size in device pixels (2x for retina).
+  getLogoUrl: (path: string, width = 260, height = 80): string => {
+    const url = api.getImageUrl(path);
+    // Two chained components, not one: within a single component Cloudinary
+    // resizes before applying the effect, so the trim would run on an
+    // already-downscaled canvas and throw away resolution.
+    return (
+      withCloudinaryTransform(url, `e_trim/c_limit,w_${width},h_${height},q_auto,f_auto`) ?? url
+    );
+  },
+
+  // First frame of a video as a JPEG, so a preview costs one small image
+  // instead of streaming the clip.
+  getVideoPosterUrl: (path: string, width = 320, height = 180): string => {
+    const url = api.getImageUrl(path);
+    const transformed = withCloudinaryTransform(url, `so_0,c_fill,w_${width},h_${height},q_auto`);
+    if (!transformed) return "";
+    return transformed.replace(/\.(mp4|webm|mov)$/i, ".jpg");
+  },
+
   // Reviews
   getProductReviews: async (productId: string, page = 1): Promise<ReviewsResponse> => {
     const res = await fetch(`${API_BASE_URL}/reviews/product/${productId}?page=${page}&limit=10`);
@@ -984,15 +1025,52 @@ export const api = {
   },
 
   // Vouchers
-  validateVoucher: async (code: string, subtotal: number): Promise<VoucherValidation> => {
+  validateVoucher: async (
+    code: string,
+    subtotal: number,
+    items: VoucherScopeItem[] = [],
+  ): Promise<VoucherValidation> => {
     const token = localStorage.getItem('customerToken');
     const res = await fetch(`${API_BASE_URL}/vouchers/validate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ code, subtotal }),
+      body: JSON.stringify({ code, subtotal, items }),
     });
     if (!res.ok) throw new Error('Failed to validate voucher');
     return res.json();
+  },
+
+  // Vouchers — admin
+  getAdminVouchers: async (): Promise<AdminVoucher[]> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/vouchers`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal memuat daftar voucher');
+    return res.json();
+  },
+
+  saveVoucher: async (payload: VoucherPayload, id?: string): Promise<AdminVoucher> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/vouchers${id ? `/${id}` : ''}`, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { message?: string };
+      throw new Error(err.message || 'Gagal menyimpan voucher');
+    }
+    return res.json();
+  },
+
+  deleteVoucher: async (id: string): Promise<void> => {
+    const token = localStorage.getItem('adminToken');
+    const res = await fetch(`${API_BASE_URL}/vouchers/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Gagal menghapus voucher');
   },
 
   // Notifications

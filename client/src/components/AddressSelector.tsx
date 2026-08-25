@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { ShippingAddress, SavedAddress, BiteshipArea } from '../types/ecommerce';
 import { useCustomerAddresses } from '../hooks/useApi';
 import api from '../services/api';
@@ -82,6 +82,18 @@ export default function AddressSelector({ selected, onSelect }: Props) {
     });
   };
 
+  // Satu alamat tersimpan berarti tidak ada yang perlu dipilih — langsung dipakai
+  // supaya ongkir bisa dihitung tanpa klik tambahan. Dua atau lebih tetap harus
+  // dipilih sendiri, dan pilihan yang sudah ada tidak pernah ditimpa.
+  const autoSelectedRef = useRef(false);
+  useEffect(() => {
+    if (loading || selected || autoSelectedRef.current) return;
+    if (addresses.length !== 1) return;
+    autoSelectedRef.current = true;
+    handleUseAddress(addresses[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, addresses, selected]);
+
   const handleConfirmNew = async () => {
     if (!form.recipientName || !form.phone || !form.street || !form.areaId) return;
     setSaving(true);
@@ -153,7 +165,7 @@ export default function AddressSelector({ selected, onSelect }: Props) {
             return (
               <div
                 key={addr._id}
-                className={`border-b border-[#E9E9EA] py-4 cursor-pointer transition-colors last:border-0 ${isSelected ? 'bg-[#FAFAF9]' : 'hover:bg-[#FAFAF9]'}`}
+                className={`border-b border-[#E9E9EA] px-4 py-4 cursor-pointer transition-colors last:border-0 ${isSelected ? 'bg-[#FAFAF9]' : 'hover:bg-[#FAFAF9]'}`}
                 onClick={() => handleUseAddress(addr)}
               >
                 <div className="flex items-start justify-between gap-3">

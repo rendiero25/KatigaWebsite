@@ -37,6 +37,9 @@ interface EditForm {
   suspended: boolean
 }
 
+// Baris per halaman untuk daftar admin.
+const PAGE_SIZE = 25
+
 export default function AdminUsers() {
   const token = localStorage.getItem('adminToken')
   const [data, setData] = useState<CustomersResponse | null>(null)
@@ -70,7 +73,7 @@ export default function AdminUsers() {
       const params = new URLSearchParams()
       if (search) params.set('search', search)
       params.set('page', String(page))
-      params.set('limit', '20')
+      params.set('limit', String(PAGE_SIZE))
       const res = await fetch(`${API_BASE_URL}/admin/customers?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       })

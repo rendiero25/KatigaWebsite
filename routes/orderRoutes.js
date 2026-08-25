@@ -14,6 +14,10 @@ const {
 } = require('../services/biteshipService');
 const { getOrCreateShippingSettings } = require('../services/shippingSettingsService');
 const Voucher = require('../models/Voucher');
+const {
+  computeVoucherDiscount,
+  eligibleSubtotal: computeVoucherEligibleSubtotal,
+} = require('../utils/voucherScope');
 const { notifyAdmin, notifyCustomer } = require('../utils/notify');
 const { createPayment, getTransaction, closePayment, MayarError } = require('../services/mayarService');
 
@@ -293,6 +297,7 @@ router.post('/', customerAuth, async (req, res) => {
 
     // Fetch products from DB — never trust client prices
     const orderItems = [];
+    const voucherScopeItems = [];
     for (const { productId, quantity, variantId } of items) {
       const normalizedVariantId =
         typeof variantId === 'string' && variantId.trim() ? variantId.trim() : undefined;
@@ -344,6 +349,14 @@ router.post('/', customerAuth, async (req, res) => {
         weightGrams,
         dimensions,
         quantity: parsedQuantity,
+        subtotal: finalPriceNumeric * parsedQuantity,
+      });
+
+      // Dipakai untuk menghitung cakupan voucher; kategori dibaca dari produk,
+      // bukan dari payload klien.
+      voucherScopeItems.push({
+        productId: String(product._id),
+        categoryId: product.category ? String(product.category) : '',
         subtotal: finalPriceNumeric * parsedQuantity,
       });
     }
@@ -415,14 +428,16 @@ router.post('/', customerAuth, async (req, res) => {
         }
       }
 
-      appliedVoucherCode = voucherDoc.code;
-      let recalcDiscount = voucherDoc.discountType === 'percent'
-        ? Math.round(itemsSubtotal * voucherDoc.discountValue / 100)
-        : voucherDoc.discountValue;
-      if (voucherDoc.discountType === 'percent' && voucherDoc.maxDiscount != null && voucherDoc.maxDiscount > 0) {
-        recalcDiscount = Math.min(recalcDiscount, voucherDoc.maxDiscount);
+      // Voucher bercakupan hanya memotong item yang memenuhi syarat. Rumusnya
+      // dibagi dengan /vouchers/validate supaya angka checkout dan tagihan sama.
+      if (computeVoucherEligibleSubtotal(voucherDoc, voucherScopeItems) <= 0) {
+        return res.status(400).json({
+          message: 'Tidak ada produk di keranjang yang memenuhi syarat voucher ini',
+        });
       }
-      appliedVoucherDiscount = Math.min(recalcDiscount, itemsSubtotal);
+
+      appliedVoucherCode = voucherDoc.code;
+      appliedVoucherDiscount = computeVoucherDiscount(voucherDoc, voucherScopeItems);
 
       const reservedVoucher = await Voucher.findOneAndUpdate(
         voucherDoc.usageLimit > 0

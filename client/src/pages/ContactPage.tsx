@@ -68,10 +68,6 @@ export default function ContactPage() {
       <Header />
 
       <main className="grow">
-        <div className="border-b border-[#E9E9EA] py-6">
-          <h1 className="text-center text-2xl md:text-3xl">Kontak</h1>
-        </div>
-
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-16">
           {(content.subtitle1 || content.subtitle2) && (
             <div className="max-w-2xl mx-auto text-center mb-12">

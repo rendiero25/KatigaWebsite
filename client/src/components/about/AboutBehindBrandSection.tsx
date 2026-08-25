@@ -67,10 +67,14 @@ export default function AboutBehindBrandSection() {
             {features.map((feature, index) => (
               <div key={index} className="w-32 flex flex-col items-center gap-3 text-center">
                 {feature.icon ? (
+                  // The CMS icons are white PNGs drawn for the dark hero banner;
+                  // inverting them makes the same asset readable on this white section.
                   <img
                     src={api.getImageUrl(feature.icon)}
                     alt={feature.title}
-                    className="w-8 h-8 object-contain"
+                    loading="lazy"
+                    decoding="async"
+                    className="w-8 h-8 object-contain invert"
                   />
                 ) : (
                   <div className="w-8 h-8 bg-[#F9F7F2]" />

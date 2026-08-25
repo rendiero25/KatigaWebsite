@@ -82,6 +82,9 @@ const menuGroups: MenuGroup[] = [
       { path: '/admin/notifikasi', icon: Bell, label: 'Notifikasi' },
     ],
   },
+  // Mirrors the public site: pages in nav order (Beranda, Tentang Kami, Produk,
+  // Berita, Kontak), and within each page the sections in the order a visitor
+  // scrolls past them. Editing content should mean opening the page it sits on.
   {
     label: 'Halaman Website',
     items: [
@@ -91,9 +94,8 @@ const menuGroups: MenuGroup[] = [
         label: 'Home',
         children: [
           { path: '/admin/hero', label: 'Hero Section' },
-          { path: '/admin/partners', label: 'Partners' },
-          { path: '/admin/advantages', label: 'Keunggulan' },
           { path: '/admin/manufacturing', label: 'Banner Tentang Kami' },
+          { path: '/admin/advantages', label: 'Keunggulan' },
         ],
       },
       {
@@ -104,8 +106,21 @@ const menuGroups: MenuGroup[] = [
           { path: '/admin/about', label: 'General Info' },
           { path: '/admin/certification-tech', label: 'Technology' },
           { path: '/admin/distribution', label: 'Distribution' },
+          { path: '/admin/partners', label: 'Partners' },
         ],
       },
+      {
+        path: '/admin/products-group',
+        icon: Package,
+        label: 'Produk',
+        children: [
+          { path: '/admin/product-page-content', label: 'Banner' },
+          { path: '/admin/categories', label: 'Kategori' },
+          { path: '/admin/products', label: 'Produk' },
+        ],
+      },
+      { path: '/admin/catalog', icon: BookOpen, label: 'E-Catalog' },
+      { path: '/admin/news', icon: Newspaper, label: 'Berita' },
       {
         path: '/admin/contact-group',
         icon: Phone,
@@ -113,30 +128,11 @@ const menuGroups: MenuGroup[] = [
         children: [
           { path: '/admin/contact', label: 'Info Kontak' },
           { path: '/admin/contact-page-content', label: 'Konten Hal. Kontak' },
+          { path: '/admin/messages', label: 'Pesan Masuk' },
         ],
       },
       { path: '/admin/footer', icon: Layers, label: 'Footer' },
     ],
-  },
-  {
-    label: 'Produk & Katalog',
-    items: [
-      {
-        path: '/admin/products-group',
-        icon: Package,
-        label: 'Produk',
-        children: [
-          { path: '/admin/categories', label: 'Kategori' },
-          { path: '/admin/products', label: 'Produk' },
-          { path: '/admin/product-page-content', label: 'Konten Hal. Produk' },
-        ],
-      },
-      { path: '/admin/catalog', icon: BookOpen, label: 'E-Catalog' },
-    ],
-  },
-  {
-    label: 'Konten',
-    items: [{ path: '/admin/news', icon: Newspaper, label: 'Berita' }],
   },
   {
     label: 'Transaksi',
@@ -158,6 +154,7 @@ const menuGroups: MenuGroup[] = [
         children: [
           { path: '/admin/promosi', label: 'Kelola Promosi' },
           { path: '/admin/promosi/tampilan', label: 'Tampilan Promosi' },
+          { path: '/admin/voucher', label: 'Kode Voucher' },
         ],
       },
     ],

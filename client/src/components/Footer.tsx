@@ -1,10 +1,20 @@
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { FaPhone, FaWhatsapp, FaEnvelope, FaInstagram, FaTiktok } from "react-icons/fa";
 import { FiChevronDown } from "react-icons/fi";
 
-import { useFooter, useContactInfo } from "../hooks/useApi";
+import { useFooter, useContactInfo, useSiteSettings } from "../hooks/useApi";
+
+import api from "../services/api";
+
+import WhatsAppFab from "./WhatsAppFab";
+
+// Dipakai selama field-nya belum diisi di Pengaturan, supaya ikon sosial tidak
+// pernah jadi tautan mati seperti sebelumnya (href="#").
+const INSTAGRAM_FALLBACK = "https://www.instagram.com/kumakuma.katalog/";
+const TIKTOK_FALLBACK = "https://www.tiktok.com/@housekumakumaofficial";
 
 // TODO(cms): pindahkan blurb perusahaan ini ke model FooterContent
 const COMPANY_BLURB =
@@ -40,10 +50,37 @@ function FooterColumn({ title, children }: FooterColumnProps) {
 export default function Footer() {
   const { data: footer } = useFooter();
   const { data: contact } = useContactInfo();
+  const { data: site } = useSiteSettings();
 
-  const handleNewsletterSubmit = (e: FormEvent<HTMLFormElement>) => {
-    // TODO(cms): sambungkan ke endpoint newsletter setelah penyedia ditentukan
+  const instagramUrl = site?.instagramUrl?.trim() || INSTAGRAM_FALLBACK;
+  const tiktokUrl = site?.tiktokUrl?.trim() || TIKTOK_FALLBACK;
+
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  // Routed through the contact endpoint: it stores the request in /admin/messages
+  // and forwards it to the team inbox, same path as the contact page form.
+  const handleNewsletterSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const address = newsletterEmail.trim();
+    if (!address || subscribing) return;
+
+    setSubscribing(true);
+    try {
+      await api.submitContact({
+        name: address,
+        email: address,
+        phone: "",
+        subject: "Berlangganan newsletter",
+        message: `${address} ingin berlangganan newsletter Katiga.`,
+      });
+      toast.success("Terima kasih, email kamu sudah kami terima.");
+      setNewsletterEmail("");
+    } catch {
+      toast.error("Gagal mengirim. Coba lagi sebentar.");
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -74,15 +111,19 @@ export default function Footer() {
             <p className="text-white/70 text-sm leading-relaxed max-w-xs">{COMPANY_BLURB}</p>
             <div className="flex items-center gap-4 mt-2">
               <a
-                href="#"
-                aria-label="Instagram"
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram Katiga"
                 className="text-white/70 hover:text-white transition-colors"
               >
                 <FaInstagram className="w-5 h-5" />
               </a>
               <a
-                href="#"
-                aria-label="TikTok"
+                href={tiktokUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="TikTok Katiga"
                 className="text-white/70 hover:text-white transition-colors"
               >
                 <FaTiktok className="w-5 h-5" />
@@ -158,18 +199,23 @@ export default function Footer() {
               </a>
             )}
 
-            {/* TODO(cms): form newsletter belum tersambung — belum ada endpoint/penyedia */}
             <form onSubmit={handleNewsletterSubmit} className="mt-2 flex">
               <input
                 type="email"
+                required
+                name="email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="Email Anda"
+                aria-label="Email untuk berlangganan"
                 className="flex-1 min-w-0 bg-transparent border border-white/30 text-white placeholder:text-white/50 text-sm px-3 py-2 focus:outline-none focus:border-white"
               />
               <button
                 type="submit"
-                className="shrink-0 bg-white text-[#2B3A67] uppercase tracking-[0.18em] text-[13px] px-4 hover:bg-white/90 transition-colors"
+                disabled={subscribing}
+                className="shrink-0 bg-white text-[#2B3A67] uppercase tracking-[0.18em] text-[13px] px-4 hover:bg-white/90 disabled:opacity-60 transition-colors"
               >
-                Kirim
+                {subscribing ? "Mengirim" : "Kirim"}
               </button>
             </form>
           </FooterColumn>
@@ -182,6 +228,10 @@ export default function Footer() {
           <p>{footer?.copyright || "© 2026 Kusuma Kencana Khatulistiwa. All rights reserved."}</p>
         </div>
       </div>
+
+      {/* Rendered here because the footer is the one component every public page
+          mounts; the button itself is fixed to the viewport, not to the footer. */}
+      <WhatsAppFab />
     </footer>
   );
 }

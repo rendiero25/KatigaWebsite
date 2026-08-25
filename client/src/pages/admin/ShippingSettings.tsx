@@ -151,13 +151,11 @@ export default function AdminShippingSettings() {
             </div>
           )}
 
-          <Button
-            type="submit"
-            disabled={loading || saving || !data}
-            className="w-full py-3"
-          >
-            {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
-          </Button>
+          <div className="flex justify-end">
+            <Button type="submit" disabled={loading || saving || !data} className="min-w-[170px]">
+              {saving ? 'Menyimpan...' : 'Simpan Pengaturan'}
+            </Button>
+          </div>
         </form>
       </div>
     </AdminLayout>

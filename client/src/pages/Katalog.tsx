@@ -56,10 +56,6 @@ export default function Katalog() {
       <Header />
 
       <main className="grow">
-        <div className="border-b border-[#E9E9EA] py-6">
-          <h1 className="text-center text-2xl md:text-3xl">Katalog</h1>
-        </div>
-
         <ResponsiveBanner image={catalog?.backgroundImage} alt="" />
 
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-16">

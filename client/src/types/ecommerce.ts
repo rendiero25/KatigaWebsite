@@ -19,7 +19,43 @@ export interface VoucherValidation {
   valid: boolean;
   voucherId?: string;
   discountAmount?: number;
+  eligibleSubtotal?: number;
   message: string;
+}
+
+// Dikirim ke /vouchers/validate supaya voucher bercakupan produk/kategori bisa
+// dihitung dari item yang memenuhi syarat saja. Kategori tidak dikirim — server
+// membacanya sendiri dari database.
+export interface VoucherScopeItem {
+  productId: string;
+  subtotal: number;
+}
+
+export type VoucherScope = 'all' | 'products' | 'categories';
+
+export interface VoucherPayload {
+  code: string;
+  name: string;
+  description: string;
+  discountValue: number;
+  minOrderAmount: number;
+  maxDiscount: number | null;
+  usageLimit: number;
+  perUserLimit: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  appliesTo: VoucherScope;
+  products: string[];
+  categories: string[];
+}
+
+export interface AdminVoucher extends Omit<VoucherPayload, 'products' | 'categories'> {
+  _id: string;
+  usedCount: number;
+  discountType: string;
+  products: { _id: string; name: string }[];
+  categories: { _id: string; name: string }[];
 }
 
 export interface CustomerProfile {

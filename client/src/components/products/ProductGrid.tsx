@@ -10,12 +10,13 @@ interface Props {
   onClearFilters: () => void;
 }
 
-const SKELETON_COUNT = 6;
+// Multiple of the widest column count so the skeleton never renders a ragged row.
+const SKELETON_COUNT = 8;
 
 export default function ProductGrid({ products, loading, wishlistIds, onToggleWishlist, onClearFilters }: Props) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-12">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">
         {Array.from({ length: SKELETON_COUNT }, (_, i) => (
           <div key={i} className="animate-pulse">
             <div className="w-full aspect-square bg-gray-200 mb-4" />
@@ -49,7 +50,7 @@ export default function ProductGrid({ products, loading, wishlistIds, onToggleWi
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-12">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">
       {products.map((product) => (
         <ProductCard
           key={product._id}

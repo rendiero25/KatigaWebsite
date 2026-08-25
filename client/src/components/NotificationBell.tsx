@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react'
+import { FiBell } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import type { AppNotification, NotificationRole } from '../types/ecommerce'
 import {
@@ -38,7 +38,7 @@ export default function NotificationBell({ role, notifications, unreadCount, onM
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="relative cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
-        <Bell className="size-5" strokeWidth={1.5} />
+        <FiBell className="w-5 h-5" />
         {unreadCount > 0 && (
           <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-[#4F68AF] text-white text-[9px] leading-none flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}

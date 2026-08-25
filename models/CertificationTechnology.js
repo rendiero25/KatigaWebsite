@@ -8,6 +8,7 @@ const certificationTechnologySchema = new mongoose.Schema(
     },
     section1: {
       title: { type: String, default: "" }, // e.g., SNI & K3L
+      subtitle: { type: String, default: "" }, // eyebrow above the title, like section2
       image: { type: String, default: "" },
       points: [
         {

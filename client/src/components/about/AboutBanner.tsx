@@ -4,16 +4,15 @@ interface Props {
   image?: string;
   quote?: string;
   label?: string;
-  boxed?: boolean;
 }
 
-export default function AboutBanner({ image, quote, label, boxed }: Props) {
+export default function AboutBanner({ image, quote, label }: Props) {
   if (!image && !quote) {
     return null;
   }
 
   return (
-    <ResponsiveBanner image={image} alt={label || quote || ''} boxed={boxed}>
+    <ResponsiveBanner image={image} alt={label || quote || ''}>
       {quote && (
         <div
           className={`absolute inset-0 flex flex-col items-center justify-center text-center px-4 ${

@@ -95,7 +95,8 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [openSection, setOpenSection] = useState<'info' | 'shipping' | 'returns' | null>('info');
+  const [openSection, setOpenSection] = useState<'info' | 'shipping' | 'returns' | null>(null);
+  const [brokenImages, setBrokenImages] = useState<string[]>([]);
 
   const { wishlistIds, add, remove } = useWishlist();
   const { reviews, meta, loading: reviewsLoading, loadingMore, loadMore } = useProductReviews(id ?? '');
@@ -172,6 +173,11 @@ export default function ProductDetail() {
       ? (selectedVariant.price as number)
       : (product.priceNumeric ?? 0);
   const hasPrice = effectivePrice > 0;
+  // effectivePrice masih harga normal; promosi baru dipotong di sini supaya
+  // subtotal cocok dengan yang benar-benar masuk keranjang.
+  const promoPercent = product.activePromotion?.discountPercent ?? 0;
+  const discountedPrice =
+    promoPercent > 0 ? Math.round(effectivePrice * (1 - promoPercent / 100)) : effectivePrice;
   const activeWeightGrams =
     selectedVariant !== null && selectedVariant.weightGrams > 0
       ? selectedVariant.weightGrams
@@ -309,6 +315,8 @@ export default function ProductDetail() {
     setOpenSection((current) => (current === section ? null : section));
   };
 
+  const coverImage = activeImage || product.image || '';
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -334,19 +342,18 @@ export default function ProductDetail() {
             {/* Image Gallery */}
             <div className="flex flex-col gap-3 md:w-1/2 md:shrink-0">
               <div className="bg-[#F9F7F2] overflow-hidden relative aspect-square">
-                <img
-                  src={
-                    activeImage
-                      ? api.getImageUrl(activeImage)
-                      : api.getImageUrl(product.image)
-                  }
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800';
-                  }}
-                />
+                {coverImage && !brokenImages.includes(coverImage) && (
+                  <img
+                    src={api.getImageUrl(coverImage)}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={() =>
+                      setBrokenImages((prev) =>
+                        prev.includes(coverImage) ? prev : [...prev, coverImage]
+                      )
+                    }
+                  />
+                )}
                 {product.isFeatured && (
                   <span className="absolute top-4 left-4 px-2.5 py-1 bg-white/90 text-[#1E1E1E] uppercase text-[11px] tracking-[0.1em]">
                     Featured
@@ -482,11 +489,17 @@ export default function ProductDetail() {
                         <Plus className="size-3.5" />
                       </button>
                     </div>
-                    <p className="text-[12px] text-[#6F6F71]">
-                      Subtotal:{' '}
-                      <span className="text-[#1E1E1E]">
-                        {formatRp(effectivePrice * qty)}
-                      </span>
+                    <p className="text-[12px] text-[#6F6F71] flex flex-wrap items-baseline gap-1.5">
+                      <span>Subtotal:</span>
+                      <span className="text-[#1E1E1E]">{formatRp(discountedPrice * qty)}</span>
+                      {promoPercent > 0 && (
+                        <>
+                          <span className="text-[#6F6F71]/60 line-through">
+                            {formatRp(effectivePrice * qty)}
+                          </span>
+                          <span className="text-[11px] text-[#AE4B4B]">-{promoPercent}%</span>
+                        </>
+                      )}
                     </p>
                   </div>
 

@@ -1,8 +1,11 @@
+import { useState } from 'react';
+
 import { useCertificationTech } from '../hooks/useApi';
 import api from '../services/api';
 
 export default function CertificationTechSection() {
   const { data, loading } = useCertificationTech();
+  const [imageBroken, setImageBroken] = useState(false);
 
   if (loading || !data) {
     return null;
@@ -14,15 +17,15 @@ export default function CertificationTechSection() {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Image */}
           <div className="relative">
-            <div className="aspect-[4/3] rounded-3xl overflow-hidden">
-              <img 
-                src={api.getImageUrl(data.image)}
-                alt="Technology from Forest"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800';
-                }}
-              />
+            <div className="aspect-[4/3] bg-[#F9F7F2] rounded-3xl overflow-hidden">
+              {data.image && !imageBroken && (
+                <img
+                  src={api.getImageUrl(data.image)}
+                  alt="Technology from Forest"
+                  className="w-full h-full object-cover"
+                  onError={() => setImageBroken(true)}
+                />
+              )}
             </div>
             {/* Decorative */}
             <div className="absolute -z-10 top-10 -right-10 w-full h-full bg-green-50 rounded-3xl"></div>

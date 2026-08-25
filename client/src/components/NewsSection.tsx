@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useNews } from '../hooks/useApi';
@@ -13,6 +14,7 @@ interface NewsArticle {
 
 export default function NewsSection() {
   const { data, loading } = useNews();
+  const [brokenImages, setBrokenImages] = useState<string[]>([]);
   const news = data as NewsArticle[];
   const latestNews = news?.slice(0, 3) || [];
 
@@ -45,16 +47,19 @@ export default function NewsSection() {
         <div className="grid md:grid-cols-3 gap-8">
           {latestNews.map((article) => (
             <Link key={article._id} to={`/berita/${article._id}`} className="group block">
-              <div className="aspect-[16/10] overflow-hidden mb-4">
-                <img
-                  src={api.getImageUrl(article.image)}
-                  alt={article.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400';
-                  }}
-                />
+              <div className="aspect-[16/10] bg-[#F9F7F2] overflow-hidden mb-4">
+                {article.image && !brokenImages.includes(article._id) && (
+                  <img
+                    src={api.getImageUrl(article.image)}
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    onError={() =>
+                      setBrokenImages((prev) =>
+                        prev.includes(article._id) ? prev : [...prev, article._id]
+                      )
+                    }
+                  />
+                )}
               </div>
               <p className="text-[11px] text-[#6F6F71] tracking-[0.12em] uppercase mb-2">
                 {new Date(article.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}

@@ -29,14 +29,17 @@ router.put('/', auth, upload.single('logo'), async (req, res) => {
       settings = new SiteSettings({});
     }
 
-    const { companyName, tagline, shopNowUrl, tokopediaUrl, shopeeUrl, instagramUrl } = req.body;
-    
-    if (companyName) settings.companyName = companyName;
-    if (tagline) settings.tagline = tagline;
-    if (shopNowUrl) settings.shopNowUrl = shopNowUrl;
-    if (tokopediaUrl) settings.tokopediaUrl = tokopediaUrl;
-    if (shopeeUrl) settings.shopeeUrl = shopeeUrl;
-    if (instagramUrl) settings.instagramUrl = instagramUrl;
+    const { companyName, tagline, shopNowUrl, tokopediaUrl, shopeeUrl, instagramUrl, tiktokUrl } = req.body;
+
+    // Dicek terhadap undefined, bukan truthy: dengan cek truthy sebuah field tidak
+    // pernah bisa dikosongkan lagi lewat form karena '' dianggap "tidak dikirim".
+    if (companyName !== undefined) settings.companyName = companyName;
+    if (tagline !== undefined) settings.tagline = tagline;
+    if (shopNowUrl !== undefined) settings.shopNowUrl = shopNowUrl;
+    if (tokopediaUrl !== undefined) settings.tokopediaUrl = tokopediaUrl;
+    if (shopeeUrl !== undefined) settings.shopeeUrl = shopeeUrl;
+    if (instagramUrl !== undefined) settings.instagramUrl = instagramUrl;
+    if (tiktokUrl !== undefined) settings.tiktokUrl = tiktokUrl;
     if (req.file) settings.logo = req.file.path;
 
     await settings.save();

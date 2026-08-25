@@ -52,6 +52,13 @@ export default function CartDrawer() {
   }, [isOpen]);
 
   const subtotal = items.reduce((sum, item) => sum + item.priceNumeric * item.quantity, 0);
+  // Harga coret dipakai kalau ada satu saja item diskon; item non-diskon dihitung
+  // dari harganya sendiri supaya angka sebelum-diskon tetap benar.
+  const subtotalBeforeDiscount = items.reduce(
+    (sum, item) => sum + (item.originalPrice ?? item.priceNumeric) * item.quantity,
+    0,
+  );
+  const hasDiscount = subtotalBeforeDiscount > subtotal;
   const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -125,7 +132,21 @@ export default function CartDrawer() {
                       {item.name}
                     </Link>
 
-                    <p className="text-[13px] text-[#6F6F71] mt-1">{fmt(item.priceNumeric)}</p>
+                    <p className="text-[13px] mt-1 flex flex-wrap items-baseline gap-2">
+                      <span className="text-[#6F6F71]">{fmt(item.priceNumeric)}</span>
+                      {item.originalPrice != null && item.originalPrice > item.priceNumeric && (
+                        <>
+                          <span className="text-[#6F6F71]/60 line-through">
+                            {fmt(item.originalPrice)}
+                          </span>
+                          {item.discountPercent ? (
+                            <span className="text-[11px] text-[#AE4B4B]">
+                              -{item.discountPercent}%
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </p>
 
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center border border-[#E9E9EA]">
@@ -166,7 +187,14 @@ export default function CartDrawer() {
                 <span className="uppercase tracking-[0.12em] text-[13px] text-[#6F6F71]">
                   Subtotal
                 </span>
-                <span className="text-lg text-[#1E1E1E]">{fmt(subtotal)}</span>
+                <span className="flex flex-wrap items-baseline justify-end gap-2">
+                  {hasDiscount && (
+                    <span className="text-[13px] text-[#6F6F71]/60 line-through">
+                      {fmt(subtotalBeforeDiscount)}
+                    </span>
+                  )}
+                  <span className="text-lg text-[#1E1E1E]">{fmt(subtotal)}</span>
+                </span>
               </div>
 
               <p className="text-[13px] text-[#6F6F71]">

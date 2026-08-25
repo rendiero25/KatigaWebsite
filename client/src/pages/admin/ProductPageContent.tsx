@@ -8,26 +8,14 @@ import { FaSave, FaSpinner } from "react-icons/fa";
 export default function ProductPageContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    subtitle: "",
-    title: "",
-    bannerImage: "",
-  });
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
 
   const fetchSettings = useCallback(async () => {
     try {
       const data = await api.getProductPageSettings();
-      if (data) {
-        setFormData({
-          subtitle: data.subtitle || "",
-          title: data.title || "",
-          bannerImage: data.bannerImage || "",
-        });
-        if (data.bannerImage) {
-          setPreviewUrl(api.getImageUrl(data.bannerImage));
-        }
+      if (data?.bannerImage) {
+        setPreviewUrl(api.getImageUrl(data.bannerImage));
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -56,9 +44,6 @@ export default function ProductPageContent() {
     try {
       const token = localStorage.getItem("adminToken");
       const data = new FormData();
-
-      data.append("subtitle", formData.subtitle);
-      data.append("title", formData.title);
 
       if (bannerFile) {
         data.append("bannerImage", bannerFile);
@@ -89,45 +74,10 @@ export default function ProductPageContent() {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
-    <AdminLayout title="Konten Halaman Produk">
+    <AdminLayout title="Banner Halaman Produk">
       <div className="bg-white rounded-xl shadow-sm p-6">
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Header Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
-              Header Utama
-            </h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subtitle
-              </label>
-              <input
-                type="text"
-                value={formData.subtitle}
-                onChange={(e) =>
-                  setFormData({ ...formData, subtitle: e.target.value })
-                }
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                placeholder="Product Kualitas Dunia, Buatan Indonesia"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title
-              </label>
-              <textarea
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                rows={3}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                placeholder="Hadirkan pelukan hangat..."
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Banner Image

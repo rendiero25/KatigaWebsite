@@ -36,6 +36,7 @@ const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminPromotions = lazy(() => import('./pages/admin/Promotions'));
 const AdminPromosiTampilan = lazy(() => import('./pages/admin/PromosiTampilan'));
+const AdminVouchers = lazy(() => import('./pages/admin/Vouchers'));
 const AdminLaporan = lazy(() => import('./pages/admin/Laporan'));
 const AdminShippingSettings = lazy(() => import('./pages/admin/ShippingSettings'));
 const AdminComplaints = lazy(() => import('./pages/admin/Complaints'));
@@ -148,6 +149,7 @@ function App() {
         <Route path="/admin/laporan" element={<AdminLaporan />} />
         <Route path="/admin/promosi" element={<AdminPromotions />} />
         <Route path="/admin/promosi/tampilan" element={<AdminPromosiTampilan />} />
+        <Route path="/admin/voucher" element={<AdminVouchers />} />
         <Route path="/admin/notifikasi" element={<AdminNotifikasi />} />
       </Routes>
       </Suspense>

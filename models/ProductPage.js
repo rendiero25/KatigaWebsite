@@ -2,14 +2,6 @@ const mongoose = require("mongoose");
 
 const productPageSchema = new mongoose.Schema(
   {
-    subtitle: {
-      type: String,
-      default: "",
-    },
-    title: {
-      type: String,
-      default: "",
-    },
     bannerImage: {
       type: String,
       default: "",

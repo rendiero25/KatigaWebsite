@@ -28,8 +28,6 @@ router.put('/', [auth, upload.single('bannerImage')], async (req, res) => {
     }
 
     const {
-      subtitle,
-      title,
       cat1Name,
       cat1Subtitle,
       cat1Title,
@@ -38,9 +36,6 @@ router.put('/', [auth, upload.single('bannerImage')], async (req, res) => {
       cat2Title
     } = req.body;
 
-    if (subtitle) settings.subtitle = subtitle;
-    if (title) settings.title = title;
-    
     if (req.file) {
       settings.bannerImage = req.file.path;
     }

@@ -1,16 +1,28 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import AdminLayout from "../../components/AdminLayout";
+
 import { API_BASE_URL } from "../../services/api";
+
+import AdminLayout from "../../components/AdminLayout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 const API_URL = API_BASE_URL;
+
+interface ContactPageForm {
+  subtitle1: string;
+  subtitle2: string;
+}
 
 export default function AdminContactPageContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
+  const [dirty, setDirty] = useState(false);
+  const [formData, setFormData] = useState<ContactPageForm>({
     subtitle1: "",
     subtitle2: "",
   });
@@ -22,17 +34,18 @@ export default function AdminContactPageContent() {
       .then((res) => res.json())
       .then((data) => {
         setFormData({
-          title: data.title || "",
           subtitle1: data.subtitle1 || "",
           subtitle2: data.subtitle2 || "",
         });
-        setLoading(false);
       })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+      .catch(() => toast.error("Gagal memuat konten"))
+      .finally(() => setLoading(false));
   }, []);
+
+  const update = (patch: Partial<ContactPageForm>) => {
+    setDirty(true);
+    setFormData((prev) => ({ ...prev, ...patch }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,83 +62,97 @@ export default function AdminContactPageContent() {
       });
 
       if (res.ok) {
+        setDirty(false);
         toast.success("Konten halaman kontak berhasil diperbarui!");
       } else {
         toast.error("Gagal menyimpan perubahan");
       }
-    } catch (error) {
-      console.error(error);
-      toast.error("Terjadi kesalahan");
+    } catch {
+      toast.error("Gagal menyimpan perubahan");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading)
-    return <AdminLayout title="Konten Hal. Kontak">Loading...</AdminLayout>;
+  if (loading) {
+    return (
+      <AdminLayout title="Konten Halaman Kontak">
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-56" />
+          <Card className="ring-gray-200">
+            <CardContent className="space-y-4">
+              <Skeleton className="h-20" />
+              <Skeleton className="h-20" />
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminLayout title="Konten Hal. Kontak">
-      <div className="w-full">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Header Content</h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Judul Utama (Title)
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                className="w-full px-4 py-2 border rounded-lg"
-                placeholder="Let’s get in touch"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subtitle 1 (Bold)
-              </label>
-              <input
-                type="text"
-                value={formData.subtitle1}
-                onChange={(e) =>
-                  setFormData({ ...formData, subtitle1: e.target.value })
-                }
-                className="w-full px-4 py-2 border rounded-lg"
-                placeholder="Don’t be afraid to say hello with us!"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subtitle 2 (Description)
-              </label>
-              <textarea
-                value={formData.subtitle2}
-                onChange={(e) =>
-                  setFormData({ ...formData, subtitle2: e.target.value })
-                }
-                className="w-full px-4 py-2 border rounded-lg"
-                rows={3}
-                placeholder="Great! we’re excited to hear from you..."
-              />
-            </div>
+    <AdminLayout title="Konten Halaman Kontak">
+      <form onSubmit={handleSubmit}>
+        <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-gray-200 bg-white px-6 py-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800">Konten Halaman Kontak</p>
+            <p className="text-xs text-gray-400">
+              {dirty
+                ? "Ada perubahan yang belum disimpan."
+                : "Teks pengantar di atas form kontak."}
+            </p>
           </div>
 
-          <Button
-            type="submit"
-            disabled={saving}
-            className="w-full"
-          >
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+          <Button type="submit" size="sm" disabled={saving} className="ml-auto min-w-[150px]">
+            {saving ? (
+              <>
+                <Spinner className="size-3.5" />
+                Menyimpan...
+              </>
+            ) : (
+              "Simpan Perubahan"
+            )}
           </Button>
-        </form>
-      </div>
+        </div>
+
+        <Card className="ring-gray-200">
+          <CardHeader className="border-b [.border-b]:pb-4">
+            <CardTitle className="text-sm font-semibold text-gray-700">Teks Pengantar</CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="contact-subtitle1" className="text-xs text-gray-500">
+                Paragraf Utama
+              </Label>
+              <Textarea
+                id="contact-subtitle1"
+                value={formData.subtitle1}
+                onChange={(e) => update({ subtitle1: e.target.value })}
+                rows={3}
+                className="resize-none text-sm"
+                placeholder="Ada pertanyaan tentang produk kami?"
+              />
+              <p className="text-[11px] text-gray-400">Tampil lebih besar, rata tengah.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="contact-subtitle2" className="text-xs text-gray-500">
+                Paragraf Pendukung
+              </Label>
+              <Textarea
+                id="contact-subtitle2"
+                value={formData.subtitle2}
+                onChange={(e) => update({ subtitle2: e.target.value })}
+                rows={3}
+                className="resize-none text-sm"
+                placeholder="Tim kami siap membantu pada jam kerja."
+              />
+              <p className="text-[11px] text-gray-400">Tampil lebih kecil, di bawah paragraf utama.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </form>
     </AdminLayout>
   );
 }

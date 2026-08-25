@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import PartnersSection from '../components/PartnersSection';
 import AboutBanner from '../components/about/AboutBanner';
 import AboutStorySection from '../components/about/AboutStorySection';
+import AboutVisionSection from '../components/about/AboutVisionSection';
 import AboutValuesSection from '../components/about/AboutValuesSection';
 import AboutTechSection from '../components/about/AboutTechSection';
 import AboutBehindBrandSection from '../components/about/AboutBehindBrandSection';
@@ -16,7 +17,7 @@ interface AboutContent {
   bannerTop?: string;
   bannerBottom?: string;
   history?: string;
-  mission?: { title?: string; points?: string[] };
+  mission?: { title?: string; points?: string[]; backgroundImage?: string };
   vision?: { title?: string; content?: string; backgroundImage?: string };
 }
 
@@ -44,19 +45,27 @@ export default function AboutUs() {
         <AboutBanner image={content?.bannerBottom} />
 
         <motion.div {...reveal}>
-          <AboutValuesSection title={content?.mission?.title} points={content?.mission?.points} />
+          <section className="pt-10 pb-20">
+            <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
+              <div className="grid gap-6 md:grid-cols-2">
+                <AboutVisionSection
+                  title={content?.vision?.title}
+                  content={content?.vision?.content}
+                  backgroundImage={content?.vision?.backgroundImage}
+                />
+                <AboutValuesSection
+                  title={content?.mission?.title}
+                  points={content?.mission?.points}
+                  backgroundImage={content?.mission?.backgroundImage}
+                />
+              </div>
+            </div>
+          </section>
         </motion.div>
 
         <motion.div {...reveal}>
           <AboutTechSection />
         </motion.div>
-
-        <AboutBanner
-          image={content?.vision?.backgroundImage}
-          label={content?.vision?.title}
-          quote={content?.vision?.content}
-          boxed
-        />
 
         <motion.div {...reveal}>
           <AboutBehindBrandSection />

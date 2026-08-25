@@ -14,6 +14,7 @@ interface TechHeader {
 
 interface TechSection1 {
   title?: string;
+  subtitle?: string;
   image?: string;
   points?: TechPoint[];
 }
@@ -62,7 +63,11 @@ export default function AboutTechSection() {
   const section2 = certTech.section2;
 
   const hasSection1 = Boolean(
-    section1 && (section1.title || section1.image || (section1.points && section1.points.length > 0)),
+    section1 &&
+      (section1.title ||
+        section1.subtitle ||
+        section1.image ||
+        (section1.points && section1.points.length > 0)),
   );
   const hasSection2 = Boolean(
     section2 && (section2.title || section2.image || (section2.points && section2.points.length > 0)),
@@ -98,6 +103,11 @@ export default function AboutTechSection() {
               ) : null}
             </div>
             <div>
+              {section1?.subtitle && (
+                <p className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] mb-4">
+                  {section1.subtitle}
+                </p>
+              )}
               {section1?.title && (
                 <h3 className="text-2xl md:text-3xl text-[#1E1E1E] leading-tight mb-6">{section1.title}</h3>
               )}

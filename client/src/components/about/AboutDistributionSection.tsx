@@ -14,7 +14,7 @@ export default function AboutDistributionSection() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-[#F9F7F2]">
+      <section className="pt-10 pb-20 bg-[#F9F7F2]">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             <div>
@@ -35,7 +35,7 @@ export default function AboutDistributionSection() {
   }
 
   return (
-    <section className="py-16 bg-[#F9F7F2]">
+    <section className="pt-10 pb-20 bg-[#F9F7F2]">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
           <div>

@@ -124,16 +124,19 @@ export default function Header() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-4">
-            {/* Notifications */}
+          <div className="flex items-center gap-5">
+            {/* Notifications — colour lives here, not in NotificationBell, so the
+                admin panel keeps its own token set. */}
             {customer && (
-              <NotificationBell
-                role="customer"
-                notifications={notifications}
-                unreadCount={unreadCount}
-                onMarkRead={markAsRead}
-                onMarkAllRead={markAllAsRead}
-              />
+              <span className="flex items-center text-[#6F6F71] hover:text-[#1E1E1E] transition-colors">
+                <NotificationBell
+                  role="customer"
+                  notifications={notifications}
+                  unreadCount={unreadCount}
+                  onMarkRead={markAsRead}
+                  onMarkAllRead={markAllAsRead}
+                />
+              </span>
             )}
 
             {/* Cart */}
@@ -151,13 +154,15 @@ export default function Header() {
             </button>
 
             {/* Auth — desktop */}
-            <div className="hidden sm:flex items-center gap-3 ml-1">
+            <div className="hidden sm:flex items-center gap-5">
               {customer ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
-                    <Avatar className="size-9 [&::after]:hidden ring-2 ring-primary/20 rounded-full">
+                    {/* A touch larger than the 20px icons: a filled disc reads
+                        smaller than a line icon at the same box size. */}
+                    <Avatar className="size-7 [&::after]:hidden rounded-full">
                       {customer.avatar && <AvatarImage src={api.getImageUrl(customer.avatar)} alt={customer.name} />}
-                      <AvatarFallback className="bg-[#4F68AF] text-white text-xs font-semibold">
+                      <AvatarFallback className="bg-[#4F68AF] text-white text-[10px] font-semibold">
                         {initials(customer.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -216,7 +221,7 @@ export default function Header() {
 
             {/* Hamburger */}
             <button
-              className="xl:hidden text-2xl text-[#1E1E1E] focus:outline-none ml-1"
+              className="xl:hidden text-2xl text-[#1E1E1E] focus:outline-none"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Buka menu"
             >

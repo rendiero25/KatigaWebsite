@@ -35,6 +35,7 @@ router.put(
         headerTitle,
         headerSubtitle,
         sec1Title,
+        sec1Subtitle,
         sec1Points,
         sec2Title,
         sec2Subtitle,
@@ -48,6 +49,7 @@ router.put(
 
       // Section 1 (Certificates)
       if (sec1Title !== undefined) content.section1.title = sec1Title;
+      if (sec1Subtitle !== undefined) content.section1.subtitle = sec1Subtitle;
       if (sec1Points) {
         try {
           content.section1.points = JSON.parse(sec1Points);

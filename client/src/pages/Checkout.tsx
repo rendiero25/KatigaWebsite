@@ -43,6 +43,20 @@ const getStoredBuyNowItem = (): CartItem | null => {
   }
 };
 
+// Berkas ada di client/public/payments. Satu logo mewakili tiap kanal yang
+// dibuka Mayar: QRIS, transfer bank, e-wallet, dan gerai mini market.
+const PAYMENT_LOGOS = [
+  { src: '/payments/qris.png', alt: 'QRIS' },
+  { src: '/payments/bca.png', alt: 'Transfer Bank BCA' },
+  { src: '/payments/mandiri.png', alt: 'Transfer Bank Mandiri' },
+  { src: '/payments/bni.png', alt: 'Transfer Bank BNI' },
+  { src: '/payments/bri.png', alt: 'Transfer Bank BRI' },
+  { src: '/payments/gopay.png', alt: 'GoPay' },
+  { src: '/payments/shopeepay.png', alt: 'ShopeePay' },
+  { src: '/payments/alfamart.png', alt: 'Alfamart' },
+  { src: '/payments/indomaret.png', alt: 'Indomaret' },
+];
+
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,6 +139,12 @@ export default function Checkout() {
   }, [cartPricingKey]);
 
   const subtotal = effectiveCart.reduce((s, c) => s + c.priceNumeric * c.quantity, 0);
+  // Harga sebelum diskon promosi; item tanpa diskon memakai harganya sendiri.
+  const subtotalBeforeDiscount = effectiveCart.reduce(
+    (s, c) => s + (c.originalPrice ?? c.priceNumeric) * c.quantity,
+    0,
+  );
+  const promoDiscount = subtotalBeforeDiscount - subtotal;
   const voucherDiscount = appliedVoucher?.discountAmount ?? 0;
   const shippingCost = selectedRate?.price ?? 0;
   const total = subtotal - voucherDiscount + shippingCost;
@@ -178,10 +198,6 @@ export default function Checkout() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="grow">
-        <div className="border-b border-[#E9E9EA] py-6">
-          <h1 className="text-center text-2xl md:text-3xl">Checkout</h1>
-        </div>
-
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30 py-10">
           <div className="flex flex-col lg:flex-row gap-10">
             {/* Left — form */}
@@ -276,8 +292,20 @@ export default function Checkout() {
               <div>
                 <h2 className="uppercase text-[13px] tracking-[0.12em] text-[#1E1E1E] mb-4">Pembayaran</h2>
                 <div className="border border-[#E9E9EA] px-4 py-4 text-[13px] text-[#6F6F71] leading-relaxed">
-                  <p className="text-[#1E1E1E]">QRIS, Transfer Bank, E-wallet, Mini Market</p>
-                  <p className="mt-1">
+                  <ul className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                    {PAYMENT_LOGOS.map((logo) => (
+                      <li key={logo.src}>
+                        <img
+                          src={logo.src}
+                          alt={logo.alt}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-6 w-auto max-w-[72px] object-contain"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-3">
                     Semua transaksi diproses dengan aman lewat Mayar. Setelah menekan Bayar Sekarang,
                     kamu akan diarahkan ke halaman pembayaran Mayar.
                   </p>
@@ -311,8 +339,15 @@ export default function Checkout() {
                         )}
                         <p className="text-[12px] text-[#6F6F71]">×{c.quantity}</p>
                       </div>
-                      <span className="text-[13px] text-[#1E1E1E] shrink-0 tabular-nums">
-                        {cartReady ? fmt(c.priceNumeric * c.quantity) : '—'}
+                      <span className="shrink-0 text-right tabular-nums">
+                        <span className="block text-[13px] text-[#1E1E1E]">
+                          {cartReady ? fmt(c.priceNumeric * c.quantity) : '—'}
+                        </span>
+                        {cartReady && c.originalPrice != null && c.originalPrice > c.priceNumeric && (
+                          <span className="block text-[12px] text-[#6F6F71]/60 line-through">
+                            {fmt(c.originalPrice * c.quantity)}
+                          </span>
+                        )}
                       </span>
                     </div>
                   ))}
@@ -323,6 +358,10 @@ export default function Checkout() {
                   {cartReady ? (
                     <VoucherInput
                       subtotal={subtotal}
+                      items={effectiveCart.map((c) => ({
+                        productId: c.productId,
+                        subtotal: c.priceNumeric * c.quantity,
+                      }))}
                       onApply={(v, code) => { setAppliedVoucher(v); setVoucherCode(code); }}
                       onClear={() => { setAppliedVoucher(null); setVoucherCode(''); }}
                     />
@@ -336,8 +375,21 @@ export default function Checkout() {
                 <div className="border-t border-[#E9E9EA] mt-4 pt-4 space-y-2 text-[13px] text-[#6F6F71]">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span className="tabular-nums">{cartReady ? fmt(subtotal) : '—'}</span>
+                    <span className="flex items-baseline gap-2 tabular-nums">
+                      {cartReady && promoDiscount > 0 && (
+                        <span className="text-[#6F6F71]/60 line-through">
+                          {fmt(subtotalBeforeDiscount)}
+                        </span>
+                      )}
+                      <span>{cartReady ? fmt(subtotal) : '—'}</span>
+                    </span>
                   </div>
+                  {cartReady && promoDiscount > 0 && (
+                    <div className="flex justify-between">
+                      <span>Diskon promo</span>
+                      <span className="tabular-nums text-[#AE4B4B]">−{fmt(promoDiscount)}</span>
+                    </div>
+                  )}
                   {cartReady && voucherDiscount > 0 && (
                     <div className="flex justify-between">
                       <span>Diskon voucher</span>

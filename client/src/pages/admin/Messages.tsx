@@ -17,7 +17,10 @@ export default function AdminMessages() {
     const res = await fetch(`${API_URL}/contact/submissions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setMessages(await res.json());
+    // A failed request (401 on an expired session, 500) returns an error object,
+    // not an array. Without this guard the list render throws and blanks the page.
+    const data = res.ok ? await res.json() : null;
+    setMessages(Array.isArray(data) ? data : []);
   };
 
   useEffect(() => {

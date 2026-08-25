@@ -1,33 +1,59 @@
 import type { IconType } from 'react-icons';
 import { FiAward, FiHeart, FiShield, FiStar, FiTarget } from 'react-icons/fi';
 
+import api from '../../services/api';
+
 interface Props {
   title?: string;
   points?: string[];
+  backgroundImage?: string;
 }
 
 const FALLBACK_ICONS: IconType[] = [FiShield, FiHeart, FiAward, FiTarget, FiStar];
 
-export default function AboutValuesSection({ title, points }: Props) {
+// Renders the panel only. AboutUs pairs it with AboutVisionSection in one grid
+// row, so the section wrapper and container live there.
+export default function AboutValuesSection({ title, points, backgroundImage }: Props) {
   if (!points || points.length === 0) return null;
 
+  const onPanel = Boolean(backgroundImage);
+
   return (
-    <section className="pt-10 pb-20 bg-white">
-      <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
-        <span className="uppercase tracking-[0.18em] text-[13px] text-[#6F6F71] mb-10 block text-center">
+    <div className="relative flex h-full items-center overflow-hidden rounded-md md:min-h-[400px]">
+      {backgroundImage && (
+        <img
+          src={api.getImageUrl(backgroundImage)}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+
+      <div className="relative w-full px-6 py-14 md:px-10">
+        <span
+          className={`uppercase tracking-[0.18em] text-[13px] mb-8 block text-center ${
+            onPanel ? 'text-white/80' : 'text-[#6F6F71]'
+          }`}
+        >
           {title || 'Nilai Kami'}
         </span>
 
-        <div className="flex flex-wrap justify-center">
+        <div className="mx-auto flex max-w-xl flex-col gap-6">
           {points.map((point, index) => {
             const Icon = FALLBACK_ICONS[index % FALLBACK_ICONS.length];
             return (
-              <div
-                key={point}
-                className="w-1/2 md:w-1/5 flex flex-col items-center justify-center gap-3 text-center px-4 py-6"
-              >
-                <Icon className="w-8 h-8 text-[#4F68AF]" strokeWidth={1} />
-                <span className="uppercase text-[13px] tracking-[0.12em] text-center text-[#1E1E1E]">
+              <div key={point} className="flex items-start gap-4">
+                <Icon
+                  className={`w-6 h-6 shrink-0 ${onPanel ? 'text-white' : 'text-[#4F68AF]'}`}
+                  strokeWidth={1}
+                />
+                <span
+                  className={`uppercase text-[13px] tracking-[0.12em] leading-relaxed ${
+                    onPanel ? 'text-white' : 'text-[#1E1E1E]'
+                  }`}
+                >
                   {point}
                 </span>
               </div>
@@ -35,6 +61,6 @@ export default function AboutValuesSection({ title, points }: Props) {
           })}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

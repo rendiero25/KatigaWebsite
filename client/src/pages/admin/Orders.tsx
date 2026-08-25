@@ -25,6 +25,9 @@ const PAYMENT_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   refunded:       { label: 'Refund',           color: 'bg-purple-100 text-purple-700' },
 };
 
+// Baris per halaman untuk daftar admin.
+const PAGE_SIZE = 25
+
 export default function AdminOrders() {
   const token = localStorage.getItem('adminToken');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -43,7 +46,7 @@ export default function AdminOrders() {
     if (filters.search) params.set('search', filters.search);
     if (showDeleted) params.set('deleted', '1');
     params.set('page', String(filters.page));
-    params.set('limit', '20');
+    params.set('limit', String(PAGE_SIZE));
     try {
       const res = await fetch(`${API_BASE_URL}/orders?${params}`, {
         headers: { Authorization: `Bearer ${token}` },

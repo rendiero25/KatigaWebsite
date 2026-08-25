@@ -13,6 +13,7 @@ export default function AdminCertificationTech() {
     headerTitle: "",
     headerSubtitle: "",
     sec1Title: "",
+    sec1Subtitle: "",
     sec1Points: [] as { title: string; description: string }[],
     sec2Title: "",
     sec2Subtitle: "",
@@ -36,6 +37,7 @@ export default function AdminCertificationTech() {
           headerTitle: data.header?.title || "",
           headerSubtitle: data.header?.subtitle || "",
           sec1Title: data.section1?.title || "",
+          sec1Subtitle: data.section1?.subtitle || "",
           sec1Points: data.section1?.points || [],
           sec2Title: data.section2?.title || "",
           sec2Subtitle: data.section2?.subtitle || "",
@@ -104,6 +106,7 @@ export default function AdminCertificationTech() {
     data.append("headerSubtitle", formData.headerSubtitle);
 
     data.append("sec1Title", formData.sec1Title);
+    data.append("sec1Subtitle", formData.sec1Subtitle);
     data.append("sec1Points", JSON.stringify(formData.sec1Points));
     if (sec1Image) data.append("section1Image", sec1Image);
 
@@ -186,6 +189,37 @@ export default function AdminCertificationTech() {
             <h2 className="text-xl font-semibold text-gray-700">
               Section 1: Certificates (Left Image, Right Points)
             </h2>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={formData.sec1Subtitle}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sec1Subtitle: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="Certificates & Technology"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.sec1Title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, sec1Title: e.target.value })
+                  }
+                  className="w-full border rounded px-3 py-2"
+                  placeholder="SNI & K3L"
+                />
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">

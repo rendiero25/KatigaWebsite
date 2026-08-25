@@ -62,7 +62,7 @@ export default function CategoriesSection() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-white">
+      <section className="pt-10 pb-20 bg-white">
         <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-2">
             {[0, 1, 2].map((i) => (
@@ -79,7 +79,7 @@ export default function CategoriesSection() {
   }
 
   return (
-    <section className="py-16 bg-white">
+    <section className="pt-10 pb-20 bg-white">
       <div className="container mx-auto px-4 sm:px-10 lg:px-20 xl:px-30">
         <div className="hidden md:grid md:grid-cols-3 gap-1 lg:gap-2">
           {displayedCategories.map((category) => (
