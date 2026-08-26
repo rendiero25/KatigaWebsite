@@ -29,7 +29,9 @@ Alur rilis: push ke `development` → Vercel. Merge ke `main` → VPS otomatis.
 - User: `rendiero` (punya sudo, login masih pakai password)
 - Aplikasi: `/srv/katiga`
 - Port Node: `8000`, di belakang Nginx
-- Proses: pm2, nama `katiga`
+- Proses: pm2, nama `katiga`, mode **cluster** 2 instance (`-i 2`) — rilis tanpa jeda.
+  Penjadwal hanya hidup di instance `0`; jangan kembalikan ke fork tanpa membaca catatan
+  soal jendela 502 di bagian temuan.
 - Nginx site: `/etc/nginx/sites-available/katiga`
 - File env: `/srv/katiga/.env` (chmod 600, tidak dilacak git)
 - OS: Ubuntu 24.04, Node 22, swap 2 GB
@@ -166,9 +168,14 @@ Hal-hal yang sudah menyita waktu sekali, supaya tidak terulang.
   Testing URL Mayar, dan pemeriksaan kesehatan di akhir deploy yang membuat Actions merah
   padahal rilisnya sukses. Kalau ada uji yang gagal tepat setelah deploy, ulangi dulu
   sebelum mendiagnosis.
-  Pemeriksaan di workflow sudah diberi percobaan ulang, tapi **jendela itu masih dialami
-  pengunjung**. Menghilangkannya sepenuhnya butuh pm2 mode `cluster` dengan dua instance —
-  belum dilakukan, lihat catatan di bawah.
+  **Sudah diselesaikan** 26 Agustus 2026: pm2 dipindah ke mode `cluster` dengan dua
+  instance (`pm2 start server.js --name katiga -i 2`), jadi `reload` mengganti instance
+  satu per satu dan selalu ada yang melayani. Pemeriksaan di workflow juga diberi
+  percobaan ulang sampai 30 detik.
+  Prasyaratnya: penjadwal digating ke `NODE_APP_INSTANCE === '0'` (`server.js`), karena
+  `checkExpiringPromos` memakai pola cek-lalu-tulis yang menghasilkan notifikasi ganda
+  kalau dua instance memeriksanya bersamaan. Terverifikasi lewat log — baris
+  `[Biteship Sync]` hanya muncul dari prefix `0|katiga`.
 - **`CRON_SECRET` tidak ada di `.env` lokal.** CLAUDE.md menyebutnya wajib dan
   `/api/cron/sweep` menjawab 503 tanpa itu. Nilainya harus sama di `.env` VPS, Environment
   Variables Vercel, dan repository secret GitHub.
