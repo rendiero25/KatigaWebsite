@@ -98,7 +98,7 @@ export default function UserLayout({ children, title }: Props) {
     }`
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] flex flex-col md:flex-row">
+    <div className="min-h-screen bg-white flex flex-col md:flex-row">
       {/* Mobile top bar */}
       <div className="md:hidden sticky top-0 z-10 bg-white border-b border-[#E9E9EA]">
         <div className="flex items-center justify-between px-4 py-3">
