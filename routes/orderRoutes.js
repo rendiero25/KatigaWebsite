@@ -1164,10 +1164,12 @@ const biteshipWebhookHandler = async (req, res) => {
       return res.status(200).json({ message: 'OK' });
     }
 
-    // Bentuk payload Biteship belum pernah diverifikasi dari kiriman sungguhan — kode
-    // lama mengharapkan data.*, sementara dashboard menyebut field datar. Keduanya
-    // diterima, dan yang tidak dikenali dicatat utuh supaya bentuk aslinya bisa dibaca
-    // dari log begitu webhook pertama tiba, seperti yang dulu dilakukan untuk Mayar.
+    // Bentuk payload diverifikasi dari dokumentasi resmi Biteship (biteship.com/en/docs/
+    // api/webhook/overview, dibaca 26 Agt 2026): payloadnya DATAR, bukan bersarang di
+    // bawah `data`, dan `order_id` adalah pengenal ordernya di ketiga event. Kode lama
+    // mencari `data.id` yang tidak pernah ada di sana.
+    // Bentuk bersarang tetap diterima sebagai cadangan kalau Biteship mengubahnya, dan
+    // payload yang tidak dikenali dicatat utuh supaya ketahuan dari log.
     const data = payload.data ?? payload;
     const biteshipOrderId = data.id ?? data.order_id ?? null;
     if (!biteshipOrderId) {

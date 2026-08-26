@@ -86,8 +86,15 @@ Urutannya penting — DNS dulu, karena certbot butuh domain sudah menunjuk VPS.
       sekarang ditanyakan memakai kunci live. Tidak berbahaya, hilang setelah dibersihkan.
 - [x] **Webhook Mayar** — `https://katiga.id/api/orders/webhook/mayar` terdaftar di dashboard
       produksi, Testing URL menjawab SUCCESS.
-- [ ] **Webhook Biteship** — `https://katiga.id/api/orders/webhook/biteship`, event
-      `order.status_update`. Handler mensyaratkan `data.id` = `biteshipOrderId`.
+- [x] **Webhook Biteship** — terdaftar. Nama event dan bentuk payload diverifikasi dari
+      dokumentasi resmi: tiga event (`order.status`, `order.price`, `order.waybill_id`),
+      payload **datar**, pengenal ordernya `order_id`. Handler lama mencari
+      `order.status_update` dan `data.id` — dua-duanya tidak pernah ada, jadi setiap
+      webhook dibuang diam-diam. Sudah diperbaiki.
+      Bentuk payload **Mayar produksi** masih belum terverifikasi: dokumentasinya tidak
+      mendefinisikan field transaction id, dan `data.transactionId` yang dipakai berasal
+      dari riwayat webhook sandbox. Kalau meleset, handler gagal-tertutup dan
+      `syncPendingPayments` tetap merekonsiliasi dalam 15 menit.
 - [ ] **Matikan satu penjadwal** — di VPS `setInterval` di `server.js` sudah hidup sendiri,
       jadi `.github/workflows/sweep.yml` dan cron di `vercel.json` sekarang rangkap
 - [x] **`RESEND_API_KEY` + domain Resend** — domain terverifikasi (DKIM, MX+TXT `send`,
@@ -162,6 +169,10 @@ Hal-hal yang sudah menyita waktu sekali, supaya tidak terulang.
   berarti kunci diterima. Tidak ada transaksi yang dibuat atau disentuh. Terverifikasi
   26 Agustus 2026: kunci di `.env` lokal menjawab 401 di `api.mayar.id` dan 404 di
   `api.mayar.club` — jadi itu kunci sandbox.
+  **Izin tulisnya juga bisa dipastikan tanpa transaksi**, karena payload JWT-nya membawa
+  `role` dan `scope`. Kunci produksi di VPS: `role: developer`, `scope: {read, write}`.
+  Kunci Read Only akan lolos semua uji `GET` tapi menolak `POST /payments/create` —
+  yaitu gagal tepat di langkah pertama checkout.
 - **Tiap deploy menghasilkan jendela 502 satu-dua detik.** pm2 berjalan di mode `fork`
   dengan satu instance, jadi `pm2 reload` sebenarnya restart, bukan reload tanpa henti.
   Sudah **empat kali** menyesatkan dalam satu hari: uji form kontak, dua percobaan
