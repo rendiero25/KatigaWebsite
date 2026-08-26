@@ -104,6 +104,29 @@ Urutannya penting — DNS dulu, karena certbot butuh domain sudah menunjuk VPS.
 - [ ] **`GOOGLE_CLIENT_ID`** — masih placeholder di backend, dan `VITE_GOOGLE_CLIENT_ID`
       di secret GitHub juga. Login Google belum aktif.
 - [ ] **Uji transaksi nyata bernilai kecil** setelah semua di atas selesai
+      Ingat: memicu **dua** transaksi nyata. Pembayaran Mayar, lalu `biteshipCreateOrder`
+      otomatis begitu lunas — kurir sungguhan dijadwalkan dan saldo Biteship terpotong.
+      Bandingkan ongkir di checkout dengan saldo sebelum membayar.
+      Pembatalan lewat `POST /api/orders/my/:id/cancel` ikut membatalkan order Biteship,
+      tapi **tidak mengembalikan stok** — `stock` dan `soldCount` harus dikoreksi manual.
+      Mayar juga tidak punya endpoint refund; pembatalan hanya menandai `refund_pending`.
+
+### Ditunda — layak dikerjakan, tidak menghalangi go-live
+
+- [ ] **Perkuat keaslian webhook Biteship.** Dokumentasi resminya memastikan tidak ada
+      header tanda tangan sama sekali, dan handler mempercayai `status` dari payload
+      secara langsung — termasuk untuk menandai pesanan `delivered`
+      (`routes/orderRoutes.js`). Siapa pun yang menebak `order_id` Biteship bisa
+      memalsukan status pesanan orang lain.
+      Jalur Mayar tidak punya masalah ini karena ia menanyakan ulang ke API Mayar sebelum
+      bertindak. Perbaikan yang setara: panggil `getOrderTracking(biteshipOrderId)` untuk
+      mengonfirmasi status sebelum `markOrderDelivered` / `markOrderShipped`.
+- [ ] **`node_modules` terlacak git** — 2594 file. Aturan `node_modules/` di `.gitignore`
+      tidak berlaku surut. Tidak merusak deploy karena `npm ci` memasang ulang seluruh
+      folder sesudah `git reset --hard`, tapi membengkakkan repo dan menyesatkan.
+- [ ] **`nsid3.rumahweb.net` di registry** — seharusnya `.biz`. Server itu tidak melayani
+      `katiga.id`, jadi sebagian kueri NS mendarat di tempat yang tidak menjawab. Situs
+      tetap jalan lewat tiga nameserver lain.
 - [ ] **Kunci SSH laptop → VPS** dan matikan `PasswordAuthentication` (ditunda, opsional)
 
 ## Keputusan: satu database saja
