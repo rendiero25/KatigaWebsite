@@ -91,10 +91,16 @@ Urutannya penting — DNS dulu, karena certbot butuh domain sudah menunjuk VPS.
       payload **datar**, pengenal ordernya `order_id`. Handler lama mencari
       `order.status_update` dan `data.id` — dua-duanya tidak pernah ada, jadi setiap
       webhook dibuang diam-diam. Sudah diperbaiki.
-      Bentuk payload **Mayar produksi** masih belum terverifikasi: dokumentasinya tidak
-      mendefinisikan field transaction id, dan `data.transactionId` yang dipakai berasal
-      dari riwayat webhook sandbox. Kalau meleset, handler gagal-tertutup dan
-      `syncPendingPayments` tetap merekonsiliasi dalam 15 menit.
+      Bentuk payload **Mayar** juga terverifikasi, tapi sumbernya tidak di tempat yang
+      diduga. Halaman `integration/webhook` hanya memuat tabel field dan tidak menyebut
+      `transactionId` sama sekali — yang ada cuma `data.id`, dijelaskan sebagai "Id
+      webhook". Bentuk sebenarnya ada di dokumentasi endpoint **riwayat webhook**
+      (`api-reference/webhook/history`), yang menampilkan payload terkirim berisi
+      `transactionId` berupa UUID. Itu cocok dengan `data.transactionId` yang dipakai
+      handler dan dengan catatan verifikasi 14 Agt 2026.
+      Pelajarannya: kalau bentuk payload sebuah webhook tidak ada di halaman integrasi,
+      cari di dokumentasi endpoint riwayat/log-nya — di situ yang ditampilkan adalah
+      kiriman sungguhan, bukan ringkasan.
 - [ ] **Matikan satu penjadwal** — di VPS `setInterval` di `server.js` sudah hidup sendiri,
       jadi `.github/workflows/sweep.yml` dan cron di `vercel.json` sekarang rangkap
 - [x] **`RESEND_API_KEY` + domain Resend** — domain terverifikasi (DKIM, MX+TXT `send`,

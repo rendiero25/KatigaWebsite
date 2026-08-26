@@ -244,6 +244,15 @@ const webhookHandler = async (req, res) => {
     // Bentuk payload diverifikasi dari riwayat webhook Mayar 14 Agt 2026:
     // { event: 'payment.received', data: { transactionId, status, extraData: { orderId } } }.
     // data.transactionId sama dengan paymentRef yang kita simpan.
+    //
+    // Dikuatkan 26 Agt 2026 oleh dokumentasi resmi endpoint riwayat webhook
+    // (docs.mayar.id/api-reference/webhook/history): payload terkirim memuat
+    // `transactionId` berupa UUID, berdampingan dengan `id`.
+    // Jangan tergoda memakai `data.id` sebagai penggantinya — halaman
+    // docs.mayar.id/integration/webhook menyebutnya "Id webhook", bukan id transaksi,
+    // dan references/webhook-safety.md di skill mayar-v2 melarang pemetaan tebakan.
+    // Kalau `transactionId` absen, handler ini sengaja berhenti: syncPendingPayments
+    // merekonsiliasi ulang dalam 15 menit lewat GET /transactions/{id}.
     const transactionId = payload.data?.transactionId ?? null;
 
     if (!transactionId) {
