@@ -15,11 +15,11 @@ File ini sengaja dilacak git supaya bisa dilanjutkan dari komputer mana pun.
 
 | | Vercel | VPS Rumahweb |
 |---|---|---|
-| Peran | staging | produksi |
+| Peran | staging | produksi — **live di https://katiga.id sejak 26 Agustus 2026** |
 | Branch | `development` | `main` |
 | Mayar | sandbox (`api.mayar.club`) | masih sandbox — belum ditukar |
 | Biteship | sandbox (`biteship_test.`) | masih sandbox — belum ditukar |
-| Database | `katiga` di Atlas | `katiga` di Atlas — **masih berbagi** |
+| Database | `katiga` di Atlas | `katiga` di Atlas — **sengaja berbagi**, lihat keputusan di bawah |
 
 Alur rilis: push ke `development` → Vercel. Merge ke `main` → VPS otomatis.
 
@@ -54,16 +54,30 @@ Alur rilis: push ke `development` → Vercel. Merge ke `main` → VPS otomatis.
 
 Urutannya penting — DNS dulu, karena certbot butuh domain sudah menunjuk VPS.
 
-- [ ] **DNS** — A record `@` dan `www` ke `202.10.38.98`, hapus record lama ke Vercel.
-      Pantau: `nslookup katiga.id 8.8.8.8`
-- [ ] **HTTPS** — setelah DNS propagasi:
-      `sudo apt-get install -y certbot python3-certbot-nginx && sudo certbot --nginx -d katiga.id -d www.katiga.id`
-- [ ] **`FRONTEND_URL`** di `/srv/katiga/.env` diganti `https://katiga.id` (satu URL, tanpa koma),
-      lalu `pm2 reload katiga --update-env`
-- [ ] **Kunci Mayar produksi** — `MAYAR_API_URL=https://api.mayar.id/hl/v2` + kunci akun `katiga`.
-      Kuncinya ada di `.env` lokal baris 22 dalam keadaan dikomentari.
-- [ ] **Kunci Biteship produksi** — buat baru di dashboard Biteship (prefix `biteship_live.`).
-      Yang sekarang `biteship_test.` bernama `katiga-sandbox`.
+- [x] **DNS** — selesai 26 Agustus 2026. Nameserver dipindah dari `ns1/ns2.vercel-dns.com`
+      ke `nsid1–4.rumahweb.*`, A `@` dan `www` → `202.10.38.98`. Terverifikasi di Google,
+      Cloudflare, dan Quad9.
+- [x] **HTTPS** — certbot berhasil, sertifikat mencakup `katiga.id` dan `www.katiga.id`,
+      redirect HTTP→HTTPS 301 aktif.
+- [x] **Record email dipulihkan** — MX `@` → `mail.katiga.id` (pri 10), A `mail` →
+      `203.175.8.176`, TXT SPF. Terverifikasi menjawab lewat Google.
+      Kalau dulu ada DKIM, selector-nya tidak terselamatkan dan harus di-generate ulang.
+- [x] **Autostart pm2** — unit systemd terpasang, dibuktikan dengan reboot sungguhan:
+      situs kembali sendiri tanpa disentuh.
+- [x] **`FRONTEND_URL`** — `https://katiga.id`. Sejak ini, akses lewat IP mentah tidak lagi
+      lolos CORS; pakai domain untuk semua pengujian.
+- [x] **Perpanjangan sertifikat** — `certbot renew --dry-run` lulus.
+- [ ] **Verifikasi domain Resend** — tambahkan record-nya di zona Rumahweb
+- [x] **Kunci Mayar produksi** — kunci dan `MAYAR_API_URL=https://api.mayar.id/hl/v2`
+      terpasang, diuji lewat konfigurasi aplikasi sendiri dan dijawab 404 (kunci diterima).
+- [x] **Kunci Biteship produksi** — `biteship_live.`, `GET /v1/couriers` menjawab 200.
+      `BITESHIP_API_KEY_SANDBOX` sengaja dikosongkan.
+- [x] **Secret produksi diperkuat** — `JWT_SECRET`, `JWT_CUSTOMER_SECRET`, dan `CRON_SECRET`
+      diganti nilai acak 64 karakter (sebelumnya `devsecret` dan `prodsecret`), izin `.env`
+      diturunkan dari 0664 ke 0600. Semua sesi lama gugur — perlu login ulang.
+- [ ] **Ganti password admin** — masih `admin123`, sementara panel admin sudah publik
+- [ ] **Hapus data uji** dari `katiga` sebelum transaksi nyata: 14 order, 4 pelanggan,
+      41 notifikasi, 2 submission kontak. Ingat koreksi `stock`/`soldCount` juga.
 - [ ] **Webhook dipindahkan** ke `https://katiga.id/api/orders/webhook/mayar`
       dan `https://katiga.id/api/orders/webhook/biteship`
 - [ ] **Matikan satu penjadwal** — di VPS `setInterval` di `server.js` sudah hidup sendiri,
@@ -76,22 +90,25 @@ Urutannya penting — DNS dulu, karena certbot butuh domain sudah menunjuk VPS.
 - [ ] **Uji transaksi nyata bernilai kecil** setelah semua di atas selesai
 - [ ] **Kunci SSH laptop → VPS** dan matikan `PasswordAuthentication` (ditunda, opsional)
 
-## Keputusan yang masih menggantung
+## Keputusan: satu database saja
 
-**Pisah database produksi.** Sekarang VPS dan Vercel sandbox memakai database `katiga`
-yang sama, jadi order uji dengan resi `WYB-` dummy akan bercampur dengan transaksi asli
-di laporan penjualan dan daftar pesanan admin.
+**Diputuskan 26 Agustus 2026 — tidak ada pemisahan database.** VPS dan Vercel tetap
+memakai `katiga`. Order uji dari staging dihapus manual sebelum go-live.
 
-Opsi pisah: ganti ujung `MONGODB_URI` di VPS jadi `/katiga_prod`. Cluster, user, dan
-password tetap sama. Konsekuensinya database baru mulai kosong — seluruh konten CMS
-(hero, produk, kategori, berita, footer, pengaturan) harus diisi ulang, dan admin baru
-dibuat lewat `scripts/createAdmin.js`.
+Konsekuensi yang harus diingat setiap kali menguji di staging:
 
-Claude menawarkan membuat script penyalin: menyalin koleksi konten dari `katiga` ke
-`katiga_prod`, tanpa membawa pesanan, pelanggan, dan notifikasi sandbox. **Belum dibuat,
-menunggu keputusan.**
+- **Order uji yang sampai lunas memotong stok produk asli.** `orderRoutes.js:196`
+  menjalankan `$inc: { soldCount: +n, stock: -n }` saat pembayaran jadi `paid`, dan
+  **menghapus order tidak mengembalikan stok** — tidak ada logika pemulihan di jalur itu.
+  Jadi pembersihan harus mencakup koreksi `stock` dan `soldCount`, bukan cuma menghapus
+  dokumen order. Paling aman: di staging, berhenti sebelum pembayaran sandbox diselesaikan.
+- **Sapuan terjadwal aman.** Order produksi yang ditanyakan ke Mayar/Biteship sandbox
+  dijawab 404, dan kode menanganinya tanpa mengubah apa pun (`orderRoutes.js:125`,
+  `server.js:232`). Yang muncul cuma baris log.
 
-Paling murah dikerjakan sekarang, sebelum ada uang sungguhan di dalamnya.
+Isi `katiga` per 26 Agustus 2026: 25 produk, 7 kategori, 5 berita, 7 partner, ~15 dokumen
+singleton CMS, 1 admin — plus 14 order, 4 pelanggan, 41 notifikasi, 2 submission kontak
+hasil uji yang perlu dihapus sebelum go-live.
 
 ---
 
@@ -120,6 +137,25 @@ Hal-hal yang sudah menyita waktu sekali, supaya tidak terulang.
 - **`rsync` harus ada di VPS**, bukan cuma di runner.
 - **Biteship memakai status `in_transit`**, bukan `dropping_off` seperti dugaan awal.
   Sudah diperbaiki di `utils/shipmentStatus.ts` dan `BITESHIP_SHIPPED_STATUSES`.
+- **Situs mati diam-diam setelah VPS reboot.** Mesin di-reboot 26 Agustus ~18:00 dan
+  aplikasi tidak kembali — Nginx menjawab 502 sementara `pm2 list` kosong. `dump.pm2` utuh,
+  jadi `pm2 save` memang pernah jalan; yang tidak pernah ada adalah unit systemd-nya.
+  `pm2 startup` hanya **mencetak** perintah `sudo env PATH=...` — kalau baris itu tidak
+  disalin dan dijalankan, tidak ada autostart yang terpasang, dan `pm2 startup` terlihat
+  seolah sudah selesai. Ketahuan cuma karena kebetulan sedang mengecek DNS.
+- **Pindah nameserver memindahkan seluruh zona, bukan cuma A record.** Zona Vercel juga
+  memegang MX, A `mail`, dan SPF. Begitu delegasi pindah ke Rumahweb, semuanya hilang dan
+  email berhenti — sementara situsnya terlihat baik-baik saja. Periksa MX/TXT zona lama
+  sebelum menukar NS domain apa pun.
+- **Cara memastikan sebuah kunci Mayar itu sandbox atau produksi.** JWT-nya tidak menyebut
+  environment, jadi tidak bisa dibaca dari payload. Panggil `GET /transactions/<uuid-acak>`
+  di kedua host: **401** berarti kunci ditolak host itu, **404 Transaction not found**
+  berarti kunci diterima. Tidak ada transaksi yang dibuat atau disentuh. Terverifikasi
+  26 Agustus 2026: kunci di `.env` lokal menjawab 401 di `api.mayar.id` dan 404 di
+  `api.mayar.club` — jadi itu kunci sandbox.
+- **`CRON_SECRET` tidak ada di `.env` lokal.** CLAUDE.md menyebutnya wajib dan
+  `/api/cron/sweep` menjawab 503 tanpa itu. Nilainya harus sama di `.env` VPS, Environment
+  Variables Vercel, dan repository secret GitHub.
 - **`client/.env` dan `client/.env.production` ikut terlacak git.** Isinya sekarang cuma
   placeholder, tapi namanya mengundang orang menaruh kunci asli di sana. Sebaiknya
   `git rm --cached` dan masukkan ke `.gitignore` sebelum ada yang salah taruh.
