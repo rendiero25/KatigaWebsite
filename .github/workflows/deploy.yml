@@ -47,7 +47,23 @@ jobs:
           chmod 700 ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -t ed25519,rsa "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          # stderr tidak lagi dibuang. Dengan `bash -e`, ssh-keyscan yang gagal menghentikan
+          # langkah ini, dan membuang pesannya menyisakan "exit code 1" tanpa keterangan —
+          # itu sudah sekali memakan waktu untuk didiagnosis.
+          # Satu kegagalan juga belum tentu berarti VPS mati: jalur runner GitHub ke
+          # Rumahweb sesekali meleset, jadi dicoba beberapa kali sebelum menyerah.
+          for i in 1 2 3 4 5; do
+            if ssh-keyscan -t ed25519,rsa "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts; then
+              break
+            fi
+            echo "ssh-keyscan percobaan $i gagal, ulangi dalam 10 detik"
+            sleep 10
+          done
+
+          if [ ! -s ~/.ssh/known_hosts ]; then
+            echo "::error::ssh-keyscan tidak menghasilkan satu entri pun — VPS tidak terjangkau dari runner. Pastikan VPS_HOST berisi IP, bukan nama domain."
+            exit 1
+          fi
           wc -l < ~/.ssh/known_hosts | xargs -I{} echo "known_hosts: {} entri"
 
       # Urutannya bukan selera: `git reset --hard` menghapus client/dist (folder itu
