@@ -1049,13 +1049,12 @@ router.post('/:id/sync-biteship', auth, async (req, res) => {
       order.biteshipOrderId = biteshipResult.id ?? '';
       order.biteshipTrackingCode = biteshipResult.courier?.tracking_id ?? '';
       order.biteshipWaybillId = biteshipResult.courier?.waybill_id ?? '';
+      await order.save();
     } else {
       const tracking = await getOrderTracking(order.biteshipOrderId);
-      if (tracking.courier?.tracking_id) order.biteshipTrackingCode = tracking.courier.tracking_id;
-      if (tracking.waybill_id) order.biteshipWaybillId = tracking.waybill_id;
+      await applyBiteshipTracking(order, tracking);
     }
 
-    await order.save();
     res.json(order);
   } catch (err) {
     console.error('[Sync Biteship]', err.message);
@@ -1065,7 +1064,50 @@ router.post('/:id/sync-biteship', auth, async (req, res) => {
 
 // Status Biteship yang berarti barang sudah di tangan kurir. 'confirmed', 'allocated', dan
 // 'picking_up' belum — kurir baru dijadwalkan menjemput, barang masih di gudang.
-const BITESHIP_SHIPPED_STATUSES = new Set(['picked', 'dropping_off']);
+const BITESHIP_SHIPPED_STATUSES = new Set(['picked', 'in_transit', 'dropping_off']);
+
+// ─── Shared: rekam satu update pengiriman dari Biteship ───
+// Webhook dan polling mengirim status yang sama berkali-kali, jadi entri identik
+// (status + catatan + waktu) dibuang supaya timeline tidak menggandakan diri.
+function recordShipmentEvent(order, { status, note, updatedAt }) {
+  const cleanStatus = (status ?? '').trim();
+  if (!cleanStatus) return;
+
+  const parsed = updatedAt ? new Date(updatedAt) : new Date();
+  const stamp = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  const cleanNote = (note ?? '').trim();
+
+  const duplicate = (order.shipmentHistory ?? []).some(
+    (e) =>
+      e.status === cleanStatus &&
+      (e.note ?? '') === cleanNote &&
+      e.updatedAt?.getTime() === stamp.getTime()
+  );
+  if (!duplicate) order.shipmentHistory.push({ status: cleanStatus, note: cleanNote, updatedAt: stamp });
+
+  order.biteshipStatus = cleanStatus;
+}
+
+// ─── Shared: serap payload tracking Biteship ke order (sync manual admin dan cron) ───
+async function applyBiteshipTracking(order, tracking) {
+  for (const h of tracking?.courier?.history ?? []) {
+    recordShipmentEvent(order, { status: h.status, note: h.note, updatedAt: h.updated_at });
+  }
+  if (tracking?.status) order.biteshipStatus = tracking.status;
+
+  const waybill = tracking?.courier?.waybill_id || tracking?.waybill_id || '';
+  const trackingId = tracking?.courier?.tracking_id || '';
+  if (waybill) order.biteshipWaybillId = waybill;
+  if (trackingId) order.biteshipTrackingCode = trackingId;
+
+  await order.save();
+
+  if (tracking?.status === 'delivered') {
+    await markOrderDelivered(order);
+  } else if (BITESHIP_SHIPPED_STATUSES.has(tracking?.status)) {
+    await markOrderShipped(order, trackingId || waybill);
+  }
+}
 
 // ─── Shared: mark an order shipped + notify customer (used by the admin route and the webhook) ───
 async function markOrderShipped(order, trackingCode) {
@@ -1117,22 +1159,29 @@ const biteshipWebhookHandler = async (req, res) => {
       return res.status(200).json({ message: 'OK' });
     }
 
-    const isDelivered = data.status === 'delivered';
-    const isShipped = BITESHIP_SHIPPED_STATUSES.has(data.status);
-    if (!isDelivered && !isShipped) {
-      return res.status(200).json({ message: 'OK' });
-    }
-
     const order = await Order.findOne({ biteshipOrderId: data.id });
     if (!order) {
       console.error(`[Biteship Webhook] order untuk biteshipOrderId ${data.id} tidak ditemukan`);
       return res.status(200).json({ message: 'OK' });
     }
 
-    if (isDelivered) {
+    // Setiap status direkam, termasuk yang tidak menggeser orderStatus ('allocated',
+    // 'picking_up', 'on_hold', …). Itulah yang membuat halaman pesanan bisa bercerita
+    // lebih rinci daripada lima langkah besar.
+    recordShipmentEvent(order, {
+      status: data.status,
+      note: data.note ?? data.status_note ?? '',
+      updatedAt: data.updated_at,
+    });
+
+    const waybill = data.courier_waybill_id ?? data.courier_tracking_id ?? '';
+    if (waybill && !order.biteshipWaybillId) order.biteshipWaybillId = waybill;
+    await order.save();
+
+    if (data.status === 'delivered') {
       await markOrderDelivered(order);
-    } else {
-      await markOrderShipped(order, data.courier_waybill_id ?? data.courier_tracking_id);
+    } else if (BITESHIP_SHIPPED_STATUSES.has(data.status)) {
+      await markOrderShipped(order, waybill);
     }
 
     res.status(200).json({ message: 'OK' });
@@ -1146,4 +1195,5 @@ module.exports = router;
 module.exports.webhookHandler = webhookHandler;
 module.exports.biteshipWebhookHandler = biteshipWebhookHandler;
 module.exports.markOrderDelivered = markOrderDelivered;
+module.exports.applyBiteshipTracking = applyBiteshipTracking;
 module.exports.syncPaymentStatus = syncPaymentStatus;

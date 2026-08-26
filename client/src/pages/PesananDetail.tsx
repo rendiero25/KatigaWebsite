@@ -5,6 +5,13 @@ import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { Check, Truck, FileText, XCircle, RefreshCw, MessageSquare } from 'lucide-react'
 import type { Order, CanReviewResponse, BiteshipTracking, Complaint } from '../types/ecommerce'
 import api from '../services/api'
+import {
+  formatShipmentTime,
+  hasShipmentData,
+  isProblemShipmentStatus,
+  resolveShipmentTimeline,
+  shipmentStatusLabel,
+} from '../utils/shipmentStatus'
 import UserLayout from '../components/UserLayout'
 import ReviewForm from '../components/ReviewForm'
 
@@ -220,7 +227,6 @@ export default function PesananDetail() {
   const [tracking, setTracking] = useState<BiteshipTracking | null>(null)
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingError, setTrackingError] = useState('')
-  const [showTracking, setShowTracking] = useState(false)
   const [complaint, setComplaint] = useState<Complaint | null | undefined>(undefined)
   const [showComplaintForm, setShowComplaintForm] = useState(false)
   const [shipCourier, setShipCourier] = useState('')
@@ -353,7 +359,6 @@ export default function PesananDetail() {
 
   const handleLoadTracking = useCallback(async () => {
     if (!id) return
-    setShowTracking(true)
     setTrackingLoading(true)
     setTrackingError('')
     try {
@@ -365,6 +370,29 @@ export default function PesananDetail() {
       setTrackingLoading(false)
     }
   }, [id])
+
+  // Pelacakan tidak lagi menunggu klik: begitu pesanan punya order Biteship, riwayat
+  // kurir diambil sendiri dan bagian pengiriman langsung terbuka. Sengaja tidak memakai
+  // handleLoadTracking — spinner tombol tidak boleh menyala di muat pertama, dan riwayat
+  // webhook yang tersimpan sudah tampil selagi panggilan ini berjalan.
+  const biteshipOrderId = order?.biteshipOrderId
+  const orderStatus = order?.orderStatus
+  useEffect(() => {
+    if (!id || !biteshipOrderId) return
+    if (!['packing', 'shipped', 'delivered'].includes(orderStatus ?? '')) return
+
+    let cancelled = false
+    const load = async () => {
+      try {
+        const data = await api.getOrderTracking(id)
+        if (!cancelled) setTracking(data)
+      } catch (err) {
+        if (!cancelled) setTrackingError(err instanceof Error ? err.message : 'Gagal mengambil data tracking')
+      }
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [id, biteshipOrderId, orderStatus])
 
   if (loading) return (
     <UserLayout title="Detail Pesanan">
@@ -422,7 +450,11 @@ export default function PesananDetail() {
       })
     : null
 
-  const hasTrackingSection = !!order.biteshipOrderId && ['packing', 'shipped', 'delivered'].includes(order.orderStatus)
+  const shipmentTimeline = resolveShipmentTimeline(order, tracking)
+  const latestShipmentStatus = order.biteshipStatus
+    || shipmentTimeline[shipmentTimeline.length - 1]?.status
+    || ''
+  const hasTrackingSection = hasShipmentData(order) && order.orderStatus !== 'awaiting_payment'
 
   const savedRefundAccount = order.refundAccount?.submittedAt ? order.refundAccount : null
   const refundFormFilled = Boolean(refundBank.trim() && refundHolder.trim() && refundNumber.trim())
@@ -730,65 +762,89 @@ export default function PesananDetail() {
         {/* Tracking */}
         {hasTrackingSection && (
           <Section title="Pelacakan">
-            <button
-              type="button"
-              onClick={showTracking ? () => setShowTracking(false) : handleLoadTracking}
-              className="flex items-center gap-1.5 border border-[#1E1E1E] text-[#1E1E1E] uppercase tracking-[0.12em] text-[12px] px-4 py-2 hover:bg-[#1E1E1E] hover:text-white transition-colors cursor-pointer"
-            >
-              {trackingLoading
-                ? <><RefreshCw className="size-3 animate-spin" /> Memuat...</>
-                : <><Truck className="size-3" /> {showTracking ? 'Sembunyikan Tracking' : 'Cek Status Pengiriman'}</>
-              }
-            </button>
-            {showTracking && (
-              <div className="mt-4 border border-[#E9E9EA] p-4">
-                {trackingLoading && (
-                  <p className="text-[13px] text-[#6F6F71]">Mengambil data tracking...</p>
-                )}
-                {trackingError && (
-                  <p className="text-[13px] text-[#AE4B4B]">{trackingError}</p>
-                )}
-                {!trackingLoading && !trackingError && tracking && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      {tracking.courier?.driver_photo_url && (
-                        <img
-                          src={tracking.courier.driver_photo_url}
-                          alt="Foto kurir"
-                          className="size-8 object-cover shrink-0"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <p className="text-[13px] text-[#1E1E1E]">
-                        {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      {(tracking.courier?.history ?? []).slice().reverse().map((h, i) => (
-                        <div key={i} className="flex gap-2 text-[13px]">
-                          <div className="flex flex-col items-center mt-1">
-                            <div className={`size-1.5 ${i === 0 ? 'bg-[#1E1E1E]' : 'bg-[#E9E9EA]'}`} />
-                            {i < (tracking.courier?.history?.length ?? 0) - 1 && (
-                              <div className="w-px flex-1 bg-[#E9E9EA] my-1" />
-                            )}
-                          </div>
-                          <div className="pb-2">
-                            <p className="text-[#1E1E1E] leading-tight">{h.note}</p>
-                            <p className="text-[#6F6F71] mt-0.5">
-                              {new Date(h.updated_at).toLocaleString('id-ID', {
-                                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Truck className="size-4 text-[#6F6F71] shrink-0" strokeWidth={1.5} />
+                  <p
+                    className={`text-[13px] ${
+                      isProblemShipmentStatus(latestShipmentStatus) ? 'text-[#AE4B4B]' : 'text-[#1E1E1E]'
+                    }`}
+                  >
+                    {latestShipmentStatus
+                      ? shipmentStatusLabel(latestShipmentStatus)
+                      : 'Menunggu kurir memperbarui status'}
+                  </p>
+                </div>
+                {(tracking?.courier?.company || order.shippingCourier) && (
+                  <p className="text-[13px] text-[#6F6F71] mt-1">
+                    {(tracking?.courier?.company ?? order.shippingCourier).toUpperCase()}
+                    {tracking?.courier?.tracking_id || order.biteshipTrackingCode
+                      ? ` — ${tracking?.courier?.tracking_id ?? order.biteshipTrackingCode}`
+                      : ''}
+                  </p>
                 )}
               </div>
-            )}
+              <button
+                type="button"
+                onClick={handleLoadTracking}
+                disabled={trackingLoading}
+                className="flex items-center gap-1.5 border border-[#E9E9EA] text-[#6F6F71] uppercase tracking-[0.1em] text-[11px] px-3 py-1.5 hover:border-[#1E1E1E] hover:text-[#1E1E1E] transition-colors disabled:opacity-50 shrink-0 cursor-pointer"
+              >
+                <RefreshCw className={`size-3 ${trackingLoading ? 'animate-spin' : ''}`} />
+                {trackingLoading ? 'Memuat' : 'Perbarui'}
+              </button>
+            </div>
+
+            <div className="mt-4 border border-[#E9E9EA] p-4">
+              {trackingError && (
+                <p className="text-[13px] text-[#AE4B4B] mb-3">{trackingError}</p>
+              )}
+              {tracking?.courier?.driver_photo_url && (
+                <img
+                  src={tracking.courier.driver_photo_url}
+                  alt="Foto kurir"
+                  className="size-8 object-cover shrink-0 mb-3"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              )}
+              {shipmentTimeline.length === 0 ? (
+                <p className="text-[13px] text-[#6F6F71]">
+                  {trackingLoading
+                    ? 'Mengambil data pengiriman...'
+                    : 'Belum ada pembaruan dari kurir.'}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {shipmentTimeline.slice().reverse().map((h, i) => (
+                    <div key={`${h.status}-${h.updatedAt}-${i}`} className="flex gap-2 text-[13px]">
+                      <div className="flex flex-col items-center mt-1">
+                        <div className={`size-1.5 ${i === 0 ? 'bg-[#1E1E1E]' : 'bg-[#E9E9EA]'}`} />
+                        {i < shipmentTimeline.length - 1 && (
+                          <div className="w-px flex-1 bg-[#E9E9EA] my-1" />
+                        )}
+                      </div>
+                      <div className="pb-2">
+                        <p
+                          className={`leading-tight ${
+                            isProblemShipmentStatus(h.status) ? 'text-[#AE4B4B]' : 'text-[#1E1E1E]'
+                          }`}
+                        >
+                          {h.note || shipmentStatusLabel(h.status)}
+                        </p>
+                        <p className="text-[#6F6F71] mt-0.5">
+                          {[h.note ? shipmentStatusLabel(h.status) : '', formatShipmentTime(h.updatedAt)]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </Section>
         )}
 

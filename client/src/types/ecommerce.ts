@@ -142,6 +142,12 @@ export interface OrderItem {
   subtotal: number;
 }
 
+export interface ShipmentEvent {
+  status: string;
+  note: string;
+  updatedAt: string;
+}
+
 export interface Order {
   _id: string;
   customer: string;
@@ -174,6 +180,8 @@ export interface Order {
   biteshipOrderId?: string;
   biteshipTrackingCode?: string;
   biteshipWaybillId?: string;
+  biteshipStatus?: string;
+  shipmentHistory?: ShipmentEvent[];
   adminNote?: string;
   deliveredAt?: string | null;
   deletedAt?: string | null;

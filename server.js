@@ -216,15 +216,19 @@ async function syncBiteshipDeliveries() {
   try {
     const Order = require('./models/Order');
     const { getOrderTracking } = require('./services/biteshipService');
-    const { markOrderDelivered } = require('./routes/orderRoutes');
+    const { applyBiteshipTracking } = require('./routes/orderRoutes');
 
-    const shippedOrders = await Order.find({ orderStatus: 'shipped', biteshipOrderId: { $ne: '' } });
+    // Ikut menyapu 'processing' dan 'packing': di fase itu Biteship sudah mengirim status
+    // rinci ('confirmed', 'allocated', 'picking_up') yang ingin ditampilkan di halaman
+    // pesanan, sementara orderStatus belum bergeser.
+    const shippedOrders = await Order.find({
+      orderStatus: { $in: ['processing', 'packing', 'shipped'] },
+      biteshipOrderId: { $ne: '' },
+    });
     for (const order of shippedOrders) {
       try {
         const tracking = await getOrderTracking(order.biteshipOrderId);
-        if (tracking.status === 'delivered') {
-          await markOrderDelivered(order);
-        }
+        await applyBiteshipTracking(order, tracking);
       } catch (err) {
         console.error(`[Biteship Sync] order ${order._id} failed:`, err.message);
       }

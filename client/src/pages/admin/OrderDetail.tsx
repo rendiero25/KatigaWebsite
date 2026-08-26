@@ -3,6 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import api, { API_BASE_URL } from '../../services/api';
+import {
+  formatShipmentTime,
+  hasShipmentData,
+  isProblemShipmentStatus,
+  resolveShipmentTimeline,
+  shipmentStatusLabel,
+} from '../../utils/shipmentStatus';
 import type { Order, BiteshipTracking, Complaint } from '../../types/ecommerce';
 
 const fmt = (n: number) =>
@@ -113,7 +120,7 @@ export default function AdminOrderDetail() {
 
   useEffect(() => {
     if (!id || !order?.biteshipOrderId) return;
-    if (!['shipped', 'delivered'].includes(order.orderStatus)) return;
+    if (!['processing', 'packing', 'shipped', 'delivered'].includes(order.orderStatus)) return;
     const load = async () => {
       setTrackingLoading(true);
       setTrackingError('');
@@ -264,6 +271,11 @@ export default function AdminOrderDetail() {
   const osColor = ORDER_STATUS_COLOR[order.orderStatus] ?? 'bg-gray-100 text-gray-600';
   const psColor = PAYMENT_STATUS_COLOR[order.paymentStatus] ?? 'bg-gray-100 text-gray-600';
 
+  const shipmentTimeline = resolveShipmentTimeline(order, tracking);
+  const latestShipmentStatus = order.biteshipStatus
+    || shipmentTimeline[shipmentTimeline.length - 1]?.status
+    || '';
+
   const refundResolution = refundComplaint?.resolution?.type === 'refund' ? refundComplaint.resolution : null;
   const refundAmount = refundResolution?.refundAmount ?? order.total;
   const refundDeducted = refundResolution?.returnShippingDeducted ?? 0;
@@ -369,8 +381,8 @@ export default function AdminOrderDetail() {
             )}
           </div>
 
-          {/* Tracking timeline — visible when shipped or delivered */}
-          {['shipped', 'delivered'].includes(order.orderStatus) && (
+          {/* Tracking timeline — terbuka sendiri begitu pengiriman punya data */}
+          {hasShipmentData(order) && (
             <div className="bg-white rounded-xl shadow-sm p-5">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-gray-700">Status Pengiriman</h2>
@@ -380,37 +392,60 @@ export default function AdminOrderDetail() {
                   </span>
                 )}
               </div>
-              {trackingLoading && <p className="text-xs text-gray-400">Memuat tracking...</p>}
-              {trackingError && <p className="text-xs text-red-500">{trackingError}</p>}
-              {!trackingLoading && !trackingError && tracking && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-2">
-                    {tracking.courier?.company?.toUpperCase()} — {tracking.courier?.tracking_id}
-                  </p>
-                  <div className="space-y-2">
-                    {tracking.courier.history.slice().reverse().map((h, i) => (
-                      <div key={i} className="flex gap-2 text-xs">
-                        <div className="flex flex-col items-center mt-0.5">
-                          <div className={`size-2 rounded-full ${i === 0 ? 'bg-indigo-600' : 'bg-gray-300'}`} />
-                          {i < tracking.courier.history.length - 1 && (
-                            <div className="w-px flex-1 bg-gray-200 my-1" />
-                          )}
-                        </div>
-                        <div className="pb-2">
-                          <p className="text-gray-800 font-medium leading-tight">{h.note}</p>
-                          <p className="text-gray-400 mt-0.5">
-                            {new Date(h.updated_at).toLocaleString('id-ID', {
-                              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <p
+                className={`text-sm font-medium mb-3 ${
+                  isProblemShipmentStatus(latestShipmentStatus) ? 'text-red-600' : 'text-gray-800'
+                }`}
+              >
+                {latestShipmentStatus
+                  ? shipmentStatusLabel(latestShipmentStatus)
+                  : 'Menunggu pembaruan dari kurir'}
+                {latestShipmentStatus && (
+                  <span className="ml-2 text-xs font-mono text-gray-400">{latestShipmentStatus}</span>
+                )}
+              </p>
+              {trackingError && <p className="text-xs text-red-500 mb-2">{trackingError}</p>}
+              {(tracking?.courier?.company || order.shippingCourier) && (
+                <p className="text-xs font-semibold text-gray-600 mb-2">
+                  {(tracking?.courier?.company ?? order.shippingCourier).toUpperCase()}
+                  {tracking?.courier?.tracking_id ? ` — ${tracking.courier.tracking_id}` : ''}
+                </p>
               )}
-              {!trackingLoading && !trackingError && !tracking && (
-                <p className="text-xs text-gray-400">Data tracking belum tersedia.</p>
+              {shipmentTimeline.length === 0 ? (
+                <p className="text-xs text-gray-400">
+                  {trackingLoading ? 'Memuat tracking...' : 'Data tracking belum tersedia.'}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {shipmentTimeline.slice().reverse().map((h, i) => (
+                    <div key={`${h.status}-${h.updatedAt}-${i}`} className="flex gap-2 text-xs">
+                      <div className="flex flex-col items-center mt-0.5">
+                        <div
+                          className={`size-2 rounded-full ${
+                            isProblemShipmentStatus(h.status)
+                              ? 'bg-red-500'
+                              : i === 0
+                                ? 'bg-indigo-600'
+                                : 'bg-gray-300'
+                          }`}
+                        />
+                        {i < shipmentTimeline.length - 1 && (
+                          <div className="w-px flex-1 bg-gray-200 my-1" />
+                        )}
+                      </div>
+                      <div className="pb-2">
+                        <p className="text-gray-800 font-medium leading-tight">
+                          {h.note || shipmentStatusLabel(h.status)}
+                        </p>
+                        <p className="text-gray-400 mt-0.5">
+                          {[h.note ? shipmentStatusLabel(h.status) : '', formatShipmentTime(h.updatedAt)]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

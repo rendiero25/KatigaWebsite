@@ -28,6 +28,15 @@ const shippingAddressSchema = new mongoose.Schema({
   areaName:      { type: String, default: '' },
 }, { _id: false });
 
+// Satu baris riwayat pengiriman, apa adanya dari Biteship. Status di sini jauh lebih rinci
+// daripada enum orderStatus ('allocated', 'picking_up', 'dropping_off', …); enum itu sengaja
+// tidak diperlebar — pembeli tetap melihat lima langkah besar, rinciannya dibaca dari sini.
+const shipmentEventSchema = new mongoose.Schema({
+  status:    { type: String, default: '' },
+  note:      { type: String, default: '' },
+  updatedAt: { type: Date },
+}, { _id: false });
+
 const orderSchema = new mongoose.Schema({
   customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   customerSnapshot: {
@@ -82,6 +91,8 @@ const orderSchema = new mongoose.Schema({
   biteshipOrderId:      { type: String, default: '' },
   biteshipTrackingCode: { type: String, default: '' },
   biteshipWaybillId:    { type: String, default: '' },
+  biteshipStatus:       { type: String, default: '' },
+  shipmentHistory:      [shipmentEventSchema],
 
   adminNote: { type: String, default: '' },
   // Tenggat komplain dihitung dari sini. Sebelumnya memakai updatedAt, yang bergeser
