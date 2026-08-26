@@ -1154,33 +1154,53 @@ async function markOrderDelivered(order) {
 // ─── Biteship webhook (registered in server.js before express-json routes) ───
 const biteshipWebhookHandler = async (req, res) => {
   try {
-    const { event, data } = req.body ?? {};
-    if (event !== 'order.status_update' || !data?.id) {
+    const payload = req.body ?? {};
+
+    // Dashboard Biteship mendaftarkan tiga event: order.status, order.waybill_id, dan
+    // order.price. 'order.status_update' yang disaring di sini sebelumnya tidak pernah
+    // dikirim, jadi setiap webhook sungguhan dibuang diam-diam.
+    const event = payload.event ?? '';
+    if (!event.startsWith('order.')) {
       return res.status(200).json({ message: 'OK' });
     }
 
-    const order = await Order.findOne({ biteshipOrderId: data.id });
+    // Bentuk payload Biteship belum pernah diverifikasi dari kiriman sungguhan — kode
+    // lama mengharapkan data.*, sementara dashboard menyebut field datar. Keduanya
+    // diterima, dan yang tidak dikenali dicatat utuh supaya bentuk aslinya bisa dibaca
+    // dari log begitu webhook pertama tiba, seperti yang dulu dilakukan untuk Mayar.
+    const data = payload.data ?? payload;
+    const biteshipOrderId = data.id ?? data.order_id ?? null;
+    if (!biteshipOrderId) {
+      console.error('[Biteship Webhook] payload tanpa order id:', JSON.stringify(payload));
+      return res.status(200).json({ message: 'OK' });
+    }
+
+    const order = await Order.findOne({ biteshipOrderId });
     if (!order) {
-      console.error(`[Biteship Webhook] order untuk biteshipOrderId ${data.id} tidak ditemukan`);
+      console.error(`[Biteship Webhook] order untuk biteshipOrderId ${biteshipOrderId} tidak ditemukan`);
       return res.status(200).json({ message: 'OK' });
     }
 
     // Setiap status direkam, termasuk yang tidak menggeser orderStatus ('allocated',
     // 'picking_up', 'on_hold', …). Itulah yang membuat halaman pesanan bisa bercerita
-    // lebih rinci daripada lima langkah besar.
-    recordShipmentEvent(order, {
-      status: data.status,
-      note: data.note ?? data.status_note ?? '',
-      updatedAt: data.updated_at,
-    });
+    // lebih rinci daripada lima langkah besar. Event order.waybill_id dan order.price
+    // tidak membawa status, jadi perekamannya dilewati — bukan status kosong yang dicatat.
+    const status = data.status ?? '';
+    if (status) {
+      recordShipmentEvent(order, {
+        status,
+        note: data.note ?? data.status_note ?? '',
+        updatedAt: data.updated_at,
+      });
+    }
 
     const waybill = data.courier_waybill_id ?? data.courier_tracking_id ?? '';
     if (waybill && !order.biteshipWaybillId) order.biteshipWaybillId = waybill;
     await order.save();
 
-    if (data.status === 'delivered') {
+    if (status === 'delivered') {
       await markOrderDelivered(order);
-    } else if (BITESHIP_SHIPPED_STATUSES.has(data.status)) {
+    } else if (status && BITESHIP_SHIPPED_STATUSES.has(status)) {
       await markOrderShipped(order, waybill);
     }
 
