@@ -54,8 +54,27 @@ app.use('/api', async (req, res, next) => {
 
 // Webhook Mayar tidak perlu raw body — tidak ada signature untuk dihitung. Keaslian
 // dipastikan dengan menanyakan ulang status ke API Mayar (routes/orderRoutes.js).
-app.post('/api/orders/webhook/mayar', express.json(), require('./routes/orderRoutes').webhookHandler);
-app.post('/api/orders/webhook/biteship', express.json(), require('./routes/orderRoutes').biteshipWebhookHandler);
+
+// Dashboard Biteship memvalidasi URL dengan GET sebelum mengizinkan pemasangan. Tanpa
+// rute ini permintaan itu jatuh ke fallback SPA dan dijawab index.html — HTML, bukan
+// balasan ok, dan pemasangan ditolak.
+const webhookProbeOk = (req, res) => res.status(200).json({ message: 'OK' });
+
+// Body yang bukan JSON valid tidak boleh jadi 500: pengirim webhook membaca non-2xx
+// sebagai kegagalan dan mengulang berkali-kali. Ditelan di sini, sesudah express.json()
+// dan sebelum handler, supaya balasan tetap 200 seperti jalur normalnya.
+const swallowWebhookJsonError = (err, req, res, next) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    console.error('[Webhook] body bukan JSON valid:', err.message);
+    return res.status(200).json({ message: 'OK' });
+  }
+  next(err);
+};
+
+app.get('/api/orders/webhook/mayar', webhookProbeOk);
+app.get('/api/orders/webhook/biteship', webhookProbeOk);
+app.post('/api/orders/webhook/mayar', express.json(), swallowWebhookJsonError, require('./routes/orderRoutes').webhookHandler);
+app.post('/api/orders/webhook/biteship', express.json(), swallowWebhookJsonError, require('./routes/orderRoutes').biteshipWebhookHandler);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

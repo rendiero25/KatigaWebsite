@@ -77,14 +77,21 @@ Urutannya penting — DNS dulu, karena certbot butuh domain sudah menunjuk VPS.
       diturunkan dari 0664 ke 0600. Semua sesi lama gugur — perlu login ulang.
 - [ ] **Ganti password admin** — masih `admin123`, sementara panel admin sudah publik
 - [ ] **Hapus data uji** dari `katiga` sebelum transaksi nyata: 14 order, 4 pelanggan,
-      41 notifikasi, 2 submission kontak. Ingat koreksi `stock`/`soldCount` juga.
-- [ ] **Webhook dipindahkan** ke `https://katiga.id/api/orders/webhook/mayar`
-      dan `https://katiga.id/api/orders/webhook/biteship`
+      41 notifikasi, 4 submission kontak (2 di antaranya berlabel `UJI COBA`).
+      Ingat koreksi `stock`/`soldCount` juga.
+      Gejala yang sudah muncul: sapuan Biteship mencatat `400` tiap 15 menit untuk order
+      uji dengan resi dummy `WYB-`, karena order itu dibuat pakai kunci sandbox sementara
+      sekarang ditanyakan memakai kunci live. Tidak berbahaya, hilang setelah dibersihkan.
+- [x] **Webhook Mayar** — `https://katiga.id/api/orders/webhook/mayar` terdaftar di dashboard
+      produksi, Testing URL menjawab SUCCESS.
+- [ ] **Webhook Biteship** — `https://katiga.id/api/orders/webhook/biteship`, event
+      `order.status_update`. Handler mensyaratkan `data.id` = `biteshipOrderId`.
 - [ ] **Matikan satu penjadwal** — di VPS `setInterval` di `server.js` sudah hidup sendiri,
       jadi `.github/workflows/sweep.yml` dan cron di `vercel.json` sekarang rangkap
-- [ ] **`RESEND_API_KEY`** — masih placeholder, jadi email selamat datang dan notifikasi
-      form kontak belum pernah berfungsi. Domain `katiga.id` juga harus diverifikasi di Resend
-      karena kode mengirim dari `noreply@katiga.id`.
+- [x] **`RESEND_API_KEY` + domain Resend** — domain terverifikasi (DKIM, MX+TXT `send`,
+      DMARC), kunci terpasang. Form kontak dan newsletter footer diuji di produksi dan
+      menjawab `emailed: true`. Catatan: mengedit `.env` tidak berpengaruh sampai
+      `pm2 reload katiga --update-env` — itu sebabnya uji pertama masih `false`.
 - [ ] **`GOOGLE_CLIENT_ID`** — masih placeholder di backend, dan `VITE_GOOGLE_CLIENT_ID`
       di secret GitHub juga. Login Google belum aktif.
 - [ ] **Uji transaksi nyata bernilai kecil** setelah semua di atas selesai
@@ -153,6 +160,11 @@ Hal-hal yang sudah menyita waktu sekali, supaya tidak terulang.
   berarti kunci diterima. Tidak ada transaksi yang dibuat atau disentuh. Terverifikasi
   26 Agustus 2026: kunci di `.env` lokal menjawab 401 di `api.mayar.id` dan 404 di
   `api.mayar.club` — jadi itu kunci sandbox.
+- **Tiap deploy menghasilkan jendela 502 satu-dua detik.** pm2 berjalan di mode `fork`
+  dengan satu instance, jadi `pm2 reload` sebenarnya restart, bukan reload tanpa henti.
+  Ini sudah dua kali menyesatkan: uji form kontak dan uji webhook Mayar sama-sama gagal
+  hanya karena mendarat di jendela itu, dan terlihat seperti kerusakan sungguhan.
+  Kalau ada uji yang gagal tepat setelah deploy, ulangi dulu sebelum mendiagnosis.
 - **`CRON_SECRET` tidak ada di `.env` lokal.** CLAUDE.md menyebutnya wajib dan
   `/api/cron/sweep` menjawab 503 tanpa itu. Nilainya harus sama di `.env` VPS, Environment
   Variables Vercel, dan repository secret GitHub.
