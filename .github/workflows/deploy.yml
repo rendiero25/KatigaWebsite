@@ -1,0 +1,66 @@
+name: Deploy ke VPS
+
+# Produksi hidup di VPS dan mengikuti `main`. Vercel tetap melayani `development`
+# sebagai staging, jadi push ke sana sengaja tidak memicu apa pun di sini.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      # Frontend dibangun di sini, bukan di VPS. Mesin produksi 1 core / 2 GB tidak
+      # perlu menjalankan Vite sama sekali, dan kode yang gagal type-check berhenti
+      # di langkah ini — sebelum menyentuh apa pun di server.
+      - name: Build frontend
+        working-directory: client
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+        run: |
+          npm ci
+          npx tsc -b
+          npm run lint
+          npm run build
+
+      - name: Siapkan SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      # Urutannya bukan selera: `git reset --hard` menghapus client/dist (folder itu
+      # ada di .gitignore), jadi hasil build harus dikirim SESUDAH langkah ini.
+      - name: Perbarui backend
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'cd /srv/katiga && git fetch --prune origin main && git reset --hard origin/main && npm ci --omit=dev'
+
+      - name: Kirim hasil build
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519" \
+            client/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/srv/katiga/client/dist/
+
+      - name: Reload aplikasi
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'pm2 reload katiga --update-env && pm2 save'
+
+      - name: Pastikan aplikasi menjawab
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            'curl -fsS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/api/products'
