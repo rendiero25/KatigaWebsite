@@ -75,7 +75,17 @@ jobs:
 
       - name: Kirim hasil build
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/id_ed25519" \
+          # --delay-updates: semua berkas baru ditahan di direktori sementara lalu
+          # dipindahkan sekaligus di akhir. Tanpa ini rsync menulis di tempatnya langsung,
+          # dan permintaan yang tiba di tengah proses mendapat berkas separuh jadi — 500.
+          #
+          # --delete SENGAJA TIDAK DIPAKAI. Nama aset Vite mengandung hash, jadi berkas
+          # lama tidak pernah bentrok dengan yang baru. Tapi pengunjung yang memuat
+          # index.html beberapa detik sebelum deploy akan meminta nama-aset LAMA; kalau
+          # sudah dihapus, halamannya putih sampai mereka memuat ulang. Membiarkan aset
+          # lama menumpuk jauh lebih murah daripada itu — ukurannya ratusan KB per rilis.
+          # Kalau suatu saat perlu dipangkas, hapus manual yang tidak lagi dirujuk.
+          rsync -az --delay-updates -e "ssh -i ~/.ssh/id_ed25519" \
             client/dist/ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/srv/katiga/client/dist/
 
       - name: Reload aplikasi

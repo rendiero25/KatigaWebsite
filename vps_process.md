@@ -216,6 +216,16 @@ Hal-hal yang sudah menyita waktu sekali, supaya tidak terulang.
   `checkExpiringPromos` memakai pola cek-lalu-tulis yang menghasilkan notifikasi ganda
   kalau dua instance memeriksanya bersamaan. Terverifikasi lewat log — baris
   `[Biteship Sync]` hanya muncul dari prefix `0|katiga`.
+- **Halaman putih dan aset 500 tepat saat deploy.** Penyebabnya `rsync -az --delete`
+  yang menulis langsung ke `client/dist` yang sedang dilayani. Dua gejala berbeda:
+  berkas separuh jadi selama rsync berjalan (500), dan aset lama yang dihapus `--delete`
+  sehingga pengunjung yang sudah memuat `index.html` sebelumnya meminta nama-aset yang
+  tidak ada lagi (halaman putih sampai dimuat ulang).
+  Diperbaiki dengan `--delay-updates` dan membuang `--delete`. Nama aset Vite berhash,
+  jadi berkas lama tidak pernah bentrok — membiarkannya menumpuk jauh lebih murah
+  daripada memutus sesi pengunjung.
+  Mode cluster pm2 tidak menolong untuk yang ini; itu masalah berkas statis, bukan jeda
+  restart proses.
 - **`CRON_SECRET` tidak ada di `.env` lokal.** CLAUDE.md menyebutnya wajib dan
   `/api/cron/sweep` menjawab 503 tanpa itu. Nilainya harus sama di `.env` VPS, Environment
   Variables Vercel, dan repository secret GitHub.
