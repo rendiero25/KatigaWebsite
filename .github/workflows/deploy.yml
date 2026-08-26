@@ -83,7 +83,22 @@ jobs:
           ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             'pm2 reload katiga --update-env && pm2 save'
 
+      # pm2 berjalan di mode fork dengan satu instance, jadi `reload` sebenarnya restart:
+      # ada jeda satu-dua detik sebelum Node mengikat port 8000 lagi. Pemeriksaan sekali
+      # jalan menabrak jeda itu dan melaporkan deploy gagal padahal rilisnya sukses —
+      # status merah yang keliru lebih berbahaya daripada tidak ada pemeriksaan, karena
+      # membuat merah berhenti dipercaya.
       - name: Pastikan aplikasi menjawab
         run: |
-          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            'curl -fsS -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8000/api/products'
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} '
+            for i in $(seq 1 15); do
+              code=$(curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/api/products || true)
+              if [ "$code" = "200" ]; then
+                echo "aplikasi menjawab 200 pada percobaan ke-$i"
+                exit 0
+              fi
+              sleep 2
+            done
+            echo "aplikasi tidak menjawab 200 setelah 30 detik (terakhir: ${code:-000})"
+            exit 1
+          '
