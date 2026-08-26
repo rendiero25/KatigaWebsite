@@ -287,15 +287,30 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-  mongoose.connection.once('connected', checkExpiringPromos);
-  mongoose.connection.once('connected', syncBiteshipDeliveries);
-  mongoose.connection.once('connected', syncPendingPayments);
+  // Di mode cluster pm2 memberi tiap instance NODE_APP_INSTANCE ('0', '1', …), dan
+  // penjadwal hanya boleh hidup di satu di antaranya. checkExpiringPromos memakai pola
+  // cek-lalu-tulis (findOne lalu buat kalau belum ada), jadi dua instance yang memeriksa
+  // bersamaan bisa sama-sama lolos dan menghasilkan notifikasi ganda. Dua sapuan juga
+  // berarti dua kali panggilan API Mayar dan Biteship tanpa manfaat apa pun.
+  // Di mode fork variabel itu tidak ada, jadi penjadwal tetap berjalan seperti biasa.
+  const menjalankanPenjadwal =
+    process.env.NODE_APP_INSTANCE === undefined || process.env.NODE_APP_INSTANCE === '0';
+
+  if (menjalankanPenjadwal) {
+    mongoose.connection.once('connected', checkExpiringPromos);
+    mongoose.connection.once('connected', syncBiteshipDeliveries);
+    mongoose.connection.once('connected', syncPendingPayments);
+  }
+
   connectDB().catch((error) => {
     console.error(`Initial MongoDB connection error: ${error.message}`);
   });
-  setInterval(checkExpiringPromos, 60 * 60 * 1000);
-  setInterval(syncBiteshipDeliveries, 15 * 60 * 1000);
-  setInterval(syncPendingPayments, 15 * 60 * 1000);
+
+  if (menjalankanPenjadwal) {
+    setInterval(checkExpiringPromos, 60 * 60 * 1000);
+    setInterval(syncBiteshipDeliveries, 15 * 60 * 1000);
+    setInterval(syncPendingPayments, 15 * 60 * 1000);
+  }
 }
 
 module.exports = app;

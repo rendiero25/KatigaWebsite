@@ -162,9 +162,13 @@ Hal-hal yang sudah menyita waktu sekali, supaya tidak terulang.
   `api.mayar.club` — jadi itu kunci sandbox.
 - **Tiap deploy menghasilkan jendela 502 satu-dua detik.** pm2 berjalan di mode `fork`
   dengan satu instance, jadi `pm2 reload` sebenarnya restart, bukan reload tanpa henti.
-  Ini sudah dua kali menyesatkan: uji form kontak dan uji webhook Mayar sama-sama gagal
-  hanya karena mendarat di jendela itu, dan terlihat seperti kerusakan sungguhan.
-  Kalau ada uji yang gagal tepat setelah deploy, ulangi dulu sebelum mendiagnosis.
+  Sudah **empat kali** menyesatkan dalam satu hari: uji form kontak, dua percobaan
+  Testing URL Mayar, dan pemeriksaan kesehatan di akhir deploy yang membuat Actions merah
+  padahal rilisnya sukses. Kalau ada uji yang gagal tepat setelah deploy, ulangi dulu
+  sebelum mendiagnosis.
+  Pemeriksaan di workflow sudah diberi percobaan ulang, tapi **jendela itu masih dialami
+  pengunjung**. Menghilangkannya sepenuhnya butuh pm2 mode `cluster` dengan dua instance —
+  belum dilakukan, lihat catatan di bawah.
 - **`CRON_SECRET` tidak ada di `.env` lokal.** CLAUDE.md menyebutnya wajib dan
   `/api/cron/sweep` menjawab 503 tanpa itu. Nilainya harus sama di `.env` VPS, Environment
   Variables Vercel, dan repository secret GitHub.
