@@ -36,12 +36,19 @@ jobs:
           npm run lint
           npm run build
 
+      # Host key diambil langsung dari server tiap deploy, bukan dari secret. Menyalin
+      # entri known_hosts lewat tangan terlalu mudah rusak — kunci RSA terpotong jadi
+      # beberapa baris saat disalin, dan SSH menolak file yang tidak satu baris per entri.
+      # Konsekuensinya kita percaya host apa adanya saat koneksi pertama tiap run; untuk
+      # VPS ber-IP tetap yang hanya dihubungi dari GitHub Actions, itu pertukaran yang wajar.
       - name: Siapkan SSH
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          echo "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          ssh-keyscan -t ed25519,rsa "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+          wc -l < ~/.ssh/known_hosts | xargs -I{} echo "known_hosts: {} entri"
 
       # Urutannya bukan selera: `git reset --hard` menghapus client/dist (folder itu
       # ada di .gitignore), jadi hasil build harus dikirim SESUDAH langkah ini.
