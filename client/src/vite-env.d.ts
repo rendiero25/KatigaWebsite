@@ -2,26 +2,10 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
-  readonly VITE_GOOGLE_CLIENT_ID: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
-}
-
-interface Window {
-  google: {
-    accounts: {
-      id: {
-        initialize: (config: {
-          client_id: string;
-          callback: (response: { credential: string }) => void;
-        }) => void;
-        prompt: () => void;
-        renderButton: (element: HTMLElement, config: object) => void;
-      };
-    };
-  };
 }
 
 declare module 'swiper/css';
