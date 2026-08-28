@@ -170,7 +170,7 @@ export default function SyaratKetentuan() {
                   </p>
                   <ul className="list-disc pl-6 text-sm text-[#6F6F71] leading-relaxed space-y-2 mt-4">
                     <li>Telepon: {contact?.phone || '021-535-7450'}</li>
-                    <li>WhatsApp: {contact?.whatsapp || '0821-2233-8226'}</li>
+                    <li>WhatsApp: {contact?.whatsapp || '+62 821-7402-8363'}</li>
                     <li>Email: {contact?.email || 'info@kusumakencana.co.id'}</li>
                     <li>
                       Alamat:{' '}

@@ -157,7 +157,7 @@ export default function AdminContact() {
                   value={formData.whatsapp}
                   onChange={(e) => update({ whatsapp: e.target.value })}
                   className="h-9 text-sm"
-                  placeholder="0821-2233-8226"
+                  placeholder="+62 821-7402-8363"
                 />
                 <p className="text-[11px] text-gray-400">
                   Dipakai tombol WhatsApp melayang di semua halaman.

@@ -209,7 +209,7 @@ const seedData = async () => {
     // 12. Contact Info
     await ContactInfo.create({
       phone: '021-535-7450',
-      whatsapp: '0821-2233-8226',
+      whatsapp: '+62 821-7402-8363',
       email: 'info@kusumakencana.co.id',
       address: 'Grha KATIGA, Jalan Kebon Jeruk Raya 18B, Kebon Jeruk, Jakarta, Indonesia 11530'
     });

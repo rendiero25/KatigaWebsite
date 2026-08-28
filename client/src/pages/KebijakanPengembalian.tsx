@@ -116,7 +116,7 @@ export default function KebijakanPengembalian() {
                   <p className="text-sm text-[#6F6F71] leading-relaxed">Jika Anda memiliki pertanyaan lebih lanjut, silakan hubungi kami melalui:</p>
                   <ul className="list-disc pl-6 text-sm text-[#6F6F71] leading-relaxed space-y-2 mt-4">
                     <li>Telepon: {contact?.phone || '021-535-7450'}</li>
-                    <li>WhatsApp: {contact?.whatsapp || '0821-2233-8226'}</li>
+                    <li>WhatsApp: {contact?.whatsapp || '+62 821-7402-8363'}</li>
                     <li>Email: {contact?.email || 'info@kusumakencana.co.id'}</li>
                     <li>Alamat: {contact?.address || 'Grha KATIGA, Jalan Kebon Jeruk Raya 18B, Kebon Jeruk, Jakarta, Indonesia 11530'}</li>
                   </ul>
