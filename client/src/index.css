@@ -8,7 +8,10 @@
   --color-black: #1e1e1e;
   --color-primary-dark: #2b3a67;
   --color-secondary: #ec4899;
-  --color-accent: #10b981;
+  /* Neutral highlight for shadcn menus/selects. A saturated colour here paints
+     every hovered item, and any component that overrides the background is left
+     with white text on a light surface. */
+  --color-accent: #f3f4f6;
 
   /* Redesign tokens — LPH-inspired neutral-dominant scale */
   --color-ink: #6f6f71;
@@ -50,7 +53,7 @@
   --color-secondary-foreground: #ffffff;
   --color-muted: #f3f4f6;
   --color-muted-foreground: #6b7280;
-  --color-accent-foreground: #ffffff;
+  --color-accent-foreground: #111827;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
   --color-border: #e5e7eb;
