@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FaPhone, FaWhatsapp, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
 
+import api from "../services/api";
+import { toWaNumber } from "../utils/whatsapp";
+
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import api from "../services/api";
 
 interface ContactPageContent {
   title?: string;
@@ -200,7 +202,7 @@ export default function ContactPage() {
                   <div>
                     <p className={`${labelClass} mb-1`}>WhatsApp</p>
                     <a
-                      href={`https://wa.me/${contactInfo.whatsapp}`}
+                      href={`https://wa.me/${toWaNumber(contactInfo.whatsapp)}`}
                       className="text-sm text-black/80 leading-relaxed hover:text-[#4F68AF] transition-colors"
                     >
                       {contactInfo.whatsapp}

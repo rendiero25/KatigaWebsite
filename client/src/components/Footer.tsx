@@ -8,6 +8,7 @@ import { FiChevronDown } from "react-icons/fi";
 import { useFooter, useContactInfo, useSiteSettings } from "../hooks/useApi";
 
 import api from "../services/api";
+import { toWaNumber } from "../utils/whatsapp";
 
 import WhatsAppFab from "./WhatsAppFab";
 
@@ -184,7 +185,7 @@ export default function Footer() {
             )}
             {contact?.whatsapp && (
               <a
-                href={`https://wa.me/${contact.whatsapp}`}
+                href={`https://wa.me/${toWaNumber(contact.whatsapp)}`}
                 className="flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors"
               >
                 <FaWhatsapp className="w-4 h-4 shrink-0" /> {contact.whatsapp}

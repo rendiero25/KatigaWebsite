@@ -2,24 +2,15 @@ import { FaWhatsapp } from 'react-icons/fa';
 
 import { useContactInfo } from '../hooks/useApi';
 
+import { FALLBACK_WHATSAPP, toWaNumber } from '../utils/whatsapp';
+
 interface ContactInfo {
   whatsapp?: string;
 }
 
-// Used when the CMS has no number yet, so the button never renders a dead link.
-const FALLBACK_NUMBER = '0821-2233-8226';
-
-// wa.me needs a bare international number: 0821-2233-8226 -> 6282122338226.
-const toWaNumber = (raw: string) => {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.startsWith('62')) return digits;
-  if (digits.startsWith('0')) return `62${digits.slice(1)}`;
-  return digits;
-};
-
 export default function WhatsAppFab() {
   const { data } = useContactInfo();
-  const number = toWaNumber((data as ContactInfo | null)?.whatsapp || FALLBACK_NUMBER);
+  const number = toWaNumber((data as ContactInfo | null)?.whatsapp || FALLBACK_WHATSAPP);
 
   if (!number) return null;
 
