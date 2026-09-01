@@ -37,6 +37,7 @@ export default function AdminOrders() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ text: string; tone: 'ok' | 'warn' } | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -54,8 +55,19 @@ export default function AdminOrders() {
       const data = await res.json();
       setOrders(data.data ?? []);
       setPagination(data.pagination ?? null);
+      // Pilihan cetak selalu direset — id dari halaman/filter sebelumnya tidak lagi terlihat
+      // di layar, jadi kalau ikut tercetak admin tidak punya cara menyadarinya.
+      setSelected([]);
     } finally { setLoading(false); }
   }, [filters, showDeleted, token]);
+
+  const printLabels = (ids: string[]) => {
+    if (ids.length === 0) return;
+    window.open(api.getAdminShippingLabelUrl(ids), '_blank', 'noopener,noreferrer');
+  };
+
+  const toggleSelected = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
 
   const handleDelete = async (order: Order) => {
     const confirmed = window.confirm(
@@ -98,6 +110,9 @@ export default function AdminOrders() {
   const setFilter = (key: string, value: string) =>
     setFilters((f) => ({ ...f, [key]: value, page: 1 }));
 
+  const allSelected = orders.length > 0 && selected.length === orders.length;
+  const columnCount = showDeleted ? 7 : 8;
+
   return (
     <AdminLayout title="Pesanan">
       {/* Filters */}
@@ -137,6 +152,17 @@ export default function AdminOrders() {
         >
           {showDeleted ? 'Lihat Pesanan Aktif' : 'Kotak Sampah'}
         </Button>
+        {!showDeleted && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-center"
+            disabled={selected.length === 0}
+            onClick={() => printLabels(selected)}
+          >
+            Cetak Resi{selected.length > 0 ? ` (${selected.length})` : ''}
+          </Button>
+        )}
         {pagination && (
           <p className="ml-auto text-sm text-gray-500 self-center">
             {pagination.total} pesanan
@@ -161,6 +187,18 @@ export default function AdminOrders() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-500">
             <tr>
+              {!showDeleted && (
+                <th className="pl-5 pr-0 py-3 font-medium w-8">
+                  <input
+                    type="checkbox"
+                    aria-label="Pilih semua pesanan di halaman ini"
+                    checked={allSelected}
+                    onChange={() => setSelected(allSelected ? [] : orders.map((o) => o._id))}
+                    disabled={orders.length === 0}
+                    className="size-4 accent-indigo-600 align-middle"
+                  />
+                </th>
+              )}
               <th className="px-5 py-3 font-medium">Order ID</th>
               <th className="px-5 py-3 font-medium">Customer</th>
               <th className="px-5 py-3 font-medium">Total</th>
@@ -172,10 +210,10 @@ export default function AdminOrders() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-gray-400">Memuat...</td></tr>
+              <tr><td colSpan={columnCount} className="px-5 py-8 text-center text-gray-400">Memuat...</td></tr>
             ) : orders.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-8 text-center text-gray-400">
+                <td colSpan={columnCount} className="px-5 py-8 text-center text-gray-400">
                   {showDeleted ? 'Kotak sampah kosong' : 'Tidak ada pesanan'}
                 </td>
               </tr>
@@ -184,6 +222,17 @@ export default function AdminOrders() {
               const ps = PAYMENT_STATUS_LABEL[order.paymentStatus] ?? { label: order.paymentStatus, color: 'bg-gray-100 text-gray-600' };
               return (
                 <tr key={order._id} className="hover:bg-gray-50">
+                  {!showDeleted && (
+                    <td className="pl-5 pr-0 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Pilih pesanan ${order._id.slice(-8).toUpperCase()}`}
+                        checked={selected.includes(order._id)}
+                        onChange={() => toggleSelected(order._id)}
+                        className="size-4 accent-indigo-600 align-middle"
+                      />
+                    </td>
+                  )}
                   <td className="px-5 py-3 font-mono text-xs text-gray-500">#{order._id.slice(-8).toUpperCase()}</td>
                   <td className="px-5 py-3">
                     <p className="font-medium text-gray-900">{order.customerSnapshot.name}</p>
@@ -204,6 +253,15 @@ export default function AdminOrders() {
                       <Link to={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
                         Detail
                       </Link>
+                      {!order.deletedAt && (
+                        <button
+                          type="button"
+                          onClick={() => printLabels([order._id])}
+                          className="text-gray-600 hover:text-gray-900 font-medium"
+                        >
+                          Cetak Resi
+                        </button>
+                      )}
                       {order.deletedAt ? (
                         <button
                           type="button"

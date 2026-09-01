@@ -554,17 +554,32 @@ export default function AdminOrderDetail() {
             </div>
           )}
 
-          {/* Invoice download */}
+          {/* Dokumen cetak */}
           <div className="bg-white rounded-xl shadow-sm p-5">
-            <h2 className="font-semibold text-gray-700 mb-3">Invoice</h2>
-            <a
-              href={api.getAdminInvoiceUrl(order._id)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 text-sm rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
-            >
-              Download Invoice PDF
-            </a>
+            <h2 className="font-semibold text-gray-700 mb-3">Dokumen</h2>
+            <div className="space-y-2">
+              <a
+                href={api.getAdminInvoiceUrl(order._id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 text-sm rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+              >
+                Download Invoice PDF
+              </a>
+              <a
+                href={api.getAdminShippingLabelUrl([order._id])}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 text-sm rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+              >
+                Cetak Resi (10×15 cm)
+              </a>
+            </div>
+            {!order.biteshipTrackingCode && (
+              <p className="text-xs text-gray-400 mt-2">
+                Resi belum ada — label tercetak dengan kolom nomor resi kosong.
+              </p>
+            )}
           </div>
 
           <div className="bg-white rounded-xl shadow-sm p-5">

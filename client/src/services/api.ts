@@ -540,6 +540,12 @@ export const api = {
     return `${API_BASE_URL}/orders/${id}/invoice?token=${token}`;
   },
 
+  getAdminShippingLabelUrl: (ids: string[]): string => {
+    const token = localStorage.getItem('adminToken');
+    const params = new URLSearchParams({ ids: ids.join(','), token: token ?? '' });
+    return `${API_BASE_URL}/orders/labels?${params}`;
+  },
+
   acceptOrder: async (id: string) => {
     const token = localStorage.getItem('adminToken');
     const res = await fetch(`${API_BASE_URL}/orders/${id}/accept`, {

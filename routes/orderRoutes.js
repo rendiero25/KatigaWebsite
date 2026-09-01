@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
 const Order = require('../models/Order');
@@ -19,6 +20,7 @@ const {
   eligibleSubtotal: computeVoucherEligibleSubtotal,
 } = require('../utils/voucherScope');
 const { notifyAdmin, notifyCustomer } = require('../utils/notify');
+const { buildShippingLabelPdf } = require('../utils/shippingLabelPdf');
 const { createPayment, getTransaction, closePayment, MayarError } = require('../services/mayarService');
 
 const resolvePositiveNumber = (value) => {
@@ -606,6 +608,34 @@ router.get('/', auth, async (req, res) => {
     res.json({ data: orders, pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)), limit: Number(limit) } });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── GET /api/orders/labels?ids=a,b,c — admin: cetak resi (satu order = satu halaman) ───
+// Harus terdaftar di atas '/:id', kalau tidak Express membaca 'labels' sebagai id order.
+router.get('/labels', auth, async (req, res) => {
+  try {
+    const ids = String(req.query.ids ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    if (ids.length === 0) return res.status(400).json({ message: 'Tidak ada pesanan yang dipilih' });
+    if (ids.some((id) => !mongoose.isValidObjectId(id))) {
+      return res.status(400).json({ message: 'Ada id pesanan yang tidak valid' });
+    }
+
+    const orders = await Order.find({ _id: { $in: ids } });
+    if (orders.length === 0) return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
+
+    // Urutan mengikuti pilihan admin, bukan urutan MongoDB — supaya tumpukan hasil cetak
+    // sama persis dengan urutan di layar.
+    const byId = new Map(orders.map((order) => [order._id.toString(), order]));
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+
+    const filename = ordered.length === 1
+      ? `resi-${ordered[0]._id}.pdf`
+      : `resi-${ordered.length}-pesanan.pdf`;
+    buildShippingLabelPdf(ordered, res, filename);
+  } catch (err) {
+    console.error('[Label Resi]', err);
+    res.status(500).json({ message: 'Gagal membuat label resi' });
   }
 });
 
