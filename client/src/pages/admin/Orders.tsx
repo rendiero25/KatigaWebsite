@@ -11,6 +11,7 @@ const fmt = (n: number) =>
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   awaiting_payment: { label: 'Menunggu Bayar', color: 'bg-yellow-100 text-yellow-700' },
   processing:       { label: 'Diproses',       color: 'bg-blue-100 text-blue-700' },
+  packing:          { label: 'Dikemas',        color: 'bg-violet-100 text-violet-700' },
   shipped:          { label: 'Dikirim',         color: 'bg-indigo-100 text-indigo-700' },
   delivered:        { label: 'Selesai',         color: 'bg-green-100 text-green-700' },
   cancelled:        { label: 'Dibatalkan',      color: 'bg-red-100 text-red-700' },
@@ -27,6 +28,13 @@ const PAYMENT_STATUS_LABEL: Record<string, { label: string; color: string }> = {
 
 // Baris per halaman untuk daftar admin.
 const PAGE_SIZE = 25
+
+// Resi baru boleh dicetak setelah admin menekan "Terima & Mulai Kemas". Sebelum itu pembeli
+// masih bisa membatalkan, dan label yang terlanjur tertempel di kardus jadi sampah.
+const LABEL_PRINTABLE_STATUS = ['packing', 'shipped', 'delivered'];
+
+const canPrintLabel = (order: Order) =>
+  !order.deletedAt && LABEL_PRINTABLE_STATUS.includes(order.orderStatus);
 
 export default function AdminOrders() {
   const token = localStorage.getItem('adminToken');
@@ -112,6 +120,11 @@ export default function AdminOrders() {
 
   const allSelected = orders.length > 0 && selected.length === orders.length;
   const columnCount = showDeleted ? 7 : 8;
+  // Pesanan terpilih yang belum masuk tahap kemas ikut tersaring di sini, bukan ditolak
+  // saat diklik — admin boleh mencentang sebaris penuh lalu mencetak yang memang siap.
+  const printableSelected = orders
+    .filter((order) => selected.includes(order._id) && canPrintLabel(order))
+    .map((order) => order._id);
 
   return (
     <AdminLayout title="Pesanan">
@@ -157,10 +170,11 @@ export default function AdminOrders() {
             variant="outline"
             size="sm"
             className="self-center"
-            disabled={selected.length === 0}
-            onClick={() => printLabels(selected)}
+            disabled={printableSelected.length === 0}
+            onClick={() => printLabels(printableSelected)}
+            title="Hanya pesanan yang sudah dikemas, dikirim, atau selesai"
           >
-            Cetak Resi{selected.length > 0 ? ` (${selected.length})` : ''}
+            Cetak Resi{printableSelected.length > 0 ? ` (${printableSelected.length})` : ''}
           </Button>
         )}
         {pagination && (
@@ -253,7 +267,7 @@ export default function AdminOrders() {
                       <Link to={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-800 font-medium">
                         Detail
                       </Link>
-                      {!order.deletedAt && (
+                      {canPrintLabel(order) && (
                         <button
                           type="button"
                           onClick={() => printLabels([order._id])}

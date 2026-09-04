@@ -24,6 +24,7 @@ const PAYMENT_STATUS_LABEL: Record<string, { label: string; color: string }> = {
 const ORDER_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   awaiting_payment: { label: 'Menunggu Bayar', color: 'bg-yellow-100 text-yellow-700' },
   processing:       { label: 'Diproses',       color: 'bg-blue-100 text-blue-700' },
+  packing:          { label: 'Dikemas',        color: 'bg-violet-100 text-violet-700' },
   shipped:          { label: 'Dikirim',        color: 'bg-indigo-100 text-indigo-700' },
   delivered:        { label: 'Selesai',        color: 'bg-green-100 text-green-700' },
   cancelled:        { label: 'Dibatalkan',     color: 'bg-red-100 text-red-700' },

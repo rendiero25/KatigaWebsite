@@ -1,10 +1,24 @@
+const fs = require('fs');
+const path = require('path');
 const PDFDocument = require('pdfkit');
+const SiteSettings = require('../models/SiteSettings');
 
-// Label 10 x 15 cm — ukuran standar kertas thermal sticker yang dipakai admin.
-const PAGE = { width: 283.46, height: 425.2 };
+// Label dicetak di kertas A6 (105 x 148 mm), satu pesanan satu halaman.
+const PAGE = { width: 297.64, height: 419.53 };
 const PAD = 10;
 const CONTENT = PAGE.width - PAD * 2;
-const MAX_ITEM_ROWS = 6;
+const GAP = 6;
+const COL_LEFT = CONTENT * 0.56 - GAP / 2;
+const COL_RIGHT = CONTENT - COL_LEFT - GAP;
+const COL_RIGHT_X = PAD + COL_LEFT + GAP;
+const INSET = 5;
+const MAX_ITEM_ROWS = 7;
+
+// Banner penanganan dan footer dipaku ke dasar halaman.
+const FOOTER_Y = PAGE.height - PAD - 7;
+const UNBOXING_Y = FOOTER_Y - 11;
+const BANNER_HEIGHT = 16;
+const BANNER_TOP = UNBOXING_Y - 12 - BANNER_HEIGHT;
 
 // Tabel lebar bar/spasi Code 128 (nilai 0–106). Tiap pola: bar, spasi, bar, spasi, bar, spasi
 // — total 11 modul, kecuali pola stop (106) yang 13 modul karena punya bar penutup tambahan.
@@ -27,6 +41,83 @@ const CODE128_PATTERNS = [
 
 const CODE128_START_B = 104;
 const CODE128_STOP = 106;
+
+// Sama persis dengan client/src/utils/courierLogos.ts — backend CommonJS tidak bisa mengimpor
+// modul TypeScript itu, jadi tabelnya disalin. Kalau satu sisi bertambah, tambahkan juga di sisi lain.
+const COURIER_LOGOS = {
+  gojek: 'gojek.png',
+  grab: 'grab.png',
+  deliveree: 'deliveree.png',
+  jne: 'jne.png',
+  tiki: 'tiki.png',
+  ninja: 'ninjaexpress.png',
+  lion: 'lionparcel.png',
+  sicepat: 'sicepat.png',
+  sentralcargo: 'sentralcargo.png',
+  jnt: 'j&t.png',
+  idexpress: 'idexpress.png',
+  rpx: 'rpx.png',
+  wahana: 'wahana.png',
+  pos: 'posindonesia.png',
+  tlx: 'tlx.jpeg',
+  anteraja: 'antaraja.png',
+  sap: 'sap.png',
+  paxel: 'paxel.png',
+  borzo: 'borzo.png',
+  lalamove: 'lalamove.png',
+  dash_express: 'dash.png',
+};
+
+// Di lokal berkasnya ada di client/public; setelah `npm run build` ikut tersalin ke client/dist.
+const COURIER_DIRS = [
+  path.join(__dirname, '..', 'client', 'public', 'couriers'),
+  path.join(__dirname, '..', 'client', 'dist', 'couriers'),
+];
+
+const courierLogoCache = new Map();
+
+const loadCourierLogo = (courierCode) => {
+  const file = COURIER_LOGOS[String(courierCode || '').toLowerCase()];
+  if (!file) return null;
+  if (courierLogoCache.has(file)) return courierLogoCache.get(file);
+
+  const found = COURIER_DIRS
+    .map((dir) => path.join(dir, file))
+    .find((full) => fs.existsSync(full));
+  const buffer = found ? fs.readFileSync(found) : null;
+  courierLogoCache.set(file, buffer);
+  return buffer;
+};
+
+// PDFKit hanya menerima PNG dan JPEG. Logo brand disimpan di Cloudinary dan bisa berformat
+// apa saja (webp, svg), jadi URL-nya dilewatkan transformasi f_png dulu.
+const asCloudinaryPng = (url) =>
+  url.includes('/upload/') ? url.replace('/upload/', '/upload/f_png,w_400/') : url;
+
+// Di-cache sepuluh menit, bukan selamanya: proses `npm start` hidup terus, dan admin yang
+// mengganti logo di CMS harus melihat hasilnya tanpa menunggu restart.
+const BRAND_CACHE_MS = 10 * 60 * 1000;
+let brandCache = null;
+let brandCachedAt = 0;
+
+const loadBrand = async () => {
+  if (brandCache && Date.now() - brandCachedAt < BRAND_CACHE_MS) return brandCache;
+
+  const settings = await SiteSettings.findOne().lean().catch(() => null);
+  let logo = null;
+  if (settings?.logo?.startsWith('http')) {
+    try {
+      const response = await fetch(asCloudinaryPng(settings.logo));
+      if (response.ok) logo = Buffer.from(await response.arrayBuffer());
+    } catch {
+      logo = null;
+    }
+  }
+
+  brandCache = { logo, companyName: settings?.companyName || '' };
+  brandCachedAt = Date.now();
+  return brandCache;
+};
 
 const fmtIDR = (n) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n);
@@ -65,144 +156,232 @@ const drawBarcode = (doc, raw, { x, y, width, height }) => {
   return true;
 };
 
-const boxedSection = (doc, y, height) => {
-  doc.lineWidth(0.5).rect(PAD, y, CONTENT, height).stroke('#000');
+const boxedSection = (doc, x, y, width, height) => {
+  doc.lineWidth(0.5).rect(x, y, width, height).stroke('#000');
 };
 
-const labelText = (doc, text, x, y, size = 6.5) => {
-  doc.font('Helvetica').fontSize(size).fillColor('#666').text(text, x, y, { width: CONTENT - 12 });
+const labelText = (doc, text, x, y, width, size = 6) => {
+  doc.font('Helvetica-Bold').fontSize(size).fillColor('#666')
+    .text(text, x, y, { width, characterSpacing: 0.6 });
   doc.fillColor('#000');
 };
 
 const totalWeightGrams = (order) =>
   order.items.reduce((sum, item) => sum + (item.weightGrams ?? 0) * item.quantity, 0);
 
+// Berat volumetrik kurir Indonesia: panjang x lebar x tinggi (cm) dibagi 6000, hasilnya kg.
+const volumetricKg = (order) =>
+  order.items.reduce((sum, item) => {
+    const d = item.dimensions ?? {};
+    return sum + ((d.length ?? 0) * (d.width ?? 0) * (d.height ?? 0) * item.quantity) / 6000;
+  }, 0);
+
+// ORIGIN_ADDRESS versi Google Maps sudah memuat kode pos di ujungnya. Menambahkan
+// ORIGIN_POSTAL_CODE begitu saja membuat angkanya tercetak dua kali.
+const originAddress = () => {
+  const street = (process.env.ORIGIN_ADDRESS || '').trim();
+  const postal = (process.env.ORIGIN_POSTAL_CODE || '').trim();
+  if (!street) return postal || '-';
+  return postal && !street.endsWith(postal) ? `${street} ${postal}` : street;
+};
+
 const formatWeight = (grams) =>
   grams >= 1000 ? `${(grams / 1000).toFixed(2).replace(/\.?0+$/, '')} kg` : `${grams} g`;
 
-const drawLabel = (doc, order) => {
+const drawLabel = (doc, order, brand) => {
   const address = order.shippingAddress ?? {};
   const resi = order.biteshipTrackingCode || '';
+  const orderCode = order.orderCode || `#${order._id.toString().slice(-8).toUpperCase()}`;
 
   // ── Kurir ──
   let y = PAD;
-  doc.font('Helvetica-Bold').fontSize(14)
-    .text((order.shippingCourier || '-').toUpperCase(), PAD, y, { width: CONTENT * 0.55 });
-  doc.font('Helvetica').fontSize(8)
-    .text(order.shippingServiceName || order.shippingService || '', PAD + CONTENT * 0.55, y + 4, {
+  const courierLogo = loadCourierLogo(order.shippingCourier);
+  if (courierLogo) {
+    doc.image(courierLogo, PAD, y, { fit: [80, 24] });
+  } else {
+    doc.font('Helvetica-Bold').fontSize(16)
+      .text((order.shippingCourier || '-').toUpperCase(), PAD, y + 5, { width: CONTENT * 0.55 });
+  }
+  doc.font('Helvetica').fontSize(7.5)
+    .text(order.shippingServiceName || order.shippingService || '', PAD + CONTENT * 0.55, y + 9, {
       width: CONTENT * 0.45,
       align: 'right',
     });
-  y += 22;
+  y += 28;
   doc.lineWidth(1).moveTo(PAD, y).lineTo(PAGE.width - PAD, y).stroke('#000');
-  y += 8;
+  y += 6;
 
   // ── Resi + barcode ──
   if (resi) {
-    drawBarcode(doc, resi, { x: PAD, y, width: CONTENT, height: 42 });
-    y += 45;
+    drawBarcode(doc, resi, { x: PAD, y, width: CONTENT, height: 46 });
+    y += 50;
     doc.font('Helvetica-Bold').fontSize(11)
-      .text(resi, PAD, y, { width: CONTENT, align: 'center', characterSpacing: 1 });
-    y += 16;
+      .text(resi, PAD, y, { width: CONTENT, align: 'center', characterSpacing: 1.5 });
+    y += 15;
   } else {
     doc.font('Helvetica-Bold').fontSize(9)
-      .text('RESI BELUM TERSEDIA', PAD, y + 14, { width: CONTENT, align: 'center' });
-    doc.font('Helvetica').fontSize(7).fillColor('#666')
-      .text('Tulis nomor resi manual setelah paket diserahkan ke kurir.', PAD, y + 27, {
+      .text('RESI BELUM TERSEDIA', PAD, y + 20, { width: CONTENT, align: 'center' });
+    doc.font('Helvetica').fontSize(6.5).fillColor('#666')
+      .text('Tulis nomor resi manual setelah paket diserahkan ke kurir.', PAD, y + 33, {
         width: CONTENT,
         align: 'center',
       });
     doc.fillColor('#000');
-    y += 45;
+    y += 65;
   }
 
   doc.lineWidth(1).moveTo(PAD, y).lineTo(PAGE.width - PAD, y).stroke('#000');
-  y += 8;
+  y += 6;
 
   // ── Penerima ──
   const recipientTop = y;
-  labelText(doc, 'PENERIMA', PAD + 6, y + 5);
-  y += 15;
-  doc.font('Helvetica-Bold').fontSize(10)
-    .text(address.recipientName || order.customerSnapshot?.name || '-', PAD + 6, y, { width: CONTENT - 12 });
+  labelText(doc, 'PENERIMA', PAD + INSET, y + 4, CONTENT - INSET * 2);
+  y += 13;
+  doc.font('Helvetica-Bold').fontSize(11)
+    .text(address.recipientName || order.customerSnapshot?.name || '-', PAD + INSET, y, {
+      width: CONTENT - INSET * 2,
+    });
   y = doc.y + 1;
-  doc.font('Helvetica').fontSize(8).text(address.phone || '-', PAD + 6, y, { width: CONTENT - 12 });
+  doc.font('Helvetica-Bold').fontSize(8)
+    .text(address.phone || order.customerSnapshot?.phone || '-', PAD + INSET, y, { width: CONTENT - INSET * 2 });
   y = doc.y + 2;
-  doc.fontSize(8).text(address.street || '-', PAD + 6, y, { width: CONTENT - 12 });
+  doc.font('Helvetica').fontSize(8)
+    .text(address.street || '-', PAD + INSET, y, { width: CONTENT - INSET * 2 });
   y = doc.y;
-  doc.fontSize(8).text(
-    [address.areaName, address.postalCode].filter(Boolean).join(' '),
-    PAD + 6,
-    y,
-    { width: CONTENT - 12 },
-  );
-  y = doc.y + 6;
-  boxedSection(doc, recipientTop, y - recipientTop);
-  y += 6;
+  const areaLine = [address.areaName, address.city, address.province].filter(Boolean).join(', ');
+  if (areaLine) {
+    doc.fontSize(8).text(areaLine, PAD + INSET, y, { width: CONTENT - INSET * 2 });
+    y = doc.y;
+  }
+  if (address.postalCode) {
+    doc.font('Helvetica-Bold').fontSize(8.5)
+      .text(`Kode Pos ${address.postalCode}`, PAD + INSET, y, { width: CONTENT - INSET * 2 });
+    y = doc.y;
+  }
+  y += 5;
+  boxedSection(doc, PAD, recipientTop, CONTENT, y - recipientTop);
+  y += 5;
 
   // ── Pengirim ──
   const senderTop = y;
-  labelText(doc, 'PENGIRIM', PAD + 6, y + 5);
-  y += 15;
-  doc.font('Helvetica-Bold').fontSize(9)
-    .text(process.env.SHIPPER_NAME || 'Katiga', PAD + 6, y, { width: CONTENT - 12 });
-  y = doc.y + 1;
-  doc.font('Helvetica').fontSize(7.5).text(process.env.SHIPPER_PHONE || '-', PAD + 6, y, { width: CONTENT - 12 });
-  y = doc.y + 1;
-  doc.fontSize(7.5).text(
-    [process.env.ORIGIN_ADDRESS, process.env.ORIGIN_POSTAL_CODE].filter(Boolean).join(' ') || '-',
-    PAD + 6,
-    y,
-    { width: CONTENT - 12 },
-  );
-  y = doc.y + 6;
-  boxedSection(doc, senderTop, y - senderTop);
-  y += 6;
+  const brandLogoWidth = brand?.logo ? 54 : 0;
+  const senderTextWidth = CONTENT - INSET * 2 - brandLogoWidth;
+  labelText(doc, 'PENGIRIM', PAD + INSET, y + 4, senderTextWidth);
+  y += 13;
+  doc.font('Helvetica-Bold').fontSize(8.5)
+    .text(process.env.SHIPPER_NAME || 'Katiga', PAD + INSET, y, { width: senderTextWidth });
+  y = doc.y;
+  if (brand?.companyName) {
+    doc.font('Helvetica').fontSize(6.5).fillColor('#666')
+      .text(brand.companyName, PAD + INSET, y, { width: senderTextWidth });
+    doc.fillColor('#000');
+    y = doc.y + 1;
+  }
+  doc.font('Helvetica').fontSize(7.5)
+    .text(process.env.SHIPPER_PHONE || '-', PAD + INSET, y, { width: senderTextWidth });
+  y = doc.y;
+  doc.fontSize(7.5).text(originAddress(), PAD + INSET, y, { width: senderTextWidth });
+  y = doc.y + 5;
+  if (brand?.logo) {
+    doc.image(brand.logo, PAGE.width - PAD - INSET - brandLogoWidth, senderTop + 8, {
+      fit: [brandLogoWidth, Math.max(16, y - senderTop - 16)],
+    });
+  }
+  boxedSection(doc, PAD, senderTop, CONTENT, y - senderTop);
+  y += 5;
 
-  // ── Isi paket ──
-  const itemsTop = y;
-  labelText(doc, 'ISI PAKET', PAD + 6, y + 5);
-  y += 15;
-  const rows = order.items.slice(0, MAX_ITEM_ROWS);
+  // ── Isi paket (kiri) + data paket (kanan) ──
+  // Banner dan footer dipaku ke dasar halaman: blok ini mengisi sisa ruang, tidak memanjang
+  // ke bawah. Tanpa itu alamat yang panjang mendorong footer melewati batas halaman dan
+  // PDFKit diam-diam menambah halaman kedua.
+  const detailTop = y;
+  const detailBottom = Math.max(detailTop + 70, BANNER_TOP - 6);
+  const itemRoom = Math.floor((detailBottom - detailTop - 16) / 10);
+
+  let leftY = detailTop;
+  labelText(doc, 'ISI PAKET', PAD + INSET, leftY + 4, COL_LEFT - INSET * 2);
+  leftY += 13;
+  const rows = order.items.slice(0, Math.max(1, Math.min(MAX_ITEM_ROWS, itemRoom)));
   rows.forEach((item) => {
-    doc.font('Helvetica').fontSize(7.5)
-      .text(item.name, PAD + 6, y, { width: CONTENT - 40, ellipsis: true, height: 10 });
-    doc.font('Helvetica-Bold').fontSize(7.5)
-      .text(`x${item.quantity}`, PAD + CONTENT - 34, y, { width: 28, align: 'right' });
-    y += 10;
+    const name = item.variantName ? `${item.name} (${item.variantName})` : item.name;
+    doc.font('Helvetica').fontSize(7)
+      .text(name, PAD + INSET, leftY, { width: COL_LEFT - INSET * 2 - 22, ellipsis: true, height: 9 });
+    doc.font('Helvetica-Bold').fontSize(7)
+      .text(`x${item.quantity}`, PAD + COL_LEFT - INSET - 20, leftY, { width: 20, align: 'right' });
+    leftY += 10;
   });
   if (order.items.length > rows.length) {
-    doc.font('Helvetica').fontSize(7).fillColor('#666')
-      .text(`+${order.items.length - rows.length} produk lainnya`, PAD + 6, y, { width: CONTENT - 12 });
+    doc.font('Helvetica').fontSize(6.5).fillColor('#666')
+      .text(`+${order.items.length - rows.length} produk lainnya`, PAD + INSET, leftY, {
+        width: COL_LEFT - INSET * 2,
+      });
     doc.fillColor('#000');
-    y += 10;
   }
+
+  // Kolom kanan pakai baris satu larik — label kiri, nilai rata kanan — karena di A6 tidak
+  // ada ruang untuk menaruh nilainya di baris terpisah.
+  let rightY = detailTop;
+  labelText(doc, 'DATA PAKET', COL_RIGHT_X + INSET, rightY + 4, COL_RIGHT - INSET * 2);
+  rightY += 13;
   const weight = totalWeightGrams(order);
-  if (weight > 0) {
-    doc.font('Helvetica').fontSize(7.5)
-      .text(`Berat total: ${formatWeight(weight)}`, PAD + 6, y, { width: CONTENT - 12 });
-    y += 11;
-  }
-  y += 2;
-  boxedSection(doc, itemsTop, y - itemsTop);
-  y += 6;
+  const volume = volumetricKg(order);
+  const infoRows = [
+    ['Berat', weight > 0 ? formatWeight(weight) : '-'],
+    ['Volumetrik', volume > 0 ? `${volume.toFixed(2).replace(/\.?0+$/, '')} kg` : '-'],
+    ['Koli', '1 dari 1'],
+    ['Nilai barang', fmtIDR(order.subtotal)],
+    ['Ongkir', fmtIDR(order.shippingCost ?? 0)],
+    ['Pembayaran', order.paymentStatus === 'paid' ? 'LUNAS' : 'BELUM LUNAS'],
+  ];
+  infoRows.forEach(([key, value]) => {
+    doc.font('Helvetica').fontSize(6.5).fillColor('#666')
+      .text(key, COL_RIGHT_X + INSET, rightY + 1, { width: (COL_RIGHT - INSET * 2) * 0.45 });
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#000')
+      .text(value, COL_RIGHT_X + INSET + (COL_RIGHT - INSET * 2) * 0.45, rightY, {
+        width: (COL_RIGHT - INSET * 2) * 0.55,
+        align: 'right',
+      });
+    rightY += 10;
+  });
+
+  const detailHeight = detailBottom - detailTop;
+  boxedSection(doc, PAD, detailTop, COL_LEFT, detailHeight);
+  boxedSection(doc, COL_RIGHT_X, detailTop, COL_RIGHT, detailHeight);
+
+  // ── Instruksi penanganan ──
+  doc.lineWidth(0.5).rect(PAD, BANNER_TOP, CONTENT, BANNER_HEIGHT).stroke('#000');
+  doc.font('Helvetica-Bold').fontSize(7.5)
+    .text('BARANG PECAH BELAH - JANGAN DIBANTING, JAUHKAN DARI AIR', PAD, BANNER_TOP + 5, {
+      width: CONTENT,
+      align: 'center',
+      characterSpacing: 0.3,
+    });
 
   // ── Footer ──
-  doc.font('Helvetica').fontSize(7).fillColor('#666');
-  doc.text(`Order #${order._id.toString().slice(-8).toUpperCase()}`, PAD, y, { width: CONTENT * 0.5 });
+  doc.lineWidth(0.5).moveTo(PAD, UNBOXING_Y - 5).lineTo(PAGE.width - PAD, UNBOXING_Y - 5).stroke('#666');
+  doc.font('Helvetica-Bold').fontSize(7)
+    .text('WAJIB REKAM VIDEO SAAT MEMBUKA PAKET UNTUK KLAIM', PAD, UNBOXING_Y, {
+      width: CONTENT,
+      align: 'center',
+      lineBreak: false,
+    });
+  doc.font('Helvetica').fontSize(6.5).fillColor('#666');
+  doc.text(`Order ${orderCode}`, PAD, FOOTER_Y, { width: CONTENT * 0.5 });
   doc.text(
     new Date(order.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
     PAD + CONTENT * 0.5,
-    y,
+    FOOTER_Y,
     { width: CONTENT * 0.5, align: 'right' },
   );
-  y += 10;
-  doc.text(`Nilai barang: ${fmtIDR(order.subtotal)}`, PAD, y, { width: CONTENT });
   doc.fillColor('#000');
 };
 
 // Satu order = satu halaman. Dipakai untuk cetak satuan maupun batch dari daftar pesanan.
-const buildShippingLabelPdf = (orders, res, filename) => {
+// Logo brand diambil sekali di depan, sebelum header respons dikirim — kalau gagal, label
+// tetap tercetak tanpa logo.
+const buildShippingLabelPdf = async (orders, res, filename) => {
+  const brand = await loadBrand();
+
   const doc = new PDFDocument({ size: [PAGE.width, PAGE.height], margin: 0, autoFirstPage: false });
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
@@ -210,7 +389,7 @@ const buildShippingLabelPdf = (orders, res, filename) => {
 
   orders.forEach((order) => {
     doc.addPage({ size: [PAGE.width, PAGE.height], margin: 0 });
-    drawLabel(doc, order);
+    drawLabel(doc, order, brand);
   });
 
   doc.end();

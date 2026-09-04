@@ -271,6 +271,9 @@ export default function AdminOrderDetail() {
   const osColor = ORDER_STATUS_COLOR[order.orderStatus] ?? 'bg-gray-100 text-gray-600';
   const psColor = PAYMENT_STATUS_COLOR[order.paymentStatus] ?? 'bg-gray-100 text-gray-600';
 
+  // Sama dengan aturan di daftar pesanan: resi baru dicetak setelah "Terima & Mulai Kemas".
+  const canPrintLabel = ['packing', 'shipped', 'delivered'].includes(order.orderStatus);
+
   const shipmentTimeline = resolveShipmentTimeline(order, tracking);
   const latestShipmentStatus = order.biteshipStatus
     || shipmentTimeline[shipmentTimeline.length - 1]?.status
@@ -566,16 +569,23 @@ export default function AdminOrderDetail() {
               >
                 Download Invoice PDF
               </a>
-              <a
-                href={api.getAdminShippingLabelUrl([order._id])}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 text-sm rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
-              >
-                Cetak Resi (10×15 cm)
-              </a>
+              {canPrintLabel && (
+                <a
+                  href={api.getAdminShippingLabelUrl([order._id])}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-700 text-sm rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+                >
+                  Cetak Resi (A6)
+                </a>
+              )}
             </div>
-            {!order.biteshipTrackingCode && (
+            {!canPrintLabel && (
+              <p className="text-xs text-gray-400 mt-2">
+                Resi bisa dicetak setelah pesanan diterima dan mulai dikemas.
+              </p>
+            )}
+            {canPrintLabel && !order.biteshipTrackingCode && (
               <p className="text-xs text-gray-400 mt-2">
                 Resi belum ada — label tercetak dengan kolom nomor resi kosong.
               </p>

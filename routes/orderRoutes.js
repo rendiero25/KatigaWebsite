@@ -23,6 +23,11 @@ const { notifyAdmin, notifyCustomer } = require('../utils/notify');
 const { buildShippingLabelPdf } = require('../utils/shippingLabelPdf');
 const { createPayment, getTransaction, closePayment, MayarError } = require('../services/mayarService');
 
+// Resi baru boleh dicetak setelah admin menekan "Terima & Mulai Kemas". Sebelum itu pembeli
+// masih bisa membatalkan, dan label yang terlanjur tertempel di kardus jadi sampah. Daftar
+// yang sama dipakai di client/src/pages/admin/Orders.tsx untuk menyembunyikan tombolnya.
+const LABEL_PRINTABLE_STATUS = ['packing', 'shipped', 'delivered'];
+
 const resolvePositiveNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -629,10 +634,22 @@ router.get('/labels', auth, async (req, res) => {
     const byId = new Map(orders.map((order) => [order._id.toString(), order]));
     const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
 
+    // Tombolnya memang sudah disembunyikan di panel admin, tapi URL-nya tetap bisa dibuka
+    // langsung — aturannya ditegakkan di sini, bukan cuma di layar.
+    const notReady = ordered.filter((order) => !LABEL_PRINTABLE_STATUS.includes(order.orderStatus));
+    if (notReady.length > 0) {
+      const names = notReady
+        .map((order) => order.orderCode || `#${order._id.toString().slice(-8).toUpperCase()}`)
+        .join(', ');
+      return res.status(400).json({
+        message: `Resi hanya bisa dicetak setelah pesanan diterima dan mulai dikemas. Belum siap: ${names}`,
+      });
+    }
+
     const filename = ordered.length === 1
       ? `resi-${ordered[0]._id}.pdf`
       : `resi-${ordered.length}-pesanan.pdf`;
-    buildShippingLabelPdf(ordered, res, filename);
+    await buildShippingLabelPdf(ordered, res, filename);
   } catch (err) {
     console.error('[Label Resi]', err);
     res.status(500).json({ message: 'Gagal membuat label resi' });
