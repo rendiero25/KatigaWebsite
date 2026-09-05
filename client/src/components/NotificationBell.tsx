@@ -1,6 +1,8 @@
-import { FiBell } from 'react-icons/fi'
+import { Bell } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+
 import type { AppNotification, NotificationRole } from '../types/ecommerce'
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,10 +39,13 @@ export default function NotificationBell({ role, notifications, unreadCount, onM
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="relative cursor-pointer bg-transparent border-0 p-0 focus:outline-none">
-        <FiBell className="w-5 h-5" />
+      <DropdownMenuTrigger
+        aria-label="Buka notifikasi"
+        className="relative inline-flex size-11 items-center justify-center border-0 bg-transparent text-current transition-colors hover:bg-[#F9F7F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E1E1E]"
+      >
+        <Bell className="size-5" strokeWidth={1.75} aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full bg-[#4F68AF] text-white text-[9px] leading-none flex items-center justify-center">
+          <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#4F68AF] px-1 text-[9px] leading-none text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

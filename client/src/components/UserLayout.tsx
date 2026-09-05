@@ -1,8 +1,24 @@
-import { type ReactNode, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import {
+  Bell,
+  Heart,
+  Home,
+  LogOut,
+  MapPin,
+  Package,
+  Settings,
+  Star,
+  Store,
+  WalletCards,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
-import api from '../services/api'
 import { useNotifications } from '../hooks/useApi'
+
+import api from '../services/api'
+
 import NotificationBell from './NotificationBell'
 
 interface Props {
@@ -13,6 +29,7 @@ interface Props {
 interface NavItem {
   label: string
   href: string
+  icon: LucideIcon
 }
 
 interface NavGroup {
@@ -23,24 +40,24 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     items: [
-      { label: 'Beranda', href: '/profil' },
-      { label: 'Notifikasi', href: '/notifikasi' },
+      { label: 'Beranda', href: '/profil', icon: Home },
+      { label: 'Notifikasi', href: '/notifikasi', icon: Bell },
     ],
   },
   {
     label: 'Transaksi',
     items: [
-      { label: 'Pesanan Saya', href: '/pesanan' },
-      { label: 'Ulasan Saya', href: '/profil/ulasan' },
-      { label: 'Laporan Keuangan', href: '/profil/laporan-keuangan' },
+      { label: 'Pesanan Saya', href: '/pesanan', icon: Package },
+      { label: 'Ulasan Saya', href: '/profil/ulasan', icon: Star },
+      { label: 'Laporan Keuangan', href: '/profil/laporan-keuangan', icon: WalletCards },
     ],
   },
   {
     label: 'Akun',
     items: [
-      { label: 'Alamat', href: '/profil/alamat' },
-      { label: 'Wishlist', href: '/profil/wishlist' },
-      { label: 'Pengaturan', href: '/profil/pengaturan' },
+      { label: 'Alamat', href: '/profil/alamat', icon: MapPin },
+      { label: 'Wishlist', href: '/profil/wishlist', icon: Heart },
+      { label: 'Pengaturan', href: '/profil/pengaturan', icon: Settings },
     ],
   },
 ]
@@ -59,6 +76,7 @@ export default function UserLayout({ children, title }: Props) {
   const navigate = useNavigate()
   const [customerName, setCustomerName] = useState(() => localStorage.getItem('customerName') || '')
   const [customerAvatar, setCustomerAvatar] = useState(() => localStorage.getItem('customerAvatar') || '')
+  const activeMobileLinkRef = useRef<HTMLAnchorElement>(null)
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications('customer')
 
   useEffect(() => {
@@ -76,6 +94,10 @@ export default function UserLayout({ children, title }: Props) {
     return () => window.removeEventListener('storage', sync)
   }, [])
 
+  useEffect(() => {
+    activeMobileLinkRef.current?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [location.pathname])
+
   const handleLogout = () => {
     localStorage.removeItem('customerToken')
     localStorage.removeItem('customerName')
@@ -91,10 +113,10 @@ export default function UserLayout({ children, title }: Props) {
   const flatItems = NAV_GROUPS.flatMap((g) => g.items)
 
   const navLinkClass = (active: boolean) =>
-    `uppercase tracking-[0.12em] text-[13px] transition-colors whitespace-nowrap ${
+    `group inline-flex min-h-11 items-center gap-3 whitespace-nowrap text-[13px] uppercase tracking-[0.12em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E1E1E] md:border-l-2 md:pl-4 ${
       active
-        ? 'text-[#1E1E1E] md:border-l-2 md:border-[#1E1E1E] md:pl-4'
-        : 'text-[#6F6F71] hover:text-[#1E1E1E] md:pl-[calc(0.5rem+2px)]'
+        ? 'text-[#1E1E1E] md:border-[#1E1E1E]'
+        : 'text-[#6F6F71] hover:text-[#1E1E1E] md:border-transparent'
     }`
 
   return (
@@ -116,7 +138,15 @@ export default function UserLayout({ children, title }: Props) {
             </span>
             <span className="truncate text-sm text-[#1E1E1E]">{customerName || 'User'}</span>
           </Link>
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-1">
+            <Link
+              to="/produk"
+              aria-label="Kembali ke Toko"
+              className="inline-flex min-h-11 items-center gap-2 px-2 text-[11px] uppercase tracking-[0.12em] text-[#1E1E1E] transition-colors hover:bg-[#F9F7F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E1E1E]"
+            >
+              <Store className="size-4" strokeWidth={1.75} aria-hidden="true" />
+              <span className="hidden min-[390px]:inline">Toko</span>
+            </Link>
             <NotificationBell
               role="customer"
               notifications={notifications}
@@ -127,23 +157,28 @@ export default function UserLayout({ children, title }: Props) {
             <button
               type="button"
               onClick={handleLogout}
-              className="uppercase tracking-[0.12em] text-[11px] text-[#AE4B4B]"
+              className="inline-flex min-h-11 items-center gap-2 px-2 text-[11px] uppercase tracking-[0.12em] text-[#AE4B4B] transition-colors hover:text-[#8F3A3A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#AE4B4B]"
             >
-              Keluar
+              <LogOut className="size-4" strokeWidth={1.75} aria-hidden="true" />
+              <span className="hidden sm:inline">Keluar</span>
+              <span className="sr-only sm:hidden">Keluar</span>
             </button>
           </div>
         </div>
-        <nav className="flex overflow-x-auto no-scrollbar gap-6 px-4 pb-3">
+        <nav aria-label="Menu akun" className="flex gap-2 overflow-x-auto px-4 pb-3 no-scrollbar">
           {flatItems.map((item) => {
             const active = isActive(item.href)
+            const Icon = item.icon
             return (
               <Link
                 key={item.href}
                 to={item.href}
+                ref={active ? activeMobileLinkRef : undefined}
                 aria-current={active ? 'page' : undefined}
                 className={navLinkClass(active)}
               >
-                {item.label}
+                <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                <span>{item.label}</span>
                 {item.href === '/notifikasi' && unreadCount > 0 && (
                   <span className="ml-1 text-[#6F6F71]">({unreadCount > 9 ? '9+' : unreadCount})</span>
                 )}
@@ -173,15 +208,16 @@ export default function UserLayout({ children, title }: Props) {
           </span>
         </Link>
 
-        <nav className="flex flex-col gap-8">
+        <nav aria-label="Menu akun" className="flex flex-col gap-8">
           {NAV_GROUPS.map((group, i) => (
             <div key={group.label ?? `g${i}`} className="flex flex-col gap-3">
               {group.label && (
                 <span className="uppercase tracking-[0.12em] text-[11px] text-[#9A9A96]">{group.label}</span>
               )}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
                 {group.items.map((item) => {
                   const active = isActive(item.href)
+                  const Icon = item.icon
                   return (
                     <Link
                       key={item.href}
@@ -189,7 +225,8 @@ export default function UserLayout({ children, title }: Props) {
                       aria-current={active ? 'page' : undefined}
                       className={navLinkClass(active)}
                     >
-                      {item.label}
+                      <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+                      <span>{item.label}</span>
                       {item.href === '/notifikasi' && unreadCount > 0 && (
                         <span className="ml-1 text-[#6F6F71]">({unreadCount > 9 ? '9+' : unreadCount})</span>
                       )}
@@ -201,16 +238,14 @@ export default function UserLayout({ children, title }: Props) {
           ))}
         </nav>
 
-        <div className="mt-auto pt-8 flex flex-col gap-3">
-          <Link to="/produk" className={navLinkClass(false)}>
-            Kembali ke Toko
-          </Link>
+        <div className="mt-auto pt-8">
           <button
             type="button"
             onClick={handleLogout}
-            className="text-left uppercase tracking-[0.12em] text-[13px] text-[#AE4B4B] hover:text-[#8f3a3a] transition-colors"
+            className="inline-flex min-h-11 items-center gap-3 pl-[18px] text-left text-[13px] uppercase tracking-[0.12em] text-[#AE4B4B] transition-colors hover:text-[#8F3A3A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#AE4B4B]"
           >
-            Keluar
+            <LogOut className="size-4 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+            <span>Keluar</span>
           </button>
         </div>
       </aside>
@@ -218,8 +253,15 @@ export default function UserLayout({ children, title }: Props) {
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="hidden md:flex items-center justify-between px-10 py-6 border-b border-[#E9E9EA]">
-          {title && <h1 className="text-lg text-[#1E1E1E]">{title}</h1>}
-          <div className="ml-auto">
+          {title && <h1 className="min-w-0 flex-1 truncate text-lg text-[#1E1E1E]">{title}</h1>}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Link
+              to="/produk"
+              className="inline-flex min-h-11 items-center gap-2 px-3 text-[11px] uppercase tracking-[0.12em] text-[#1E1E1E] transition-colors hover:bg-[#F9F7F2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1E1E1E]"
+            >
+              <Store className="size-4" strokeWidth={1.75} aria-hidden="true" />
+              <span>Kembali ke Toko</span>
+            </Link>
             <NotificationBell
               role="customer"
               notifications={notifications}
